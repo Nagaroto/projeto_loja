@@ -1,30 +1,89 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import { mockProducts, categories } from '../data/mockProducts';
 import { motion } from 'framer-motion';
+import axios from 'axios';
+
+const API_URL = 'http://127.0.0.1:8000/api';
+
+// Detecta categoria sistema "Sem categoria" para ocultar no filtro público.
+const isFallbackCategory = (cat) =>
+  cat && (cat.slug === 'sem-categoria' || cat.name === 'Sem categoria');
 
 export function Catalogo() {
-  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [products, setProducts] = useState([]);
+  const [apiCategories, setApiCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filtrar produtos
-  const filteredProducts = useMemo(() => {
-    let result = mockProducts;
+  useEffect(() => {
+    loadPublishedProducts();
+    loadCategories();
+  }, []);
 
-    // Filtrar por categoria
-    if (selectedCategory !== 'Todos') {
-      result = result.filter(product => product.category === selectedCategory);
+  const loadPublishedProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_URL}/products/published/`);
+      const data = response.data;
+
+      const productsList = Array.isArray(data) ? data : (data.results || []);
+      setProducts(productsList);
+    } catch (error) {
+      console.error('Erro ao carregar produtos publicados:', error);
+      setProducts(mockProducts);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/categories/`);
+      const data = response.data;
+
+      const categoriesList = Array.isArray(data) ? data : (data.results || []);
+      setApiCategories(categoriesList);
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+      setApiCategories([]);
+    }
+  };
+
+  const catalogCategories = useMemo(
+    () => apiCategories.filter((c) => !isFallbackCategory(c)),
+    [apiCategories]
+  );
+
+  const filteredProducts = useMemo(() => {
+    let result = products;
+
+    // Filtrar por categoria (usando ID da categoria do backend)
+    if (selectedCategory) {
+      result = result.filter(product => product.category === parseInt(selectedCategory));
     }
 
     // Filtrar por busca
     if (searchTerm) {
       result = result.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     return result;
-  }, [selectedCategory, searchTerm]);
+  }, [selectedCategory, searchTerm, products]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg text-gray-600">Carregando produtos...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -71,17 +130,30 @@ export function Catalogo() {
             Filtrar por Categoria
           </h3>
           <div className="flex flex-wrap gap-3">
-            {categories.map((category) => (
+            {/* Botão "Todos" para limpar filtro */}
+            <button
+              onClick={() => setSelectedCategory('')}
+              className={`px-6 py-2 rounded-full font-medium transition-all duration-300 ${
+                !selectedCategory
+                  ? 'bg-cereon-green text-white shadow-lg'
+                  : 'bg-white text-cereon-dark border-2 border-gray-300 hover:border-cereon-green'
+              }`}
+            >
+              Todos
+            </button>
+            
+            {/* Botões das categorias do backend */}
+            {catalogCategories.map((category) => (
               <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id.toString())}
                 className={`px-6 py-2 rounded-full font-medium transition-all duration-300 ${
-                  selectedCategory === category
+                  selectedCategory === category.id.toString()
                     ? 'bg-cereon-green text-white shadow-lg'
                     : 'bg-white text-cereon-dark border-2 border-gray-300 hover:border-cereon-green'
                 }`}
               >
-                {category}
+                {category.name}
               </button>
             ))}
           </div>
@@ -104,7 +176,7 @@ export function Catalogo() {
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
           >
             {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} categories={apiCategories} />
             ))}
           </motion.div>
         ) : (
@@ -119,7 +191,7 @@ export function Catalogo() {
             </p>
             <button
               onClick={() => {
-                setSelectedCategory('Todos');
+                setSelectedCategory('');
                 setSearchTerm('');
               }}
               className="px-6 py-2 bg-cereon-green text-white font-medium rounded-lg hover:bg-green-600 transition-colors"

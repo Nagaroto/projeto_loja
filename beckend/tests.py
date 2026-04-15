@@ -1,3 +1,3 @@
-from django.test import TestCase
+# Testes automatizados do app (placeholder).
 
-# Create your tests here.
+from django.test import TestCase

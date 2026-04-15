@@ -1,10 +1,50 @@
-from django.urls import path
-from .views import EmailTokenObtainView, RegisterView
+# Rotas da API: auth, conta, catálogo publicado e viewsets registrados no router.
+
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+
+from .views import (
+    EmailTokenObtainView,
+    RegisterView,
+    ProductViewSet,
+    CouponViewSet,
+    OrderViewSet,
+    CategoryViewSet,
+    analytics_view,
+    PublishedProductsView,
+)
+from .checkout_views import CheckoutView, ShippingQuoteView
+from .user_account_views import (
+    AddressDetailView,
+    AddressListCreateView,
+    CancelOrderView,
+    ChangeEmailView,
+    ChangePasswordView,
+    DeleteAccountView,
+    MyOrdersView,
+    UserProfileMeView,
+)
+
+router = DefaultRouter()
+router.register(r'categories', CategoryViewSet)
+router.register(r'products', ProductViewSet)
+router.register(r'coupons', CouponViewSet)
+router.register(r'orders', OrderViewSet)
 
 urlpatterns = [
-    # Rota que o seu React chama no axios.post('/api/login/')
+    path('checkout/shipping/', ShippingQuoteView.as_view(), name='checkout-shipping'),
+    path('checkout/place/', CheckoutView.as_view(), name='checkout-place'),
+    path('products/published/', PublishedProductsView.as_view(), name='published-products'),
+    path('analytics/', analytics_view, name='analytics'),
     path('login/', EmailTokenObtainView.as_view(), name='token_obtain_pair'),
-    
-    # Rota que o seu React chama no axios.post('/api/register/')
     path('register/', RegisterView.as_view(), name='register'),
+    path('me/profile/', UserProfileMeView.as_view(), name='me-profile'),
+    path('me/addresses/', AddressListCreateView.as_view(), name='me-addresses'),
+    path('me/addresses/<int:pk>/', AddressDetailView.as_view(), name='me-address-detail'),
+    path('me/change-password/', ChangePasswordView.as_view(), name='me-change-password'),
+    path('me/change-email/', ChangeEmailView.as_view(), name='me-change-email'),
+    path('me/delete-account/', DeleteAccountView.as_view(), name='me-delete-account'),
+    path('me/orders/', MyOrdersView.as_view(), name='me-orders'),
+    path('me/orders/<int:pk>/cancel/', CancelOrderView.as_view(), name='me-order-cancel'),
+    path('', include(router.urls)),
 ]

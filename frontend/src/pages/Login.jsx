@@ -1,11 +1,26 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, Loader2, Github, Chrome } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, ArrowRight } from 'lucide-react';
 import axios from 'axios';
+import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
-// URL do seu backend Django
 const API_URL = 'http://127.0.0.1:8000/api';
 
-export function Login( ) {
+function messageFromApiError(data) {
+  if (!data) return 'Não foi possível entrar. Tente novamente.';
+  if (typeof data.detail === 'string') return data.detail;
+  const nfe = data.non_field_errors;
+  if (Array.isArray(nfe)) return nfe.join(' ');
+  if (typeof nfe === 'string') return nfe;
+  const first = Object.values(data).flat().filter(Boolean);
+  if (first.length) return first.join(' ');
+  return 'Verifique e-mail e senha.';
+}
+
+export function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -26,114 +41,183 @@ export function Login( ) {
     setIsLoading(true);
     
     try {
-      // 1. TENTATIVA DE LOGIN
-      // Enviamos 'email' porque o seu Serializer customizado no Django espera esse campo
       const response = await axios.post(`${API_URL}/login/`, {
-        email: formData.email,
-        password: formData.password
+        email: formData.email.trim(),
+        password: formData.password,
       });
 
-      // Se o login der certo, salvamos o token e avisamos o usuário
-      const { access } = response.data;
-      localStorage.setItem('token', access);
+      const { access, refresh } = response.data;
+      // Criar objeto de usuário com dados retornados (adjust conforme o backend)
+      const userData = {
+        email: formData.email,
+        is_staff: response.data.is_staff || false,
+        role: response.data.role || null,
+        user_id: response.data.user_id,
+      };
+      
+      login(access, userData, refresh);
       alert('Login realizado com sucesso! Bem-vindo.');
-      // window.location.href = '/dashboard'; // Redirecione para onde desejar
-
-    } catch (error) {
-      // 2. TRATAMENTO DE ERRO / CADASTRO AUTOMÁTICO
-      // Se o erro for 401 (Não autorizado), o usuário não existe ou a senha está errada
-      if (error.response && error.response.status === 401) {
-        const querCadastrar = window.confirm(
-          "Usuário não encontrado. Deseja criar uma nova conta com este e-mail e senha?"
-        );
-
-        if (querCadastrar) {
-          try {
-            setIsLoading(true);
-            // Chamada para a rota de registro que criamos no Django
-            await axios.post(`${API_URL}/register/`, {
-              email: formData.email,
-              password: formData.password,
-              username: formData.email // Usamos o email como username padrão
-            });
-
-            alert("Cadastro realizado com sucesso! Agora você já pode entrar.");
-          } catch (regError) {
-            const msgErro = regError.response?.data?.detail || "Erro ao cadastrar. Verifique os dados.";
-            alert(`Erro no cadastro: ${msgErro}`);
-          }
-        }
+      
+      // Redirecionar para admin se for admin, senão para home
+      if (userData.is_staff) {
+        navigate('/admin/dashboard');
       } else {
-        // Erro de conexão ou erro 500 no servidor
-        alert("Erro na conexão com o servidor Django. Verifique se o backend está rodando.");
+        navigate('/minha-conta');
+      }
+    } catch (error) {
+      const status = error.response?.status;
+      const data = error.response?.data;
+
+      if (status === 400 || status === 401) {
+        const msg = messageFromApiError(data);
+        const notFound =
+          /não encontramos|não encontrado|não foi encontrado/i.test(msg);
+
+        if (notFound) {
+          const querCadastrar = window.confirm(
+            `${msg}\n\nDeseja criar uma nova conta com este e-mail e senha?`
+          );
+          if (querCadastrar) {
+            try {
+              setIsLoading(true);
+              await axios.post(`${API_URL}/register/`, {
+                email: formData.email.trim(),
+                password: formData.password,
+                username: formData.email.trim(),
+              });
+              alert('Cadastro realizado com sucesso. Você já pode entrar.');
+            } catch (regError) {
+              const d = regError.response?.data;
+              alert(`Erro no cadastro: ${messageFromApiError(d)}`);
+            }
+          }
+        } else {
+          alert(msg);
+        }
+      } else if (error.response) {
+        alert(messageFromApiError(error.response.data));
+      } else {
+        alert(
+          'Não foi possível conectar ao servidor. Confira se o backend está rodando.'
+        );
       }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: 'easeOut' },
+    },
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-white font-sans flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative background elements - subtle green */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-cereon-green opacity-5 rounded-full blur-3xl -mr-48 -mt-48" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-cereon-green opacity-5 rounded-full blur-3xl -ml-48 -mb-48" />
+
+      <motion.div
+        className="w-full max-w-md relative z-10"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Card Principal */}
-        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl">
+        <motion.div
+          variants={itemVariants}
+          className="bg-white border border-gray-200 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-shadow duration-300"
+        >
+          {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Bem-vindo</h1>
-            <p className="text-slate-400">Entre na sua conta para continuar</p>
+            <motion.h1
+              variants={itemVariants}
+              className="text-4xl font-bold text-cereon-dark mb-2"
+            >
+              Bem-vindo
+            </motion.h1>
+            <motion.p
+              variants={itemVariants}
+              className="text-cereon-dark/70"
+            >
+              Entre na sua conta para continuar
+            </motion.p>
           </div>
 
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Campo Email */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 ml-1">Email</label>
+            <motion.div variants={itemVariants} className="space-y-2">
+              <label className="text-sm font-semibold text-cereon-dark ml-1">E-mail ou usuário</label>
               <div className="relative group">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-cereon-green transition-colors duration-300" />
                 <input
                   type="email"
                   name="email"
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full bg-slate-950/50 border border-slate-800 text-white rounded-xl py-3 pl-11 pr-4 outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full bg-cereon-light border-2 border-gray-200 text-cereon-dark rounded-lg py-3 pl-11 pr-4 outline-none focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 transition-all duration-300 font-medium placeholder:text-cereon-dark/40"
                   placeholder="seu@email.com"
                 />
               </div>
-            </div>
+            </motion.div>
 
             {/* Campo Senha */}
-            <div className="space-y-2">
+            <motion.div variants={itemVariants} className="space-y-2">
               <div className="flex items-center justify-between ml-1">
-                <label className="text-sm font-medium text-slate-300">Senha</label>
-                <button type="button" className="text-xs text-blue-500 hover:text-blue-400 transition-colors">
+                <label className="text-sm font-semibold text-cereon-dark">Senha</label>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-cereon-green hover:text-cereon-green/70 transition-colors duration-300"
+                >
                   Esqueceu a senha?
                 </button>
               </div>
               <div className="relative group">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-cereon-green transition-colors duration-300" />
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full bg-slate-950/50 border border-slate-800 text-white rounded-xl py-3 pl-11 pr-12 outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full bg-cereon-light border-2 border-gray-200 text-cereon-dark rounded-lg py-3 pl-11 pr-12 outline-none focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 transition-all duration-300 font-medium placeholder:text-cereon-dark/40"
                   placeholder="••••••••"
                 />
-                <button
+                <motion.button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-cereon-dark transition-colors duration-300"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
+                </motion.button>
               </div>
-            </div>
+            </motion.div>
 
             {/* Botão Entrar */}
-            <button
+            <motion.button
+              variants={itemVariants}
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full bg-cereon-green hover:bg-cereon-green/90 disabled:opacity-60 text-white font-bold py-3 rounded-lg transition-all duration-300 shadow-lg shadow-cereon-green/20 flex items-center justify-center gap-2 group"
             >
               {isLoading ? (
                 <>
@@ -141,42 +225,47 @@ export function Login( ) {
                   Processando...
                 </>
               ) : (
-                'Entrar'
+                <>
+                  Entrar
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
               )}
-            </button>
+            </motion.button>
           </form>
 
-          {/* Divisor */}
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-800"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-slate-900 px-2 text-slate-500">Ou continue com</span>
-            </div>
-          </div>
-
-          {/* Social Login */}
-          <div className="grid grid-cols-2 gap-4">
-            <button className="flex items-center justify-center gap-2 bg-slate-950/50 border border-slate-800 text-white py-2.5 rounded-xl hover:bg-slate-800 transition-all">
-              <Github className="w-5 h-5" />
-              <span>Github</span>
-            </button>
-            <button className="flex items-center justify-center gap-2 bg-slate-950/50 border border-slate-800 text-white py-2.5 rounded-xl hover:bg-slate-800 transition-all">
+          {/* Google acima do divisor; depois Cadastrar */}
+          <motion.div variants={itemVariants} className="mt-4 space-y-3">
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full flex items-center justify-center gap-2 bg-white border-2 border-gray-300 text-cereon-dark py-3 rounded-lg hover:border-cereon-green hover:bg-cereon-light transition-all duration-300 font-semibold shadow-sm"
+            >
               <Chrome className="w-5 h-5" />
               <span>Google</span>
-            </button>
-          </div>
-        </div>
+            </motion.button>
 
-        {/* Link Cadastro */}
-        <p className="text-center mt-8 text-slate-400">
-          Não tem uma conta?{' '}
-          <button className="text-blue-500 font-semibold hover:text-blue-400 transition-colors">
-            Criar conta gratuita
-          </button>
-        </p>
-      </div>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500 font-semibold">Ou Crie Sua conta</span>
+              </div>
+            </div>
+
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Link
+                to="/cadastro"
+                className="w-full bg-cereon-green hover:bg-cereon-green/90 text-white font-bold py-3 rounded-lg transition-all duration-300 shadow-lg shadow-cereon-green/20 flex items-center justify-center gap-2 group"
+              >
+                Cadastrar
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

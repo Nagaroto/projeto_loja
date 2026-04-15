@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, ShoppingCart, LogOut } from 'lucide-react';
+import { Menu, X, ShoppingCart, LogOut, Shield, User } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { cartItems, setIsCartOpen } = useCart();
+  const { user, token, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -23,7 +24,9 @@ export function Navbar() {
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
+    logout();
+    navigate('/');
+    setIsMenuOpen(false);
   };
 
   return (
@@ -52,6 +55,27 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            
+            {/* Link Admin */}
+            {isAdmin && (
+              <Link
+                to="/admin/dashboard"
+                className="text-cereon-green font-semibold flex items-center gap-1 hover:text-cereon-green/80 transition-colors"
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
+            )}
+
+            {token && !isAdmin && (
+              <Link
+                to="/minha-conta"
+                className="text-cereon-dark font-medium flex items-center gap-1 hover:text-cereon-green transition-colors"
+              >
+                <User className="w-4 h-4" />
+                Minha conta
+              </Link>
+            )}
           </div>
 
           {/* Carrinho + Login + Menu Mobile */}
@@ -71,17 +95,17 @@ export function Navbar() {
             </button>
 
             {/* Login/Logout */}
-            {!isLoggedIn ? (
+            {!token ? (
               <Link
                 to="/login"
-                className="hidden sm:block px-4 py-2 bg-cereon-green text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
+                className="hidden sm:block px-4 py-2 bg-cereon-green text-white font-medium rounded-lg hover:bg-cereon-green/90 transition-colors"
               >
                 Login
               </Link>
             ) : (
               <button
                 onClick={handleLogout}
-                className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-cereon-green text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
+                className="hidden sm:flex items-center space-x-2 px-4 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors"
               >
                 <LogOut size={18} />
                 <span>Sair</span>
@@ -120,21 +144,42 @@ export function Navbar() {
                     {link.label}
                   </Link>
                 ))}
-                {!isLoggedIn ? (
+                
+                {/* Admin Link Mobile */}
+                {isAdmin && (
+                  <Link
+                    to="/admin/dashboard"
+                    className="block px-3 py-2 rounded-lg text-cereon-green font-semibold hover:bg-white transition-colors flex items-center gap-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </Link>
+                )}
+
+                {token && !isAdmin && (
+                  <Link
+                    to="/minha-conta"
+                    className="block px-3 py-2 rounded-lg text-cereon-dark font-medium hover:bg-white transition-colors flex items-center gap-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <User className="w-4 h-4" />
+                    Minha conta
+                  </Link>
+                )}
+                
+                {!token ? (
                   <Link
                     to="/login"
-                    className="block w-full mt-2 px-3 py-2 bg-cereon-green text-white font-medium rounded-lg hover:bg-green-600 transition-colors text-center"
+                    className="block w-full mt-2 px-3 py-2 bg-cereon-green text-white font-medium rounded-lg hover:bg-cereon-green/90 transition-colors text-center"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Login
                   </Link>
                 ) : (
                   <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMenuOpen(false);
-                    }}
-                    className="block w-full mt-2 px-3 py-2 bg-cereon-green text-white font-medium rounded-lg hover:bg-green-600 transition-colors text-center"
+                    onClick={handleLogout}
+                    className="block w-full mt-2 px-3 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 transition-colors text-center"
                   >
                     Sair
                   </button>

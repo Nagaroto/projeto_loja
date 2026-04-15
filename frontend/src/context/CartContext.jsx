@@ -8,22 +8,28 @@ export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Adicionar item ao carrinho
   const addToCart = (product) => {
-    setCartItems(prevItems => {
-      // Gerar itemId único
-      const itemId = product.cartId || `${product.id}`;
-      const existingItem = prevItems.find(item => item.itemId === itemId);
-      
+    const priceNum = parseFloat(product.price);
+    const normalized = {
+      ...product,
+      price: Number.isFinite(priceNum) ? priceNum : 0,
+      image: product.image_url || product.image || '/imgs/cereon.webp',
+    };
+
+    setCartItems((prevItems) => {
+      const itemId = normalized.cartId || `${normalized.id}`;
+      const existingItem = prevItems.find((item) => item.itemId === itemId);
+      const addQty = normalized.quantity || 1;
+
       if (existingItem) {
-        return prevItems.map(item =>
+        return prevItems.map((item) =>
           item.itemId === itemId
-            ? { ...item, quantity: item.quantity + (product.quantity || 1) }
+            ? { ...item, quantity: item.quantity + addQty }
             : item
         );
       }
-      
-      return [...prevItems, { ...product, itemId, quantity: product.quantity || 1 }];
+
+      return [...prevItems, { ...normalized, itemId, quantity: addQty }];
     });
   };
 
@@ -50,7 +56,11 @@ export function CartProvider({ children }) {
 
   // Calcular total
   const getTotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => {
+      const p = parseFloat(item.price);
+      const q = item.quantity || 1;
+      return total + (Number.isFinite(p) ? p : 0) * q;
+    }, 0);
   };
 
   // Limpar carrinho

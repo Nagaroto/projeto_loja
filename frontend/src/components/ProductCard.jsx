@@ -4,7 +4,7 @@ import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { motion } from 'framer-motion';
 
-export function ProductCard({ product }) {
+export function ProductCard({ product, categories = [] }) {
   const { addToCart } = useCart();
   const [isAdded, setIsAdded] = React.useState(false);
 
@@ -13,6 +13,29 @@ export function ProductCard({ product }) {
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
+
+  // Converter preço para número se for string
+  const formatPrice = (price) => {
+    return parseFloat(price).toFixed(2);
+  };
+
+  // Obter nome da categoria pelo ID (categoria de sistema "Sem categoria" não aparece no catálogo)
+  const getCategoryName = () => {
+    if (!product.category) return '';
+
+    if (typeof product.category === 'number') {
+      const category = categories.find((c) => c.id === product.category);
+      if (!category) return '';
+      if (category.slug === 'sem-categoria' || category.name === 'Sem categoria') {
+        return '';
+      }
+      return category.name;
+    }
+
+    return product.category;
+  };
+
+  const categoryLabel = getCategoryName();
 
   return (
     <motion.div
@@ -26,7 +49,7 @@ export function ProductCard({ product }) {
       <Link to={`/produto/${product.id}`} className="block">
         <div className="relative h-64 overflow-hidden bg-gray-200 cursor-pointer">
           <img
-            src={product.image}
+            src={product.image_url || product.image}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
           />
@@ -37,9 +60,11 @@ export function ProductCard({ product }) {
       {/* Conteúdo */}
       <div className="p-4">
         {/* Categoria */}
-        <p className="text-xs text-cereon-green font-semibold uppercase tracking-wide mb-2">
-          {product.category}
-        </p>
+        {categoryLabel ? (
+          <p className="text-xs text-cereon-green font-semibold uppercase tracking-wide mb-2">
+            {categoryLabel}
+          </p>
+        ) : null}
 
         {/* Nome */}
         <Link to={`/produto/${product.id}`} className="block hover:text-cereon-green transition-colors">
@@ -51,7 +76,7 @@ export function ProductCard({ product }) {
         {/* Preço */}
         <div className="flex items-baseline space-x-2 mb-4">
           <span className="text-2xl font-bold text-cereon-green">
-            R$ {product.price.toFixed(2)}
+            R$ {formatPrice(product.price)}
           </span>
         </div>
 

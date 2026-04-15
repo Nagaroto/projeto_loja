@@ -1,10 +1,23 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Minus, Plus, Trash2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function CartDrawer() {
+  const navigate = useNavigate();
+  const { token } = useAuth();
   const { cartItems, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, getTotal } = useCart();
+
+  const goCheckout = () => {
+    setIsCartOpen(false);
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    navigate('/checkout');
+  };
 
   return (
     <AnimatePresence>
@@ -61,7 +74,7 @@ export function CartDrawer() {
                   >
                     {/* Imagem */}
                     <img
-                      src={item.image}
+                      src={item.image_url || item.image || '/imgs/cereon.webp'}
                       alt={item.name}
                       className="w-20 h-20 object-cover rounded-lg"
                     />
@@ -71,13 +84,18 @@ export function CartDrawer() {
                       <h4 className="font-semibold text-cereon-dark line-clamp-2">
                         {item.name}
                       </h4>
-                      {item.selectedSize && (
+                      {(item.selectedSize || item.selectedColor) && (
                         <p className="text-xs text-gray-500 mt-1">
-                          Tamanho: {item.selectedSize} | Cor: {item.selectedColor}
+                          {item.selectedSize ? `Tamanho: ${item.selectedSize}` : ''}
+                          {item.selectedSize && item.selectedColor ? ' | ' : ''}
+                          {item.selectedColor ? `Cor: ${item.selectedColor}` : ''}
                         </p>
                       )}
                       <p className="text-cereon-green font-bold mt-1">
-                        R$ {item.price.toFixed(2)}
+                        R${' '}
+                        {Number.isFinite(parseFloat(item.price))
+                          ? parseFloat(item.price).toFixed(2)
+                          : '0.00'}
                       </p>
 
                       {/* Quantidade */}
@@ -124,8 +142,12 @@ export function CartDrawer() {
                 </div>
 
                 {/* Botões */}
-                <button className="w-full py-3 bg-cereon-green text-white font-bold rounded-lg hover:bg-green-600 transition-colors">
-                  Finalizar Compra
+                <button
+                  type="button"
+                  onClick={goCheckout}
+                  className="w-full py-3 bg-cereon-green text-white font-bold rounded-lg hover:bg-green-600 transition-colors"
+                >
+                  Finalizar compra
                 </button>
                 <button
                   onClick={() => setIsCartOpen(false)}
