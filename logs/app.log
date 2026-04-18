@@ -1,0 +1,804 @@
+ERROR 2026-04-17 16:10:31,009 services 3545 139722991138688 Erro ao gerar QR Code: No module named 'PIL'
+ERROR 2026-04-17 16:12:09,986 services 3731 139651395131264 Erro ao consultar status: 404 Client Error: Not Found for url: https://api.mercadopago.com/v1/payments/123456789
+INFO 2026-04-17 16:21:51,085 autoreload 4872 140185973925760 Watching for file changes with StatReloader
+INFO 2026-04-17 16:22:53,953 autoreload 5019 140173634066304 Watching for file changes with StatReloader
+INFO 2026-04-17 16:23:27,367 autoreload 5135 140638529726336 Watching for file changes with StatReloader
+INFO 2026-04-17 16:24:04,277 autoreload 5258 139809588705152 Watching for file changes with StatReloader
+INFO 2026-04-17 16:24:56,412 autoreload 5422 139967738767232 Watching for file changes with StatReloader
+INFO 2026-04-17 16:45:41,344 autoreload 5831 140520798660480 Watching for file changes with StatReloader
+INFO 2026-04-17 16:54:56,983 autoreload 6544 139631792998272 Watching for file changes with StatReloader
+INFO 2026-04-17 19:00:59,227 autoreload 4336 139924519073664 Watching for file changes with StatReloader
+INFO 2026-04-17 19:02:10,113 log 4336 139924381185728 "OPTIONS /api/token/refresh/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:02:10,114 log 4336 139924372793024 "OPTIONS /api/token/refresh/ HTTP/1.1" 200 0
+WARNING 2026-04-17 19:02:10,132 log 4336 139924381185728 Unauthorized: /api/token/refresh/
+WARNING 2026-04-17 19:02:10,133 log 4336 139924372793024 Unauthorized: /api/token/refresh/
+WARNING 2026-04-17 19:02:10,134 log 4336 139924381185728 "POST /api/token/refresh/ HTTP/1.1" 401 54
+WARNING 2026-04-17 19:02:10,134 log 4336 139924372793024 "POST /api/token/refresh/ HTTP/1.1" 401 54
+INFO 2026-04-17 19:02:24,375 log 4336 139924381185728 "OPTIONS /api/login/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:02:25,245 log 4336 139924372793024 "POST /api/login/ HTTP/1.1" 200 547
+INFO 2026-04-17 19:02:27,033 log 4336 139924372793024 "OPTIONS /api/me/profile/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:02:27,034 log 4336 139924381185728 "OPTIONS /api/me/profile/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:02:27,049 log 4336 139924372793024 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 19:02:27,052 log 4336 139924381185728 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 19:02:27,102 log 4336 139924372793024 "OPTIONS /api/me/addresses/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:02:27,157 log 4336 139924372793024 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:02:27,215 log 4336 139924372793024 "OPTIONS /api/me/orders/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:02:27,274 log 4336 139924372793024 "GET /api/me/orders/ HTTP/1.1" 200 2
+INFO 2026-04-17 19:02:27,331 log 4336 139924372793024 "GET /api/coupons/ HTTP/1.1" 200 256
+INFO 2026-04-17 19:02:32,705 log 4336 139924381185728 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:02:32,708 log 4336 139924372793024 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:04:59,732 log 4336 139924372793024 "OPTIONS /api/checkout/shipping/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:04:59,737 log 4336 139924372793024 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:05:02,537 log 4336 139924372793024 "OPTIONS /api/pagamentos/ HTTP/1.1" 200 0
+WARNING 2026-04-17 19:05:02,548 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:02,548 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:05,767 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:05,768 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:06,327 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:06,328 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:06,518 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:06,518 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:06,686 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:06,687 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:15,548 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:15,549 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:16,127 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:16,127 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:16,318 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:16,318 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:16,582 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:16,583 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:21,231 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:21,232 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:21,446 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:21,446 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:21,613 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:21,613 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:24,663 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:24,664 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:05:24,814 log 4336 139924372793024 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:05:24,814 log 4336 139924372793024 "POST /api/pagamentos/ HTTP/1.1" 405 41
+INFO 2026-04-17 19:08:16,251 autoreload 4336 139924519073664 /home/destwarrio/projetos_1/projeto_loja/pagamentos/views.py changed, reloading.
+INFO 2026-04-17 19:08:16,967 autoreload 5264 139934532585344 Watching for file changes with StatReloader
+INFO 2026-04-17 19:08:28,720 autoreload 5264 139934532585344 /home/destwarrio/projetos_1/projeto_loja/pagamentos/views.py changed, reloading.
+INFO 2026-04-17 19:08:29,482 autoreload 5305 139958322481024 Watching for file changes with StatReloader
+INFO 2026-04-17 19:08:37,215 autoreload 5305 139958322481024 /home/destwarrio/projetos_1/projeto_loja/pagamentos/serializers.py changed, reloading.
+INFO 2026-04-17 19:08:37,984 autoreload 5345 140234577246080 Watching for file changes with StatReloader
+INFO 2026-04-17 19:08:40,667 autoreload 5345 140234577246080 /home/destwarrio/projetos_1/projeto_loja/pagamentos/serializers.py changed, reloading.
+INFO 2026-04-17 19:08:41,394 autoreload 5379 139925262301056 Watching for file changes with StatReloader
+INFO 2026-04-17 19:08:49,117 autoreload 5379 139925262301056 /home/destwarrio/projetos_1/projeto_loja/pagamentos/serializers.py changed, reloading.
+INFO 2026-04-17 19:08:49,920 autoreload 5408 140342465275776 Watching for file changes with StatReloader
+INFO 2026-04-17 19:08:52,602 autoreload 5408 140342465275776 /home/destwarrio/projetos_1/projeto_loja/pagamentos/serializers.py changed, reloading.
+INFO 2026-04-17 19:08:53,340 autoreload 5431 140086974539648 Watching for file changes with StatReloader
+INFO 2026-04-17 19:09:11,274 log 5431 140086903604928 "POST /api/token/refresh/ HTTP/1.1" 200 244
+WARNING 2026-04-17 19:09:11,290 log 5431 140086903604928 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:09:11,290 log 5431 140086903604928 "POST /api/pagamentos/ HTTP/1.1" 405 41
+INFO 2026-04-17 19:09:11,315 log 5431 140086894163648 "GET /api/me/addresses/ HTTP/1.1" 200 52
+WARNING 2026-04-17 19:09:12,012 log 5431 140086903604928 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:09:12,012 log 5431 140086903604928 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:09:12,188 log 5431 140086903604928 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:09:12,189 log 5431 140086903604928 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:09:12,365 log 5431 140086903604928 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:09:12,365 log 5431 140086903604928 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:09:12,533 log 5431 140086903604928 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:09:12,533 log 5431 140086903604928 "POST /api/pagamentos/ HTTP/1.1" 405 41
+INFO 2026-04-17 19:09:14,668 log 5431 140086894163648 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:09:14,670 log 5431 140086903604928 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:09:16,646 log 5431 140086885770944 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:09:16,649 log 5431 140086877378240 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:09:16,688 log 5431 140086903604928 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:09:16,690 log 5431 140086894163648 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:09:27,047 log 5431 140086903604928 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:09:27,048 log 5431 140086894163648 "GET /api/me/addresses/ HTTP/1.1" 200 52
+WARNING 2026-04-17 19:10:07,101 log 5431 140086903604928 Bad Request: /api/checkout/shipping/
+WARNING 2026-04-17 19:10:07,101 log 5431 140086903604928 "POST /api/checkout/shipping/ HTTP/1.1" 400 40
+INFO 2026-04-17 19:10:18,514 log 5431 140086894163648 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+WARNING 2026-04-17 19:10:20,723 log 5431 140086903604928 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:10:20,723 log 5431 140086903604928 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:10:21,485 log 5431 140086894163648 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:10:21,485 log 5431 140086894163648 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:10:21,660 log 5431 140086903604928 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:10:21,661 log 5431 140086903604928 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:10:21,836 log 5431 140086894163648 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:10:21,836 log 5431 140086894163648 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:10:21,988 log 5431 140086903604928 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:10:21,989 log 5431 140086903604928 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:10:22,173 log 5431 140086894163648 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:10:22,173 log 5431 140086894163648 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:10:23,159 log 5431 140086903604928 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:10:23,160 log 5431 140086903604928 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:10:23,354 log 5431 140086894163648 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:10:23,354 log 5431 140086894163648 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:10:23,549 log 5431 140086903604928 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:10:23,549 log 5431 140086903604928 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:10:25,711 log 5431 140086894163648 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:10:25,712 log 5431 140086894163648 "POST /api/pagamentos/ HTTP/1.1" 405 41
+WARNING 2026-04-17 19:10:25,879 log 5431 140086903604928 Method Not Allowed: /api/pagamentos/
+WARNING 2026-04-17 19:10:25,880 log 5431 140086903604928 "POST /api/pagamentos/ HTTP/1.1" 405 41
+INFO 2026-04-17 19:11:42,383 autoreload 5431 140086974539648 /home/destwarrio/projetos_1/projeto_loja/pagamentos/urls.py changed, reloading.
+INFO 2026-04-17 19:11:43,124 autoreload 5769 139625650456448 Watching for file changes with StatReloader
+INFO 2026-04-17 19:15:15,145 autoreload 5769 139625650456448 /home/destwarrio/projetos_1/projeto_loja/pagamentos/urls.py changed, reloading.
+INFO 2026-04-17 19:15:15,849 autoreload 5844 140190288705408 Watching for file changes with StatReloader
+INFO 2026-04-17 19:15:24,749 log 5844 140190148458176 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 19:15:24,749 log 5844 140190140065472 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 19:15:24,771 log 5844 140190148458176 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:15:24,775 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:15:24,779 log 5844 140190131672768 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:15:28,616 log 5844 140190131672768 "OPTIONS /api/me/addresses/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:15:28,616 log 5844 140190140065472 "OPTIONS /api/me/addresses/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:15:28,626 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:15:28,628 log 5844 140190131672768 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:15:47,648 log 5844 140190140065472 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 19:15:47,651 log 5844 140190131672768 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 19:15:47,665 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 52
+INFO 2026-04-17 19:15:47,726 log 5844 140190131672768 "GET /api/me/orders/ HTTP/1.1" 200 2
+INFO 2026-04-17 19:15:47,740 log 5844 140190140065472 "GET /api/coupons/ HTTP/1.1" 200 256
+INFO 2026-04-17 19:16:24,455 log 5844 140190140065472 "POST /api/me/addresses/ HTTP/1.1" 201 199
+INFO 2026-04-17 19:16:24,483 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 251
+INFO 2026-04-17 19:16:37,099 log 5844 140190131672768 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:16:37,099 log 5844 140190123280064 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:16:37,126 log 5844 140190148458176 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:16:37,128 log 5844 140190140065472 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:16:43,020 log 5844 140190148458176 "GET /api/me/addresses/ HTTP/1.1" 200 251
+INFO 2026-04-17 19:16:43,032 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 251
+WARNING 2026-04-17 19:16:43,046 log 5844 140190148458176 Bad Request: /api/checkout/shipping/
+WARNING 2026-04-17 19:16:43,047 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 400 40
+WARNING 2026-04-17 19:16:43,057 log 5844 140190140065472 Bad Request: /api/checkout/shipping/
+WARNING 2026-04-17 19:16:43,057 log 5844 140190140065472 "POST /api/checkout/shipping/ HTTP/1.1" 400 40
+INFO 2026-04-17 19:16:45,298 log 5844 140190140065472 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:16:45,299 log 5844 140190123280064 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:16:45,330 log 5844 140190148458176 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:16:45,333 log 5844 140190131672768 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:16:48,687 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 251
+INFO 2026-04-17 19:16:48,688 log 5844 140190148458176 "GET /api/me/addresses/ HTTP/1.1" 200 251
+WARNING 2026-04-17 19:16:48,705 log 5844 140190131672768 Bad Request: /api/checkout/shipping/
+WARNING 2026-04-17 19:16:48,706 log 5844 140190131672768 "POST /api/checkout/shipping/ HTTP/1.1" 400 40
+WARNING 2026-04-17 19:16:48,727 log 5844 140190140065472 Bad Request: /api/checkout/shipping/
+WARNING 2026-04-17 19:16:48,728 log 5844 140190140065472 "POST /api/checkout/shipping/ HTTP/1.1" 400 40
+WARNING 2026-04-17 19:16:54,696 log 5844 140190148458176 Bad Request: /api/checkout/shipping/
+WARNING 2026-04-17 19:16:54,697 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 400 40
+WARNING 2026-04-17 19:17:03,760 log 5844 140190131672768 Bad Request: /api/checkout/shipping/
+WARNING 2026-04-17 19:17:03,761 log 5844 140190131672768 "POST /api/checkout/shipping/ HTTP/1.1" 400 40
+WARNING 2026-04-17 19:17:04,838 log 5844 140190140065472 Bad Request: /api/checkout/shipping/
+WARNING 2026-04-17 19:17:04,839 log 5844 140190140065472 "POST /api/checkout/shipping/ HTTP/1.1" 400 40
+INFO 2026-04-17 19:17:07,584 log 5844 140190148458176 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 19:17:07,592 log 5844 140190131672768 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 19:17:07,608 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 251
+INFO 2026-04-17 19:17:07,625 log 5844 140190148458176 "GET /api/me/orders/ HTTP/1.1" 200 2
+INFO 2026-04-17 19:17:07,686 log 5844 140190131672768 "GET /api/coupons/ HTTP/1.1" 200 256
+INFO 2026-04-17 19:17:36,614 log 5844 140190140065472 "POST /api/me/addresses/ HTTP/1.1" 201 197
+INFO 2026-04-17 19:17:36,636 log 5844 140190148458176 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:17:40,776 log 5844 140190131672768 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:17:40,777 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:17:40,801 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:17:46,142 log 5844 140190131672768 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+WARNING 2026-04-17 19:17:48,875 log 5844 140190140065472 Bad Request: /api/pagamentos/
+WARNING 2026-04-17 19:17:48,876 log 5844 140190140065472 "POST /api/pagamentos/ HTTP/1.1" 400 68
+WARNING 2026-04-17 19:17:50,629 log 5844 140190148458176 Bad Request: /api/pagamentos/
+WARNING 2026-04-17 19:17:50,630 log 5844 140190148458176 "POST /api/pagamentos/ HTTP/1.1" 400 68
+INFO 2026-04-17 19:20:58,723 log 5844 140190140065472 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:20:58,725 log 5844 140190148458176 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 19:20:58,740 log 5844 140190148458176 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:20:58,757 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:20:58,803 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:20:58,820 log 5844 140190140065472 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:21:01,490 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:21:01,497 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:21:01,516 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:21:09,318 log 5844 140190140065472 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:21:09,322 log 5844 140190148458176 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:21:09,340 log 5844 140190140065472 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:21:12,630 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:21:12,638 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:21:12,651 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:21:41,455 log 5844 140190140065472 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:21:41,463 log 5844 140190148458176 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:21:41,481 log 5844 140190140065472 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:21:42,463 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:21:42,470 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:21:42,487 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:22:04,447 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:22:04,450 log 5844 140190148458176 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:22:04,462 log 5844 140190140065472 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:22:04,465 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:22:06,021 log 5844 140190123280064 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:22:06,022 log 5844 140190131672768 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:22:06,061 log 5844 140190140065472 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:22:06,061 log 5844 140190148458176 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:22:14,501 log 5844 140190148458176 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:22:14,501 log 5844 140190140065472 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:22:14,536 log 5844 140190148458176 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:22:14,543 log 5844 140190140065472 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+ERROR 2026-04-17 19:22:22,021 services 5844 140190140065472 Erro ao criar pagamento PIX: 400 Client Error: Bad Request for url: https://api.mercadopago.com/v1/payments
+ERROR 2026-04-17 19:22:22,022 views 5844 140190140065472 Erro ao criar pagamento PIX: Erro ao criar pagamento: 400 Client Error: Bad Request for url: https://api.mercadopago.com/v1/payments
+WARNING 2026-04-17 19:22:22,041 log 5844 140190140065472 Bad Request: /api/pagamentos/
+WARNING 2026-04-17 19:22:22,042 log 5844 140190140065472 "POST /api/pagamentos/ HTTP/1.1" 400 143
+INFO 2026-04-17 19:23:05,762 autoreload 5844 140190288705408 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:23:06,553 autoreload 6852 140477270325120 Watching for file changes with StatReloader
+INFO 2026-04-17 19:23:12,227 autoreload 6852 140477270325120 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:23:13,000 autoreload 6885 139967231166336 Watching for file changes with StatReloader
+INFO 2026-04-17 19:23:44,273 autoreload 6885 139967231166336 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:23:45,030 autoreload 6956 139778264848256 Watching for file changes with StatReloader
+INFO 2026-04-17 19:23:46,623 autoreload 6956 139778264848256 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:23:47,334 autoreload 6973 140042742323072 Watching for file changes with StatReloader
+INFO 2026-04-17 19:24:31,695 autoreload 6973 140042742323072 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:24:32,456 autoreload 7093 140404824319872 Watching for file changes with StatReloader
+INFO 2026-04-17 19:24:32,884 services 7093 140404824319872 🚀 Usando Mercado Pago PRODUÇÃO
+INFO 2026-04-17 19:25:49,663 autoreload 7093 140404824319872 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:25:50,411 autoreload 7227 139759104501632 Watching for file changes with StatReloader
+INFO 2026-04-17 19:25:50,872 services 7227 139759104501632 🚀 Usando Mercado Pago PRODUÇÃO
+INFO 2026-04-17 19:25:59,156 autoreload 7227 139759104501632 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:25:59,895 autoreload 7307 140515748849536 Watching for file changes with StatReloader
+INFO 2026-04-17 19:26:00,252 services 7307 140515748849536 🚀 Usando Mercado Pago PRODUÇÃO
+INFO 2026-04-17 19:26:23,290 autoreload 7500 140150963738496 Watching for file changes with StatReloader
+INFO 2026-04-17 19:26:23,771 services 7500 140150963738496 🚀 Usando Mercado Pago PRODUÇÃO
+INFO 2026-04-17 19:27:18,677 autoreload 7838 140362646005632 Watching for file changes with StatReloader
+INFO 2026-04-17 19:27:19,074 services 7838 140362646005632 🚀 Usando Mercado Pago PRODUÇÃO
+INFO 2026-04-17 19:33:59,824 autoreload 7838 140362646005632 /home/destwarrio/projetos_1/projeto_loja/pagamentos/views.py changed, reloading.
+INFO 2026-04-17 19:34:00,579 autoreload 8257 140594278201216 Watching for file changes with StatReloader
+INFO 2026-04-17 19:34:01,051 services 8257 140594278201216 🚀 Usando Mercado Pago PRODUÇÃO
+INFO 2026-04-17 19:34:40,430 autoreload 8340 139773475682176 Watching for file changes with StatReloader
+INFO 2026-04-17 19:34:40,880 services 8340 139773475682176 🚀 Usando Mercado Pago PRODUÇÃO
+INFO 2026-04-17 19:35:11,431 autoreload 8478 139948650313600 Watching for file changes with StatReloader
+INFO 2026-04-17 19:35:11,829 services 8478 139948650313600 🚀 Usando Mercado Pago PRODUÇÃO
+INFO 2026-04-17 19:35:48,433 autoreload 8559 139843672217472 Watching for file changes with StatReloader
+INFO 2026-04-17 19:35:48,877 services 8559 139843672217472 🚀 Usando Mercado Pago PRODUÇÃO
+INFO 2026-04-17 19:36:37,584 autoreload 10588 139891526420352 Watching for file changes with StatReloader
+INFO 2026-04-17 19:36:38,043 services 10588 139891526420352 🚀 Usando Mercado Pago PRODUÇÃO
+INFO 2026-04-17 19:37:01,085 log 10588 139891455706816 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 19:37:01,085 log 10588 139891379795648 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 19:37:01,097 log 10588 139891455706816 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 19:37:01,107 log 10588 139891379795648 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 19:37:01,122 log 10588 139891370354368 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 19:37:01,123 log 10588 139891361961664 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 19:37:01,141 log 10588 139891370354368 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:37:01,198 log 10588 139891370354368 "GET /api/me/orders/ HTTP/1.1" 200 2
+INFO 2026-04-17 19:37:01,261 log 10588 139891370354368 "GET /api/coupons/ HTTP/1.1" 200 256
+INFO 2026-04-17 19:37:07,917 log 10588 139891379795648 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:37:07,918 log 10588 139891361961664 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:37:07,956 log 10588 139891370354368 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:37:07,962 log 10588 139891455706816 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:37:14,792 log 10588 139891370354368 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:37:14,793 log 10588 139891455706816 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:37:14,829 log 10588 139891370354368 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:37:14,835 log 10588 139891455706816 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:37:18,070 log 10588 139891455706816 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:37:19,886 services 10588 139891370354368 ✅ MercadoPagoService inicializado
+INFO 2026-04-17 19:37:19,886 services 10588 139891370354368    URL: https://api.mercadopago.com/v1
+INFO 2026-04-17 19:37:19,886 services 10588 139891370354368    Token: APP_USR-8f057bd7-6dc4-4937-ae5...
+INFO 2026-04-17 19:37:19,887 services 10588 139891370354368 📤 Enviando para Mercado Pago: {"transaction_amount": 454.7, "description": "Compra com 2 item(ns)", "payment_method_id": "pix", "payer": {"email": "hercolys@email.com"}, "external_reference": "pedido-1776454639.886998"}
+INFO 2026-04-17 19:37:19,887 services 10588 139891370354368 🔑 Token: APP_USR-8f057bd7-6dc4-4937-ae5...
+INFO 2026-04-17 19:37:20,417 services 10588 139891370354368 📥 Status Mercado Pago: 401
+ERROR 2026-04-17 19:37:20,418 services 10588 139891370354368 ❌ Resposta Mercado Pago: {"message":"Must provide your access_token to proceed","error":"unauthorized","status":401,"cause":[{"code":5,"description":"Must provide your access_token to proceed","data":"17-04-2026T19:37:20UTC;fb34ce37-182a-4596-b868-48de0c76f45f"}]}
+ERROR 2026-04-17 19:37:20,418 services 10588 139891370354368 ❌ Erro ao criar pagamento PIX: 401 Client Error: Unauthorized for url: https://api.mercadopago.com/v1/payments
+ERROR 2026-04-17 19:37:20,418 services 10588 139891370354368 💥 Detalhes: {"message":"Must provide your access_token to proceed","error":"unauthorized","status":401,"cause":[{"code":5,"description":"Must provide your access_token to proceed","data":"17-04-2026T19:37:20UTC;fb34ce37-182a-4596-b868-48de0c76f45f"}]}
+ERROR 2026-04-17 19:37:20,418 views 10588 139891370354368 Erro ao criar pagamento PIX: Erro ao criar pagamento: 401 Client Error: Unauthorized for url: https://api.mercadopago.com/v1/payments
+WARNING 2026-04-17 19:37:20,436 log 10588 139891370354368 Bad Request: /api/pagamentos/
+WARNING 2026-04-17 19:37:20,437 log 10588 139891370354368 "POST /api/pagamentos/ HTTP/1.1" 400 144
+INFO 2026-04-17 19:40:27,287 autoreload 10588 139891526420352 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:40:28,129 autoreload 11363 140519160493952 Watching for file changes with StatReloader
+INFO 2026-04-17 19:40:28,534 services 11363 140519160493952 ✅ Token Mercado Pago carregado: APP_USR-8f057bd7-6dc4-4937-ae56-000b54a9...
+INFO 2026-04-17 19:40:30,763 autoreload 11363 140519160493952 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:40:31,504 autoreload 11386 140684282537856 Watching for file changes with StatReloader
+INFO 2026-04-17 19:40:31,923 services 11386 140684282537856 ✅ Token Mercado Pago carregado: APP_USR-8f057bd7-6dc4-4937-ae56-000b54a9...
+INFO 2026-04-17 19:40:45,336 autoreload 11386 140684282537856 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:40:46,138 autoreload 11414 139888616531840 Watching for file changes with StatReloader
+INFO 2026-04-17 19:40:46,540 services 11414 139888616531840 ✅ Token Mercado Pago carregado: APP_USR-8f057bd7-6dc4-4937-ae56-000b54a9...
+INFO 2026-04-17 19:40:48,741 autoreload 11414 139888616531840 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:40:49,517 autoreload 11436 140152047429504 Watching for file changes with StatReloader
+INFO 2026-04-17 19:40:49,954 services 11436 140152047429504 ✅ Token Mercado Pago carregado: APP_USR-8f057bd7-6dc4-4937-ae56-000b54a9...
+INFO 2026-04-17 19:41:00,269 autoreload 11436 140152047429504 /home/destwarrio/projetos_1/projeto_loja/pagamentos/services.py changed, reloading.
+INFO 2026-04-17 19:41:01,018 autoreload 11474 140652435027840 Watching for file changes with StatReloader
+INFO 2026-04-17 19:41:01,453 services 11474 140652435027840 ✅ Token Mercado Pago carregado: APP_USR-8f057bd7-6dc4-4937-ae56-000b54a9...
+INFO 2026-04-17 19:41:29,724 services 11573 140679921424256 ✅ Token Mercado Pago carregado: APP_USR-1817398686620074-041500-30952e03...
+INFO 2026-04-17 19:41:29,730 services 11573 140679921424256 ✅ MercadoPagoService inicializado
+INFO 2026-04-17 19:41:29,730 services 11573 140679921424256    URL: https://api.mercadopago.com/v1
+INFO 2026-04-17 19:41:29,730 services 11573 140679921424256    Token: APP_USR-1817398686620074-041500-30952e03...
+INFO 2026-04-17 19:41:29,730 services 11573 140679921424256    Header Auth: Bearer APP_USR-181739868662...
+INFO 2026-04-17 19:41:29,731 services 11573 140679921424256 📤 Enviando para Mercado Pago: {"transaction_amount": 100.0, "description": "Teste de PIX", "payment_method_id": "pix", "payer": {"email": "teste@pagamento.com"}, "external_reference": "pedido-1776454889.731007"}
+INFO 2026-04-17 19:41:29,731 services 11573 140679921424256 🔑 Token: APP_USR-1817398686620074-04150...
+INFO 2026-04-17 19:41:30,586 services 11573 140679921424256 📥 Status Mercado Pago: 401
+ERROR 2026-04-17 19:41:30,586 services 11573 140679921424256 ❌ Resposta Mercado Pago: {"cause":[{"code":7,"data":"17-04-2026T19:41:30UTC;be532deb-9ef9-41d0-a164-614bd6415c76","description":"Unauthorized use of live credentials"}],"error":"unauthorized","message":"Unauthorized use of live credentials","status":401}
+ERROR 2026-04-17 19:41:30,587 services 11573 140679921424256 ❌ Erro ao criar pagamento PIX: 401 Client Error: Unauthorized for url: https://api.mercadopago.com/v1/payments
+ERROR 2026-04-17 19:41:30,587 services 11573 140679921424256 💥 Detalhes: {"cause":[{"code":7,"data":"17-04-2026T19:41:30UTC;be532deb-9ef9-41d0-a164-614bd6415c76","description":"Unauthorized use of live credentials"}],"error":"unauthorized","message":"Unauthorized use of live credentials","status":401}
+INFO 2026-04-17 19:41:47,575 autoreload 11474 140652435027840 /home/destwarrio/projetos_1/projeto_loja/pagamentos/views.py changed, reloading.
+INFO 2026-04-17 19:41:48,351 autoreload 11625 140496509314944 Watching for file changes with StatReloader
+INFO 2026-04-17 19:41:57,071 autoreload 11625 140496509314944 /home/destwarrio/projetos_1/projeto_loja/pagamentos/views.py changed, reloading.
+INFO 2026-04-17 19:41:57,812 autoreload 11674 139762517563264 Watching for file changes with StatReloader
+INFO 2026-04-17 19:42:15,720 autoreload 11674 139762517563264 /home/destwarrio/projetos_1/projeto_loja/pagamentos/views.py changed, reloading.
+INFO 2026-04-17 19:42:16,458 autoreload 11718 140346291681152 Watching for file changes with StatReloader
+INFO 2026-04-17 19:42:42,503 autoreload 11718 140346291681152 /home/destwarrio/projetos_1/projeto_loja/pagamentos/views.py changed, reloading.
+INFO 2026-04-17 19:42:43,221 autoreload 11759 140261990934400 Watching for file changes with StatReloader
+INFO 2026-04-17 19:42:44,358 services 11767 140572655134592 ✅ Token Mercado Pago carregado: APP_USR-1817398686620074-041500-30952e03...
+INFO 2026-04-17 19:42:44,364 services 11767 140572655134592 ✅ MercadoPagoService inicializado
+INFO 2026-04-17 19:42:44,364 services 11767 140572655134592    URL: https://api.mercadopago.com/v1
+INFO 2026-04-17 19:42:44,364 services 11767 140572655134592    Token: APP_USR-1817398686620074-041500-30952e03...
+INFO 2026-04-17 19:42:44,364 services 11767 140572655134592    Header Auth: Bearer APP_USR-181739868662...
+INFO 2026-04-17 19:42:44,364 services 11767 140572655134592 📤 Enviando para Mercado Pago: {"transaction_amount": 100.0, "description": "Teste de PIX", "payment_method_id": "pix", "payer": {"email": "teste@pagamento.com"}, "external_reference": "pedido-1776454964.364777"}
+INFO 2026-04-17 19:42:44,364 services 11767 140572655134592 🔑 Token: APP_USR-1817398686620074-04150...
+INFO 2026-04-17 19:42:45,169 services 11767 140572655134592 📥 Status Mercado Pago: 401
+ERROR 2026-04-17 19:42:45,170 services 11767 140572655134592 ❌ Resposta Mercado Pago: {"cause":[{"code":7,"data":"17-04-2026T19:42:44UTC;cfbe434e-9904-418a-9e6e-937f987468be","description":"Unauthorized use of live credentials"}],"error":"unauthorized","message":"Unauthorized use of live credentials","status":401}
+ERROR 2026-04-17 19:42:45,170 services 11767 140572655134592 ❌ Erro ao criar pagamento PIX: 401 Client Error: Unauthorized for url: https://api.mercadopago.com/v1/payments
+ERROR 2026-04-17 19:42:45,170 services 11767 140572655134592 💥 Detalhes: {"cause":[{"code":7,"data":"17-04-2026T19:42:44UTC;cfbe434e-9904-418a-9e6e-937f987468be","description":"Unauthorized use of live credentials"}],"error":"unauthorized","message":"Unauthorized use of live credentials","status":401}
+INFO 2026-04-17 19:46:00,572 services 12282 140516960405376 ✅ Token Mercado Pago carregado: APP_USR-1817398686620074-041500-30952e03...
+INFO 2026-04-17 19:46:00,578 services 12282 140516960405376 ✅ Usando MercadoPagoServiceMock
+INFO 2026-04-17 19:46:00,578 services 12282 140516960405376 📤 Criando pagamento PIX MOCK para teste@pagamento.com
+INFO 2026-04-17 19:46:00,603 services 12282 140516960405376 ✅ Pagamento PIX criado (MOCK): mock-1776455160
+INFO 2026-04-17 19:46:39,174 log 11759 140261929526976 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 19:46:39,175 log 11759 140261921134272 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 19:46:39,199 log 11759 140261921134272 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:46:39,202 log 11759 140261929526976 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:46:39,206 log 11759 140261912741568 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:46:39,215 log 11759 140261912741568 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:46:39,262 log 11759 140261929526976 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:46:41,274 log 11759 140261903300288 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:46:41,275 log 11759 140261912741568 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:46:41,300 log 11759 140261921134272 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:46:41,311 log 11759 140261929526976 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:46:51,952 log 11759 140261921134272 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:46:51,955 log 11759 140261929526976 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:46:51,970 log 11759 140261921134272 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:46:51,982 log 11759 140261929526976 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:46:55,658 log 11759 140261921134272 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+WARNING 2026-04-17 19:46:57,201 log 11759 140261929526976 Bad Request: /api/pagamentos/
+WARNING 2026-04-17 19:46:57,202 log 11759 140261929526976 "POST /api/pagamentos/ HTTP/1.1" 400 68
+INFO 2026-04-17 19:49:39,620 log 11759 140261929526976 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:49:39,625 log 11759 140261921134272 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:49:39,655 log 11759 140261921134272 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:49:45,993 autoreload 11759 140261990934400 /home/destwarrio/projetos_1/projeto_loja/pagamentos/views.py changed, reloading.
+INFO 2026-04-17 19:49:46,797 autoreload 12702 140013903382400 Watching for file changes with StatReloader
+INFO 2026-04-17 19:49:49,368 autoreload 12702 140013903382400 /home/destwarrio/projetos_1/projeto_loja/pagamentos/views.py changed, reloading.
+INFO 2026-04-17 19:49:50,104 autoreload 12715 139634849109888 Watching for file changes with StatReloader
+INFO 2026-04-17 19:51:07,191 log 12715 139634788701888 "OPTIONS /api/me/addresses/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:51:07,192 log 12715 139634780309184 "OPTIONS /api/me/addresses/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:51:07,220 log 12715 139634788701888 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:51:07,223 log 12715 139634780309184 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:51:07,284 log 12715 139634788701888 "OPTIONS /api/checkout/shipping/ HTTP/1.1" 200 0
+INFO 2026-04-17 19:51:07,333 log 12715 139634780309184 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:51:08,731 log 12715 139634554173120 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:51:08,732 log 12715 139634770867904 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 19:51:08,762 log 12715 139634788701888 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:51:08,771 log 12715 139634780309184 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 19:51:14,759 log 12715 139634788701888 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 19:51:14,759 log 12715 139634780309184 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 19:51:14,785 log 12715 139634788701888 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:51:14,788 log 12715 139634780309184 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:51:14,795 log 12715 139634554173120 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 19:51:14,812 log 12715 139634770867904 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:51:14,837 log 12715 139634788701888 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:51:14,852 log 12715 139634780309184 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 19:51:18,347 views 12715 139634788701888 📊 Pagamento validado: R$ 784.60 via pix
+INFO 2026-04-17 19:51:18,415 services 12715 139634788701888 ✅ Token Mercado Pago carregado: APP_USR-8f057bd7-6dc4-4937-ae56-000b54a9...
+INFO 2026-04-17 19:51:18,415 views 12715 139634788701888 ✅ Usando MercadoPagoService REAL
+INFO 2026-04-17 19:51:18,415 services 12715 139634788701888 ✅ MercadoPagoService inicializado
+INFO 2026-04-17 19:51:18,415 services 12715 139634788701888    URL: https://api.mercadopago.com/v1
+INFO 2026-04-17 19:51:18,415 services 12715 139634788701888    Token: APP_USR-8f057bd7-6dc4-4937-ae56-000b54a9...
+INFO 2026-04-17 19:51:18,415 services 12715 139634788701888    Header Auth: Bearer APP_USR-8f057bd7-6dc...
+INFO 2026-04-17 19:51:18,416 services 12715 139634788701888 📤 Enviando para Mercado Pago: {"transaction_amount": 784.6, "description": "Compra com 3 item(ns)", "payment_method_id": "pix", "payer": {"email": "hercolys@email.com"}, "external_reference": "pedido-1776455478.416067"}
+INFO 2026-04-17 19:51:18,416 services 12715 139634788701888 🔑 Token: APP_USR-8f057bd7-6dc4-4937-ae5...
+INFO 2026-04-17 19:51:18,950 services 12715 139634788701888 📥 Status Mercado Pago: 401
+ERROR 2026-04-17 19:51:18,950 services 12715 139634788701888 ❌ Resposta Mercado Pago: {"message":"Must provide your access_token to proceed","error":"unauthorized","status":401,"cause":[{"code":5,"description":"Must provide your access_token to proceed","data":"17-04-2026T19:51:18UTC;3cbc9456-ad22-4d79-8d88-1dad351a1412"}]}
+ERROR 2026-04-17 19:51:18,950 services 12715 139634788701888 ❌ Erro ao criar pagamento PIX: 401 Client Error: Unauthorized for url: https://api.mercadopago.com/v1/payments
+ERROR 2026-04-17 19:51:18,951 services 12715 139634788701888 💥 Detalhes: {"message":"Must provide your access_token to proceed","error":"unauthorized","status":401,"cause":[{"code":5,"description":"Must provide your access_token to proceed","data":"17-04-2026T19:51:18UTC;3cbc9456-ad22-4d79-8d88-1dad351a1412"}]}
+ERROR 2026-04-17 19:51:18,951 views 12715 139634788701888 Erro ao criar pagamento PIX: Erro ao criar pagamento: 401 Client Error: Unauthorized for url: https://api.mercadopago.com/v1/payments
+WARNING 2026-04-17 19:51:18,967 log 12715 139634788701888 Bad Request: /api/pagamentos/
+WARNING 2026-04-17 19:51:18,968 log 12715 139634788701888 "POST /api/pagamentos/ HTTP/1.1" 400 144
+INFO 2026-04-17 19:51:58,515 autoreload 12715 139634849109888 /home/destwarrio/projetos_1/projeto_loja/pagamentos/views.py changed, reloading.
+INFO 2026-04-17 19:51:59,292 autoreload 12975 140642756556672 Watching for file changes with StatReloader
+INFO 2026-04-17 19:55:02,740 autoreload 12975 140642756556672 /home/destwarrio/projetos_1/projeto_loja/pagamentos/views.py changed, reloading.
+INFO 2026-04-17 19:55:03,495 autoreload 13117 140210270877568 Watching for file changes with StatReloader
+INFO 2026-04-17 20:00:15,906 services 4024 139859566323584 ✅ Token Mercado Pago encontrado: APP_USR-1817398686620074-041500-30952e03cffb8140d3...
+INFO 2026-04-17 20:00:15,912 services 4024 139859566323584 ✅ Usando MercadoPagoServiceMock
+INFO 2026-04-17 20:00:15,912 services 4024 139859566323584 📤 Criando pagamento PIX MOCK para teste@pagamento.com
+INFO 2026-04-17 20:00:15,937 services 4024 139859566323584 ✅ Pagamento PIX criado (MOCK): mock-1776456015
+INFO 2026-04-17 20:00:39,589 autoreload 4144 140143897425792 Watching for file changes with StatReloader
+INFO 2026-04-17 20:01:44,479 log 4144 140143768016576 "OPTIONS /api/token/refresh/ HTTP/1.1" 200 0
+INFO 2026-04-17 20:01:44,480 log 4144 140143759623872 "OPTIONS /api/token/refresh/ HTTP/1.1" 200 0
+INFO 2026-04-17 20:01:44,507 log 4144 140143768016576 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 20:01:44,509 log 4144 140143759623872 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 20:01:44,574 log 4144 140143768016576 "OPTIONS /api/me/profile/ HTTP/1.1" 200 0
+INFO 2026-04-17 20:01:44,575 log 4144 140143759623872 "OPTIONS /api/me/profile/ HTTP/1.1" 200 0
+INFO 2026-04-17 20:01:44,581 log 4144 140143751231168 "OPTIONS /api/me/profile/ HTTP/1.1" 200 0
+INFO 2026-04-17 20:01:44,591 log 4144 140143751231168 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 20:01:44,634 log 4144 140143759623872 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 20:01:44,637 log 4144 140143768016576 "GET /api/me/profile/ HTTP/1.1" 200 77
+INFO 2026-04-17 20:01:44,652 log 4144 140143751231168 "OPTIONS /api/me/addresses/ HTTP/1.1" 200 0
+INFO 2026-04-17 20:01:44,707 log 4144 140143759623872 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 20:01:44,765 log 4144 140143759623872 "OPTIONS /api/me/orders/ HTTP/1.1" 200 0
+INFO 2026-04-17 20:01:44,819 log 4144 140143759623872 "GET /api/me/orders/ HTTP/1.1" 200 2
+INFO 2026-04-17 20:01:44,875 log 4144 140143759623872 "GET /api/coupons/ HTTP/1.1" 200 256
+INFO 2026-04-17 20:01:47,849 log 4144 140143768016576 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 20:01:47,866 log 4144 140143768016576 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 20:01:47,872 log 4144 140143759623872 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 20:01:47,898 log 4144 140143759623872 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 20:01:55,752 log 4144 140143759623872 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 20:01:55,757 log 4144 140143768016576 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 20:01:55,777 log 4144 140143759623872 "OPTIONS /api/checkout/shipping/ HTTP/1.1" 200 0
+INFO 2026-04-17 20:01:55,782 log 4144 140143768016576 "OPTIONS /api/checkout/shipping/ HTTP/1.1" 200 0
+INFO 2026-04-17 20:01:55,828 log 4144 140143759623872 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 20:01:55,833 log 4144 140143768016576 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 20:01:59,077 log 4144 140143759623872 "OPTIONS /api/pagamentos/ HTTP/1.1" 200 0
+INFO 2026-04-17 20:01:59,085 views 4144 140143759623872 📊 Pagamento validado: R$ 1074.50 via pix
+WARNING 2026-04-17 20:01:59,102 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:01:59,133 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:01:59,150 services_mock 4144 140143759623872 ✅ Mock: Pagamento PIX simulado criado
+INFO 2026-04-17 20:01:59,172 views 4144 140143759623872 Pagamento PIX criado: c4f9197b-a0e2-4f20-9df2-8bc464a3dfa2
+INFO 2026-04-17 20:01:59,173 log 4144 140143759623872 "POST /api/pagamentos/ HTTP/1.1" 201 1872
+INFO 2026-04-17 20:02:04,231 log 4144 140143759623872 "OPTIONS /api/pagamentos/c4f9197b-a0e2-4f20-9df2-8bc464a3dfa2/status/ HTTP/1.1" 200 0
+WARNING 2026-04-17 20:02:04,269 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:02:04,269 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:02:04,269 services_mock 4144 140143759623872 Mock: Consultando status de mock-f7790651
+INFO 2026-04-17 20:02:04,285 views 4144 140143759623872 Status do pagamento c4f9197b-a0e2-4f20-9df2-8bc464a3dfa2 atualizado para pendente
+INFO 2026-04-17 20:02:04,287 log 4144 140143759623872 "GET /api/pagamentos/c4f9197b-a0e2-4f20-9df2-8bc464a3dfa2/status/ HTTP/1.1" 200 2078
+WARNING 2026-04-17 20:02:09,244 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:02:09,245 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:02:09,245 services_mock 4144 140143759623872 Mock: Consultando status de mock-f7790651
+INFO 2026-04-17 20:02:09,249 log 4144 140143759623872 "GET /api/pagamentos/c4f9197b-a0e2-4f20-9df2-8bc464a3dfa2/status/ HTTP/1.1" 200 2078
+WARNING 2026-04-17 20:02:14,246 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:02:14,247 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:02:14,247 services_mock 4144 140143759623872 Mock: Consultando status de mock-f7790651
+INFO 2026-04-17 20:02:14,251 log 4144 140143759623872 "GET /api/pagamentos/c4f9197b-a0e2-4f20-9df2-8bc464a3dfa2/status/ HTTP/1.1" 200 2078
+WARNING 2026-04-17 20:02:19,245 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:02:19,245 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:02:19,245 services_mock 4144 140143759623872 Mock: Consultando status de mock-f7790651
+INFO 2026-04-17 20:02:19,249 log 4144 140143759623872 "GET /api/pagamentos/c4f9197b-a0e2-4f20-9df2-8bc464a3dfa2/status/ HTTP/1.1" 200 2078
+WARNING 2026-04-17 20:02:24,245 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:02:24,245 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:02:24,245 services_mock 4144 140143759623872 Mock: Consultando status de mock-f7790651
+INFO 2026-04-17 20:02:24,249 log 4144 140143759623872 "GET /api/pagamentos/c4f9197b-a0e2-4f20-9df2-8bc464a3dfa2/status/ HTTP/1.1" 200 2078
+WARNING 2026-04-17 20:02:29,245 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:02:29,245 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:02:29,246 services_mock 4144 140143759623872 Mock: Consultando status de mock-f7790651
+INFO 2026-04-17 20:02:29,250 log 4144 140143759623872 "GET /api/pagamentos/c4f9197b-a0e2-4f20-9df2-8bc464a3dfa2/status/ HTTP/1.1" 200 2078
+WARNING 2026-04-17 20:02:34,245 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:02:34,246 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:02:34,246 services_mock 4144 140143759623872 Mock: Consultando status de mock-f7790651
+INFO 2026-04-17 20:02:34,250 log 4144 140143759623872 "GET /api/pagamentos/c4f9197b-a0e2-4f20-9df2-8bc464a3dfa2/status/ HTTP/1.1" 200 2078
+WARNING 2026-04-17 20:02:39,248 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:02:39,248 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:02:39,248 services_mock 4144 140143759623872 Mock: Consultando status de mock-f7790651
+INFO 2026-04-17 20:02:39,252 log 4144 140143759623872 "GET /api/pagamentos/c4f9197b-a0e2-4f20-9df2-8bc464a3dfa2/status/ HTTP/1.1" 200 2078
+INFO 2026-04-17 20:02:43,471 log 4144 140143759623872 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 20:02:43,473 log 4144 140143768016576 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 20:02:43,488 log 4144 140143759623872 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 20:02:43,490 log 4144 140143768016576 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 20:02:45,503 log 4144 140143732180672 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 20:02:45,505 log 4144 140143768016576 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 20:02:45,528 log 4144 140143751231168 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 20:02:45,537 log 4144 140143759623872 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 20:03:04,133 log 4144 140143751231168 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 20:03:04,133 log 4144 140143759623872 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 20:03:04,156 log 4144 140143751231168 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 20:03:11,650 views 4144 140143759623872 📊 Pagamento validado: R$ 904.60 via pix
+WARNING 2026-04-17 20:03:11,666 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:03:11,666 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:03:11,675 services_mock 4144 140143759623872 ✅ Mock: Pagamento PIX simulado criado
+INFO 2026-04-17 20:03:11,699 views 4144 140143759623872 Pagamento PIX criado: 77bae1de-f4b7-410e-8f12-b61f84bc0444
+INFO 2026-04-17 20:03:11,700 log 4144 140143759623872 "POST /api/pagamentos/ HTTP/1.1" 201 1871
+INFO 2026-04-17 20:03:16,714 log 4144 140143751231168 "OPTIONS /api/pagamentos/77bae1de-f4b7-410e-8f12-b61f84bc0444/status/ HTTP/1.1" 200 0
+WARNING 2026-04-17 20:03:16,723 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:03:16,723 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:03:16,723 services_mock 4144 140143759623872 Mock: Consultando status de mock-35197082
+INFO 2026-04-17 20:03:16,741 views 4144 140143759623872 Status do pagamento 77bae1de-f4b7-410e-8f12-b61f84bc0444 atualizado para pendente
+INFO 2026-04-17 20:03:16,745 log 4144 140143759623872 "GET /api/pagamentos/77bae1de-f4b7-410e-8f12-b61f84bc0444/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:03:21,716 views 4144 140143751231168 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:03:21,717 services_mock 4144 140143751231168 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:03:21,717 services_mock 4144 140143751231168 Mock: Consultando status de mock-35197082
+INFO 2026-04-17 20:03:21,721 log 4144 140143751231168 "GET /api/pagamentos/77bae1de-f4b7-410e-8f12-b61f84bc0444/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:03:26,716 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:03:26,716 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:03:26,717 services_mock 4144 140143759623872 Mock: Consultando status de mock-35197082
+INFO 2026-04-17 20:03:26,721 log 4144 140143759623872 "GET /api/pagamentos/77bae1de-f4b7-410e-8f12-b61f84bc0444/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:03:31,716 views 4144 140143751231168 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:03:31,717 services_mock 4144 140143751231168 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:03:31,717 services_mock 4144 140143751231168 Mock: Consultando status de mock-35197082
+INFO 2026-04-17 20:03:31,722 log 4144 140143751231168 "GET /api/pagamentos/77bae1de-f4b7-410e-8f12-b61f84bc0444/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:03:36,716 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:03:36,717 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:03:36,717 services_mock 4144 140143759623872 Mock: Consultando status de mock-35197082
+INFO 2026-04-17 20:03:36,721 log 4144 140143759623872 "GET /api/pagamentos/77bae1de-f4b7-410e-8f12-b61f84bc0444/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:03:41,717 views 4144 140143751231168 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:03:41,717 services_mock 4144 140143751231168 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:03:41,717 services_mock 4144 140143751231168 Mock: Consultando status de mock-35197082
+INFO 2026-04-17 20:03:41,722 log 4144 140143751231168 "GET /api/pagamentos/77bae1de-f4b7-410e-8f12-b61f84bc0444/status/ HTTP/1.1" 200 2077
+INFO 2026-04-17 20:03:45,418 log 4144 140143768016576 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 20:03:45,422 log 4144 140143751231168 "GET /api/categories/ HTTP/1.1" 200 1165
+INFO 2026-04-17 20:03:45,453 log 4144 140143759623872 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 20:03:45,459 log 4144 140143732180672 "GET /api/products/published/ HTTP/1.1" 200 4002
+INFO 2026-04-17 20:14:22,163 log 4144 140143732180672 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 20:14:22,164 log 4144 140143759623872 "POST /api/token/refresh/ HTTP/1.1" 200 244
+INFO 2026-04-17 20:14:22,191 log 4144 140143759623872 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 20:14:22,193 log 4144 140143732180672 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 20:14:22,198 log 4144 140143751231168 "GET /api/me/addresses/ HTTP/1.1" 200 450
+INFO 2026-04-17 20:14:22,213 log 4144 140143751231168 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 20:14:22,257 log 4144 140143732180672 "POST /api/checkout/shipping/ HTTP/1.1" 200 41
+INFO 2026-04-17 20:14:24,862 views 4144 140143759623872 📊 Pagamento validado: R$ 254.90 via pix
+WARNING 2026-04-17 20:14:24,876 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:14:24,876 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:14:24,885 services_mock 4144 140143759623872 ✅ Mock: Pagamento PIX simulado criado
+INFO 2026-04-17 20:14:24,908 views 4144 140143759623872 Pagamento PIX criado: 84d73d76-01ce-4288-ae60-3b257bb79724
+INFO 2026-04-17 20:14:24,909 log 4144 140143759623872 "POST /api/pagamentos/ HTTP/1.1" 201 1871
+INFO 2026-04-17 20:14:30,651 log 4144 140143759623872 "OPTIONS /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 0
+WARNING 2026-04-17 20:14:30,660 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:14:30,661 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:14:30,661 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:14:30,675 views 4144 140143759623872 Status do pagamento 84d73d76-01ce-4288-ae60-3b257bb79724 atualizado para pendente
+INFO 2026-04-17 20:14:30,678 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:14:35,656 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:14:35,657 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:14:35,657 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:14:35,660 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:14:40,966 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:14:40,966 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:14:40,966 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:14:40,970 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:14:45,965 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:14:45,966 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:14:45,966 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:14:45,970 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:14:50,965 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:14:50,966 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:14:50,966 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:14:50,970 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:14:55,965 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:14:55,965 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:14:55,965 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:14:55,969 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:01,058 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:01,059 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:01,059 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:01,063 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:06,058 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:06,059 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:06,059 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:06,063 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:11,059 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:11,059 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:11,059 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:11,063 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:16,059 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:16,059 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:16,059 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:16,063 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:21,059 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:21,059 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:21,059 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:21,063 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:26,059 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:26,059 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:26,060 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:26,063 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:31,169 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:31,170 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:31,170 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:31,174 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:36,169 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:36,170 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:36,170 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:36,174 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:41,206 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:41,206 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:41,206 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:41,210 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:46,231 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:46,231 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:46,231 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:46,235 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:51,207 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:51,207 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:51,207 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:51,212 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:15:56,206 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:15:56,206 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:15:56,206 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:15:56,210 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:01,209 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:01,209 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:01,209 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:01,213 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:06,207 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:06,207 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:06,208 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:06,212 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:11,207 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:11,207 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:11,208 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:11,212 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:16,207 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:16,207 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:16,208 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:16,212 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:21,208 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:21,208 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:21,208 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:21,212 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:26,209 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:26,209 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:26,210 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:26,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:31,209 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:31,210 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:31,210 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:31,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:36,210 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:36,210 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:36,210 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:36,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:41,209 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:41,209 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:41,209 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:41,213 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:46,212 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:46,212 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:46,213 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:46,217 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:51,210 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:51,210 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:51,211 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:51,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:16:56,209 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:16:56,209 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:16:56,210 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:16:56,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:01,208 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:01,208 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:01,209 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:01,213 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:06,209 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:06,209 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:06,209 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:06,213 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:11,209 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:11,209 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:11,210 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:11,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:16,210 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:16,211 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:16,211 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:16,216 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:21,209 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:21,210 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:21,210 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:21,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:26,210 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:26,210 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:26,210 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:26,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:31,210 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:31,210 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:31,211 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:31,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:36,211 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:36,212 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:36,212 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:36,216 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:41,211 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:41,211 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:41,211 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:41,215 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:46,211 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:46,211 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:46,211 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:46,215 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:51,213 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:51,213 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:51,213 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:51,217 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:17:56,213 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:17:56,214 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:17:56,214 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:17:56,218 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:01,212 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:01,212 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:01,212 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:01,216 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:06,211 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:06,212 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:06,212 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:06,216 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:11,212 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:11,212 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:11,212 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:11,216 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:16,212 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:16,212 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:16,212 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:16,216 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:21,212 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:21,212 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:21,213 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:21,217 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:26,213 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:26,213 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:26,213 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:26,217 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:31,213 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:31,213 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:31,213 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:31,217 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:36,213 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:36,213 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:36,213 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:36,217 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:41,213 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:41,213 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:41,213 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:41,217 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:46,214 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:46,214 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:46,215 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:46,218 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:51,214 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:51,214 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:51,214 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:51,218 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:18:56,216 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:18:56,216 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:18:56,216 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:18:56,220 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:19:01,214 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:19:01,214 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:19:01,214 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:19:01,218 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:19:06,215 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:19:06,215 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:19:06,215 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:19:06,219 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:19:11,215 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:19:11,216 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:19:11,216 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:19:11,220 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:19:16,214 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:19:16,214 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:19:16,215 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:19:16,219 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:19:21,216 views 4144 140143759623872 🧪 MODO DESENVOLVIMENTO: Usando MercadoPagoServiceMock
+WARNING 2026-04-17 20:19:21,216 services_mock 4144 140143759623872 ⚠️  USANDO MOCK DO MERCADO PAGO - SEM INTERNET REAL
+INFO 2026-04-17 20:19:21,216 services_mock 4144 140143759623872 Mock: Consultando status de mock-8efe5f45
+INFO 2026-04-17 20:19:21,220 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 200 2077
+WARNING 2026-04-17 20:19:26,211 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:19:26,212 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:19:31,211 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:19:31,212 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:19:36,211 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:19:36,212 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:19:41,220 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:19:41,220 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:19:46,211 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:19:46,212 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:19:51,212 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:19:51,212 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:19:56,212 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:19:56,213 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:01,213 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:01,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:06,213 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:06,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:11,213 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:11,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:16,213 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:16,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:21,213 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:21,214 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:26,257 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:26,257 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:31,256 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:31,257 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:36,332 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:36,332 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:41,379 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:41,380 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:46,372 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:46,372 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:51,747 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:51,747 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:20:57,258 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:20:57,259 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:21:02,157 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:21:02,157 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:21:07,468 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:21:07,469 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:21:12,468 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:21:12,469 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172
+WARNING 2026-04-17 20:21:17,467 log 4144 140143759623872 Unauthorized: /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/
+WARNING 2026-04-17 20:21:17,468 log 4144 140143759623872 "GET /api/pagamentos/84d73d76-01ce-4288-ae60-3b257bb79724/status/ HTTP/1.1" 401 172

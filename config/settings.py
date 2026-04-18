@@ -2,12 +2,17 @@
 # Documentação oficial: https://docs.djangoproject.com/en/stable/ref/settings/
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Carregar variáveis do arquivo .env
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-54+)v1ruxn%%u0_!j%p3!i#fjyk5%18lh&cphvrgw-1sh_lh*s'
-DEBUG = True
-ALLOWED_HOSTS = ['*', 'testserver']
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-54+)v1ruxn%%u0_!j%p3!i#fjyk5%18lh&cphvrgw-1sh_lh*s')
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -18,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'beckend',
+    'pagamentos',
     'rest_framework',
 ]
 
@@ -88,4 +94,67 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+}
+
+# =========================================================
+# CONFIGURAÇÕES DE PAGAMENTO - MERCADO PAGO
+# =========================================================
+MERCADO_PAGO_ACCESS_TOKEN = os.getenv('MERCADO_PAGO_ACCESS_TOKEN')
+MERCADO_PAGO_PUBLIC_KEY = os.getenv('MERCADO_PAGO_PUBLIC_KEY', '')
+
+# Configurações de PIX
+PIX_EXPIRACAO_MINUTOS = int(os.getenv('PIX_EXPIRACAO_MINUTOS', 15))
+WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'http://localhost:8000/api/pagamentos/webhook/')
+
+# =========================================================
+# LOGGING
+# =========================================================
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': os.getenv('LOG_LEVEL', 'INFO'),
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': os.getenv('LOG_LEVEL', 'INFO'),
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'app.log',
+            'maxBytes': 1024 * 1024 * 10,  # 10 MB
+            'backupCount': 10,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': os.getenv('LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'pagamentos': {
+            'handlers': ['console', 'file'],
+            'level': os.getenv('LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+    },
 }
