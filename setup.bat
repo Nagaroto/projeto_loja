@@ -83,6 +83,23 @@ if exist package.json (
 )
 
 echo.
+echo [CONFIGURAÇÃO] Verificando arquivo .env...
+if not exist .env (
+    echo [AVISO] Arquivo .env não encontrado!
+    if exist .env.example (
+        echo [INFO] Copiando .env.example para .env...
+        copy .env.example .env
+        echo [OK] Arquivo .env criado de .env.example
+        echo [IMPORTANTE] Edite o arquivo .env e atualize:
+        echo   - MERCADO_PAGO_ACCESS_TOKEN com seu token real
+        echo   - SECRET_KEY em produção
+        echo   - DEBUG=False em produção
+    )
+) else (
+    echo [OK] Arquivo .env encontrado
+)
+
+echo.
 echo ============================================
 echo  SETUP CONCLUÍDO COM SUCESSO!
 echo ============================================

@@ -28,12 +28,53 @@ O script irá:
 - ✅ Criar um ambiente virtual Python
 - ✅ Instalar todas as dependências do backend (Django, DRF, Mercado Pago, etc)
 - ✅ Instalar todas as dependências do frontend (React, Tailwind, Vite, etc)
+- ✅ Copiar `.env.example` para `.env` (se não existir)
+
+---
+
+## ⚙️ Configuração do Arquivo `.env`
+
+### O que é `.env`?
+Arquivo com variáveis sensíveis (tokens, senhas) que não são commitadas no Git.
+
+### Como configurar?
+
+1. Após executar `setup.bat`, você terá um arquivo `.env`
+2. Abra `projeto_loja/.env` em um editor de texto
+3. Procure por `MERCADO_PAGO_ACCESS_TOKEN` e substitua pelo seu token real:
+
+```env
+# ANTES (placeholder)
+MERCADO_PAGO_ACCESS_TOKEN=APP_USR-seu-token-aqui
+
+# DEPOIS (seu token real)
+MERCADO_PAGO_ACCESS_TOKEN=APP_USR-1234567890-sua-chave-real
+```
+
+4. Salve o arquivo
+
+### Onde obter seus tokens?
+
+- **Mercado Pago**: https://www.mercadopago.com.br/developers/panel
+  - Gere um "Access Token" da sua conta
+  - O token começa com `APP_USR-`
+
+### Arquivo `.env.example`
+Arquivo de referência (SEM tokens reais) - serve como template.
+Sempre que alguém clonar o projeto, copia este para `.env` e preenche com seus valores.
 
 ---
 
 ## ⚙️ Próximos passos
 
-### Migrations do banco de dados
+### 1. Configurar variáveis de ambiente (IMPORTANTE!)
+```bash
+# Abra o arquivo .env com editor de texto
+# Procure por: MERCADO_PAGO_ACCESS_TOKEN
+# Substitua pelo seu token real do Mercado Pago
+```
+
+### 2. Migrations do banco de dados
 ```bash
 # Ative o ambiente virtual (se ainda não estiver ativado)
 venv\Scripts\activate.bat
@@ -42,12 +83,12 @@ venv\Scripts\activate.bat
 python manage.py migrate
 ```
 
-### Criar usuário admin (opcional)
+### 3. Criar usuário admin (opcional)
 ```bash
 python manage.py createsuperuser
 ```
 
-### Executar o servidor
+### 4. Executar o servidor
 
 #### Backend (Django)
 ```bash
@@ -68,12 +109,13 @@ Acesse: `http://localhost:5173`
 ## 📋 O que foi incluído no upload
 
 ✅ **Banco de dados**: `db.sqlite3` com todos os dados  
-✅ **Configurações de API**: Mercado Pago e outras  
+✅ **Configurações de API**: Mercado Pago com token configurável via `.env`  
 ✅ **Dependências**: Todas listadas em `requirements.txt` e `package.json`  
 ✅ **Backend**: Django com autenticação, produtos, pedidos, pagamentos  
 ✅ **Frontend**: React com Vite e Tailwind CSS  
 ✅ **Documentação**: Arquitetura, endpoints, testes  
 ✅ **Setup Automático**: `setup.bat` para Windows  
+✅ **Variáveis de Ambiente**: `.env.example` como template  
 
 ---
 
@@ -117,15 +159,30 @@ Acesse: `http://localhost:5173`
 
 ## ⚠️ Aviso de Segurança
 
-Este repositório contém:
-- Banco de dados com dados de teste
-- Configurações de API (considere usar variáveis de ambiente em produção)
-- Tokens e secrets (NÃO use em repositórios públicos em produção)
+**✅ BOAS PRÁTICAS IMPLEMENTADAS:**
+- Arquivo `.env` já está no `.gitignore` (não será commitado)
+- `.env.example` serve como template de referência
+- Tokens sensíveis não são versionados no Git
 
-**Para produção:**
-- Use arquivo `.env` com variáveis de ambiente
-- Nunca commite `db.sqlite3` ou secrets
-- Configure variáveis no seu hosting (Heroku, AWS, etc)
+**⚠️ Para desenvolvimento local:**
+- Você pode colocar seus tokens reais no `.env` (está seguro localmente)
+- Cada desenvolvedor terá seu próprio `.env`
+
+**❌ NUNCA em produção:**
+- Não use tokens hardcoded no código
+- Não commite arquivo `.env`
+- Use variáveis de ambiente do servidor (Heroku, AWS, etc)
+- Use `.env.local` para override de valores
+
+**Exemplo de segurança:**
+```bash
+# Desenvolvedores locais
+.env          ← token real (ignorado por git)
+.env.example  ← template seguro (commitado)
+
+# Servidor de produção
+Variáveis definidas no hosting (não em arquivo)
+```
 
 ---
 
