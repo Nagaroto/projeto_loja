@@ -107,6 +107,7 @@ class PagamentoViewSet(viewsets.ModelViewSet):
             metodo = serializer.validated_data.get('metodo_pagamento', 'pix')
             items = request.data.get('items', [])
             descricao = serializer.validated_data.get('descricao', '')
+            pedido_id = serializer.validated_data.get('pedido_id')
             
             # Validações
             if not valor or valor <= 0:
@@ -137,6 +138,7 @@ class PagamentoViewSet(viewsets.ModelViewSet):
                 metodo_pagamento=metodo,
                 status='pendente',
                 descricao=descricao,
+                pedido_id=str(pedido_id) if pedido_id not in (None, '') else None,
                 data_expiracao=timezone.now() + timezone.timedelta(minutes=15),
             )
             
@@ -245,6 +247,20 @@ class PagamentoViewSet(viewsets.ModelViewSet):
                         pagamento.data_pagamento = timezone.now()
                     
                     pagamento.save()
+
+                    # Se o pagamento está ligado a um pedido, atualiza status do pedido
+                    if novo_status == 'aprovado' and pagamento.pedido_id:
+                        try:
+                            from beckend.models import Order
+                            from beckend.order_lifecycle import order_is_unpaid_expired
+
+                            order = Order.objects.filter(pk=int(pagamento.pedido_id)).first()
+                            if order and order.status == 'pendente' and order.paid_at is None and not order_is_unpaid_expired(order):
+                                order.status = 'pago'
+                                order.paid_at = timezone.now()
+                                order.save(update_fields=['status', 'paid_at', 'updated_at'])
+                        except Exception as e:
+                            logger.warning(f'Falha ao atualizar pedido pago: {str(e)}')
                     
                     # Registrar auditoria
                     TransacaoAuditoria.objects.create(

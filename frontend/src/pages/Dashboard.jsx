@@ -2,11 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Package, Ticket, ShoppingBag, BarChart3, Plus, Trash2, Edit2, LogOut, Menu, X, Search, Tags, Wrench } from 'lucide-react';
+import { Package, Ticket, ShoppingBag, BarChart3, Plus, Trash2, Edit2, LogOut, Menu, X, Search, Tags, Users } from 'lucide-react';
 import axios from 'axios';
 import { CategoriesTab } from '../components/CategoriesTab';
 
 const API_URL = 'http://127.0.0.1:8000/api';
+
+// Mapa de cores e labels curtos para badges de status
+const STATUS_BADGE_CONFIG = {
+  pendente: { color: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pendente', border: 'border-yellow-300' },
+  pago: { color: 'bg-green-100', text: 'text-green-800', label: 'Pago', border: 'border-green-300' },
+  expirado: { color: 'bg-red-100', text: 'text-red-800', label: 'Expirado', border: 'border-red-300' },
+  confirmado: { color: 'bg-blue-100', text: 'text-blue-800', label: 'Confirmado', border: 'border-blue-300' },
+  enviado: { color: 'bg-blue-100', text: 'text-blue-800', label: 'Enviado', border: 'border-blue-300' },
+  entregue: { color: 'bg-green-100', text: 'text-green-800', label: 'Entregue', border: 'border-green-300' },
+  cancelado: { color: 'bg-red-100', text: 'text-red-800', label: 'Cancelado', border: 'border-red-300' },
+};
+
+function StatusBadge({ status }) {
+  const config = STATUS_BADGE_CONFIG[status] || STATUS_BADGE_CONFIG.pendente;
+  return (
+    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${config.color} ${config.text} ${config.border}`}>
+      {config.label}
+    </span>
+  );
+}
 
 // Agrega todas as páginas de um endpoint paginado (lista completa no admin).
 const loadAllPages = async (url) => {
@@ -288,7 +308,11 @@ function ProductsTab() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-cereon-dark">Gerenciar Produtos</h2>
         <motion.button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setShowEditForm(false);
+            setEditingCoupon(null);
+            setShowForm(!showForm);
+          }}
           className="bg-cereon-green text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-cereon-green/90 transition-colors"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -558,10 +582,10 @@ function ProductsTab() {
                 </span>
               )}
             </div>
-            <p className="text-sm text-cereon-dark/70 mb-2">
+            <p className="text-sm text-cereon-dark mb-2">
               {categories.find((c) => c.id === product.category)?.name || 'Sem categoria'}
             </p>
-            <p className="text-sm text-cereon-dark/70 mb-3 line-clamp-2">{product.description}</p>
+            <p className="text-sm text-cereon-dark mb-3 line-clamp-2">{product.description}</p>
             <div className="flex justify-between items-center mb-3">
               <span className="text-cereon-green font-bold">R$ {parseFloat(product.price).toFixed(2)}</span>
               <span className="text-sm bg-cereon-light text-cereon-dark px-2 py-1 rounded">
@@ -592,19 +616,149 @@ function ProductsTab() {
 }
 
 // Componente de Cupons
+function EligibleProductsSelector({ products, selectedIds, onChange }) {
+  const [search, setSearch] = useState('');
+  const selectedSet = new Set((selectedIds || []).map((x) => String(x)));
+  const filteredAvailable = products.filter((p) => {
+    const id = String(p.id);
+    if (selectedSet.has(id)) return false;
+    if (!search.trim()) return true;
+    const term = search.toLowerCase();
+    return (
+      String(p.id).includes(term) ||
+      String(p.name || '').toLowerCase().includes(term)
+    );
+  });
+  const selectedProducts = (selectedIds || [])
+    .map((id) => products.find((p) => String(p.id) === String(id)))
+    .filter(Boolean);
+
+  const addProduct = (id) => {
+    const next = Array.from(new Set([...(selectedIds || []), String(id)]));
+    onChange(next);
+  };
+
+  const removeProduct = (id) => {
+    const next = (selectedIds || []).filter((x) => String(x) !== String(id));
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-cereon-dark">
+          Produtos elegíveis (opcional)
+        </p>
+        <span className="text-xs bg-cereon-green/10 text-cereon-green px-2 py-1 rounded-full font-semibold">
+          Selecionados: {selectedProducts.length}
+        </span>
+      </div>
+      <p className="text-xs text-gray-600">
+        Se não selecionar nenhum produto, o cupom valerá para todos.
+      </p>
+
+      <input
+        type="text"
+        placeholder="Buscar produto por nome ou ID"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-3">
+          <h4 className="font-semibold text-cereon-dark mb-3">
+            Produtos disponíveis
+          </h4>
+          <div className="max-h-64 overflow-y-auto space-y-2">
+            {filteredAvailable.length === 0 ? (
+              <p className="text-sm text-gray-500">Nenhum produto disponível para adicionar.</p>
+            ) : (
+              filteredAvailable.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between gap-3 p-2 border border-gray-100 rounded-lg"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-cereon-dark truncate">#{p.id} - {p.name}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => addProduct(p.id)}
+                    className="text-xs bg-cereon-green text-white px-3 py-1 rounded-md hover:bg-green-600 transition-colors"
+                  >
+                    Adicionar
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="bg-cereon-light border border-cereon-green/20 rounded-lg p-3">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-semibold text-cereon-dark">
+              Produtos aplicáveis ao cupom
+            </h4>
+            {selectedProducts.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onChange([])}
+                className="text-xs text-red-600 hover:text-red-700 font-semibold"
+              >
+                Limpar seleção
+              </button>
+            )}
+          </div>
+          <div className="max-h-64 overflow-y-auto space-y-2">
+            {selectedProducts.length === 0 ? (
+              <p className="text-sm text-gray-500">Nenhum produto selecionado. O cupom será global.</p>
+            ) : (
+              selectedProducts.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between gap-3 p-2 bg-white border border-cereon-green/20 rounded-lg"
+                >
+                  <p className="text-sm font-medium text-cereon-dark truncate">#{p.id} - {p.name}</p>
+                  <button
+                    type="button"
+                    onClick={() => removeProduct(p.id)}
+                    className="text-xs bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-colors"
+                  >
+                    Remover
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CouponsTab() {
   const [coupons, setCoupons] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState(null);
+  const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState({
     code: '',
     discount_percent: '',
     expiry_date: '',
-    max_uses: ''
+    max_uses: '',
+    eligible_products: [],
   });
-  const { token } = useAuth();
+  const { getValidToken } = useAuth();
+  const productsById = products.reduce((acc, p) => {
+    acc[p.id] = p;
+    return acc;
+  }, {});
 
   useEffect(() => {
     loadCoupons();
+    loadProducts();
   }, []);
 
   const loadCoupons = async () => {
@@ -617,35 +771,128 @@ function CouponsTab() {
     }
   };
 
+  const loadProducts = async () => {
+    try {
+      const allProducts = await loadAllPages(`${API_URL}/products/`);
+      setProducts(allProducts);
+    } catch (e) {
+      setProducts([]);
+    }
+  };
+
   const handleAddCoupon = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/coupons/`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
+      const validToken = await getValidToken();
+      if (!validToken) {
+        alert('Sessão expirada. Faça login novamente.');
+        return;
+      }
+
+      const payload = {
+        code: formData.code,
+        discount_percent: Number(formData.discount_percent),
+        expiry_date: formData.expiry_date,
+        max_uses: formData.max_uses === '' ? null : Number(formData.max_uses),
+        eligible_products: Array.isArray(formData.eligible_products)
+          ? formData.eligible_products.map((x) => Number(x)).filter((n) => Number.isInteger(n) && n > 0)
+          : [],
+      };
+
+      await axios.post(`${API_URL}/coupons/`, payload, {
+        headers: { Authorization: `Bearer ${validToken}` }
       });
       setFormData({
         code: '',
         discount_percent: '',
         expiry_date: '',
-        max_uses: ''
+        max_uses: '',
+        eligible_products: [],
       });
       setShowForm(false);
       loadCoupons();
     } catch (error) {
-      alert('Erro ao adicionar cupom');
+      const apiError = error.response?.data;
+      const errorMessage =
+        apiError?.detail ||
+        (apiError ? JSON.stringify(apiError) : error.message);
+      alert('Erro ao adicionar cupom: ' + errorMessage);
     }
   };
 
   const handleDeleteCoupon = async (id) => {
     if (window.confirm('Tem certeza que deseja deletar este cupom?')) {
       try {
+        const validToken = await getValidToken();
+        if (!validToken) {
+          alert('Sessão expirada. Faça login novamente.');
+          return;
+        }
         await axios.delete(`${API_URL}/coupons/${id}/`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${validToken}` }
         });
         loadCoupons();
       } catch (error) {
         alert('Erro ao deletar cupom');
       }
+    }
+  };
+
+  const handleOpenEditCoupon = (coupon) => {
+    const eligible = Array.isArray(coupon.eligible_products)
+      ? coupon.eligible_products.map((x) => String(x))
+      : [];
+    setEditingCoupon(coupon);
+    setFormData({
+      code: coupon.code || '',
+      discount_percent: coupon.discount_percent?.toString?.() || '',
+      expiry_date: coupon.expiry_date || '',
+      max_uses: coupon.max_uses == null ? '' : coupon.max_uses.toString(),
+      eligible_products: eligible,
+    });
+    setShowEditForm(true);
+    setShowForm(false);
+  };
+
+  const handleUpdateCoupon = async (e) => {
+    e.preventDefault();
+    if (!editingCoupon) return;
+    try {
+      const validToken = await getValidToken();
+      if (!validToken) {
+        alert('Sessão expirada. Faça login novamente.');
+        return;
+      }
+
+      const payload = {
+        code: formData.code,
+        discount_percent: Number(formData.discount_percent),
+        expiry_date: formData.expiry_date,
+        max_uses: formData.max_uses === '' ? null : Number(formData.max_uses),
+        eligible_products: Array.isArray(formData.eligible_products)
+          ? formData.eligible_products.map((x) => Number(x)).filter((n) => Number.isInteger(n) && n > 0)
+          : [],
+      };
+
+      await axios.patch(`${API_URL}/coupons/${editingCoupon.id}/`, payload, {
+        headers: { Authorization: `Bearer ${validToken}` }
+      });
+      setFormData({
+        code: '',
+        discount_percent: '',
+        expiry_date: '',
+        max_uses: '',
+        eligible_products: [],
+      });
+      setShowEditForm(false);
+      setEditingCoupon(null);
+      loadCoupons();
+    } catch (error) {
+      const apiError = error.response?.data;
+      const errorMessage =
+        apiError?.detail ||
+        (apiError ? JSON.stringify(apiError) : error.message);
+      alert('Erro ao atualizar cupom: ' + errorMessage);
     }
   };
 
@@ -706,6 +953,12 @@ function CouponsTab() {
                 className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
               />
             </div>
+
+            <EligibleProductsSelector
+              products={products}
+              selectedIds={formData.eligible_products}
+              onChange={(eligible_products) => setFormData({ ...formData, eligible_products })}
+            />
             <div className="flex gap-3">
               <button
                 type="submit"
@@ -725,6 +978,79 @@ function CouponsTab() {
         </motion.div>
       )}
 
+      {showEditForm && editingCoupon && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-cereon-light p-6 rounded-lg border-2 border-cereon-green/30"
+        >
+          <h3 className="text-xl font-bold text-cereon-dark mb-4">
+            Editar Cupom: {editingCoupon.code}
+          </h3>
+          <form onSubmit={handleUpdateCoupon} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Código do Cupom"
+                required
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
+              />
+              <input
+                type="number"
+                placeholder="Desconto (%)"
+                required
+                min="1"
+                max="100"
+                value={formData.discount_percent}
+                onChange={(e) => setFormData({ ...formData, discount_percent: e.target.value })}
+                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
+              />
+              <input
+                type="date"
+                placeholder="Data de Expiração"
+                required
+                value={formData.expiry_date}
+                onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
+                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
+              />
+              <input
+                type="number"
+                placeholder="Máximo de usos"
+                value={formData.max_uses}
+                onChange={(e) => setFormData({ ...formData, max_uses: e.target.value })}
+                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
+              />
+            </div>
+
+            <EligibleProductsSelector
+              products={products}
+              selectedIds={formData.eligible_products}
+              onChange={(eligible_products) => setFormData({ ...formData, eligible_products })}
+            />
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="bg-cereon-green text-white px-6 py-2 rounded-lg font-semibold hover:bg-cereon-green/90 transition-colors"
+              >
+                Salvar Alterações
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditForm(false);
+                  setEditingCoupon(null);
+                }}
+                className="bg-gray-300 text-cereon-dark px-6 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      )}
+
       <div className="bg-white rounded-lg shadow-lg overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -733,26 +1059,43 @@ function CouponsTab() {
               <th className="px-6 py-3 text-left font-bold text-cereon-dark">Desconto</th>
               <th className="px-6 py-3 text-left font-bold text-cereon-dark">Expira em</th>
               <th className="px-6 py-3 text-left font-bold text-cereon-dark">Máx. Usos</th>
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">Elegíveis</th>
               <th className="px-6 py-3 text-left font-bold text-cereon-dark">Ações</th>
             </tr>
           </thead>
           <tbody>
             {coupons.map((coupon) => (
-              <tr key={coupon.id} className="border-b border-gray-200 hover:bg-gray-50">
+              <tr key={coupon.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-3 font-semibold text-cereon-green">{coupon.code}</td>
                 <td className="px-6 py-3 text-cereon-dark">{coupon.discount_percent}%</td>
                 <td className="px-6 py-3 text-cereon-dark">
                   {new Date(coupon.expiry_date).toLocaleDateString('pt-BR')}
                 </td>
                 <td className="px-6 py-3 text-cereon-dark">{coupon.max_uses || '∞'}</td>
+                <td className="px-6 py-3 text-cereon-dark text-sm">
+                  {Array.isArray(coupon.eligible_products) && coupon.eligible_products.length > 0
+                    ? coupon.eligible_products
+                        .map((id) => productsById[id]?.name || `#${id}`)
+                        .join(', ')
+                    : 'Todos'}
+                </td>
                 <td className="px-6 py-3">
-                  <button
-                    onClick={() => handleDeleteCoupon(coupon.id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center gap-1"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Deletar
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleOpenEditCoupon(coupon)}
+                      className="bg-blue-500 text-white px-3 py-1 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center gap-1"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCoupon(coupon.id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center gap-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Deletar
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -802,7 +1145,11 @@ function OrdersTab() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-gray-500">Número do Pedido</p>
-                  <p className="font-bold text-cereon-dark">#{order.id}</p>
+                  <p className="font-bold text-cereon-dark">#{order.public_code || order.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Status</p>
+                  <StatusBadge status={order.status} />
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Cliente</p>
@@ -814,6 +1161,8 @@ function OrdersTab() {
                     {new Date(order.created_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-gray-500">Total</p>
                   <p className="font-bold text-cereon-green">
@@ -835,6 +1184,101 @@ function OrdersTab() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function CustomersTab() {
+  const { getValidToken } = useAuth();
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+
+  const loadCustomers = async () => {
+    setErr('');
+    setLoading(true);
+    try {
+      const t = await getValidToken();
+      if (!t) {
+        setErr('Sessão expirada. Faça login novamente.');
+        return;
+      }
+      const res = await axios.get(`${API_URL}/admin/customers/`, {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      setRows(res.data?.results || []);
+    } catch (e) {
+      setErr(e.response?.data?.detail || 'Erro ao carregar clientes.');
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCustomers();
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-cereon-dark">Clientes</h2>
+        <motion.button
+          onClick={loadCustomers}
+          className="bg-cereon-dark text-white px-6 py-2 rounded-lg font-semibold hover:opacity-90 transition-colors"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Atualizar
+        </motion.button>
+      </div>
+
+      {err && (
+        <p className="text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
+          {err}
+        </p>
+      )}
+
+      <div className="bg-white rounded-lg shadow-lg overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-cereon-light border-b-2 border-cereon-green/30">
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">ID</th>
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">Nome</th>
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">E-mail</th>
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">CPF</th>
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">Cadastro</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td className="px-6 py-4 text-gray-500" colSpan={5}>
+                  Carregando…
+                </td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td className="px-6 py-4 text-gray-500" colSpan={5}>
+                  Nenhum cliente encontrado.
+                </td>
+              </tr>
+            ) : (
+              rows.map((r) => (
+                <tr key={r.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-3 text-cereon-dark">{r.id}</td>
+                  <td className="px-6 py-3 text-cereon-dark">{r.name_masked}</td>
+                  <td className="px-6 py-3 text-cereon-dark">{r.email_masked}</td>
+                  <td className="px-6 py-3 text-cereon-dark">{r.cpf_masked}</td>
+                  <td className="px-6 py-3 text-cereon-dark">
+                    {r.date_joined ? new Date(r.date_joined).toLocaleDateString('pt-BR') : '—'}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -975,6 +1419,7 @@ export function Dashboard() {
     { id: 'products', label: 'Produtos', icon: Package },
     { id: 'categories', label: 'Categorias', icon: Tags },
     { id: 'coupons', label: 'Cupons', icon: Ticket },
+    { id: 'customers', label: 'Clientes', icon: Users },
     { id: 'orders', label: 'Pedidos', icon: ShoppingBag }
   ];
 
@@ -1053,6 +1498,7 @@ export function Dashboard() {
           {activeTab === 'products' && <ProductsTab />}
           {activeTab === 'categories' && <CategoriesTab />}
           {activeTab === 'coupons' && <CouponsTab />}
+          {activeTab === 'customers' && <CustomersTab />}
           {activeTab === 'orders' && <OrdersTab />}
         </motion.div>
       </div>

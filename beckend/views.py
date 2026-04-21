@@ -9,11 +9,12 @@ from rest_framework import generics, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .autenticacao import EmailTokenObtainPairSerializer
-from .models import Product, Coupon, Order, Category
+from .models import Product, Coupon, Order, Category, UserProfile
 from .serializers import (
     ProductSerializer,
     CouponSerializer,
@@ -288,3 +289,68 @@ class CategoryViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+def _mask_email(email):
+    s = (email or '').strip()
+    if '@' not in s:
+        return '***'
+    user, domain = s.split('@', 1)
+    if len(user) <= 2:
+        user_masked = user[:1] + '*'
+    else:
+        user_masked = user[:2] + '*' * max(1, len(user) - 2)
+    parts = domain.split('.')
+    if parts:
+        parts[0] = (parts[0][:1] + '*' * max(1, len(parts[0]) - 1)) if parts[0] else '*'
+    return f'{user_masked}@{".".join(parts)}'
+
+
+def _mask_name(name):
+    s = ' '.join((name or '').strip().split())
+    if not s:
+        return '***'
+    parts = s.split(' ')
+    masked = []
+    for p in parts:
+        if len(p) <= 1:
+            masked.append('*')
+        elif len(p) == 2:
+            masked.append(p[0] + '*')
+        else:
+            masked.append(p[0] + '*' * (len(p) - 2) + p[-1])
+    return ' '.join(masked)
+
+
+def _mask_cpf(cpf):
+    digits = ''.join(c for c in (cpf or '') if c.isdigit())
+    if len(digits) != 11:
+        return '***.***.***-**'
+    return f'{digits[:3]}.***.***-{digits[-2:]}'
+
+
+class AdminCustomersView(APIView):
+    """Lista clientes com dados mascarados (admin only)."""
+
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        qs = (
+            User.objects
+            .filter(is_staff=False)
+            .select_related('profile')
+            .order_by('-date_joined')
+        )
+
+        results = []
+        for u in qs[:500]:
+            profile = getattr(u, 'profile', None)
+            results.append({
+                'id': u.id,
+                'name_masked': _mask_name(getattr(profile, 'full_name', '') or ''),
+                'email_masked': _mask_email(u.email),
+                'cpf_masked': _mask_cpf(getattr(profile, 'cpf', '') or ''),
+                'date_joined': u.date_joined,
+            })
+
+        return Response({'count': len(results), 'results': results})

@@ -2,15 +2,28 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTheme } from '../context/ThemeContext';
 import cereonImg from '../imgs/cereon.webp';
 
 export function Hero() {
+  const { isDark } = useTheme();
   return (
-    <section className="relative bg-gradient-to-r from-cereon-green to-green-400 text-white py-20 overflow-hidden">
-      {/* Background decorativo */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-3xl" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-white rounded-full mix-blend-multiply filter blur-3xl" />
+    <section className={`relative text-white py-20 overflow-hidden ${
+      isDark 
+        ? 'bg-gradient-to-br from-slate-950 via-emerald-950/40 to-slate-950' 
+        : 'bg-gradient-to-r from-cereon-green via-emerald-400 to-green-400'
+    }`}>
+      {/* Background decorativo com gradientes suaves */}
+      <div className="absolute inset-0 opacity-40">
+        <div className={`absolute top-20 -left-32 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl animate-blob ${
+          isDark ? 'bg-emerald-600/20' : 'bg-emerald-300/40'
+        }`} />
+        <div className={`absolute top-40 -right-32 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000 ${
+          isDark ? 'bg-emerald-700/20' : 'bg-cyan-200/40'
+        }`} />
+        <div className={`absolute -bottom-8 left-20 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000 ${
+          isDark ? 'bg-emerald-600/15' : 'bg-teal-200/40'
+        }`} />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -63,15 +76,29 @@ export function Hero() {
               >
                 <Link
                   to="/catalogo"
-                  className="group relative inline-flex items-center space-x-2 bg-white text-cereon-green px-8 py-4 rounded-lg font-bold text-lg shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                  className={`group relative inline-flex items-center space-x-2 px-8 py-4 rounded-lg font-bold text-lg shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden ${
+                    isDark
+                      ? 'bg-gradient-to-r from-emerald-700/40 to-emerald-600/40 text-emerald-100 hover:from-emerald-700/50 hover:to-emerald-600/50 border border-emerald-600/50'
+                      : 'bg-white text-cereon-green hover:bg-gray-100'
+                  }`}
                 >
                   {/* Efeito de fundo animado */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-white via-gray-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                    isDark
+                      ? 'bg-gradient-to-r from-emerald-600/20 via-emerald-500/20 to-emerald-600/20'
+                      : 'bg-gradient-to-r from-white via-gray-50 to-white'
+                  }`} />
                   
                   {/* Underline animado */}
-                  <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-cereon-green to-green-400 w-0 group-hover:w-full transition-all duration-500" />
+                  <div className={`absolute bottom-0 left-0 h-1 w-0 group-hover:w-full transition-all duration-500 ${
+                    isDark
+                      ? 'bg-gradient-to-r from-emerald-400 to-emerald-300'
+                      : 'bg-gradient-to-r from-cereon-green to-green-400'
+                  }`} />
                   
-                  <span className="relative z-10 group-hover:text-cereon-green transition-colors duration-300">Ver Catálogo</span>
+                  <span className={`relative z-10 transition-colors duration-300 ${
+                    isDark ? '' : 'group-hover:text-cereon-green'
+                  }`}>Ver Catálogo</span>
                   <motion.div
                     animate={{ x: [0, 3, 0] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
@@ -109,7 +136,9 @@ export function Hero() {
       </div>
 
       {/* Wave decorativo */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 bg-white" style={{
+      <div className={`absolute bottom-0 left-0 right-0 h-20 ${
+        isDark ? 'bg-dark-bg' : 'bg-white'
+      }`} style={{
         clipPath: 'polygon(0 20%, 100% 0, 100% 100%, 0 100%)'
       }} />
     </section>

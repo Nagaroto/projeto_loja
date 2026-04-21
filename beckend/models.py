@@ -2,6 +2,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 
 class Category(models.Model):
@@ -154,6 +155,13 @@ class Coupon(models.Model):
         verbose_name='Ativo',
         help_text='Indica se o cupom está ativo e pode ser usado',
     )
+    eligible_products = models.ManyToManyField(
+        'Product',
+        blank=True,
+        related_name='eligible_coupons',
+        verbose_name='Produtos elegíveis',
+        help_text='Se vazio, o cupom pode ser aplicado a qualquer produto. Se preenchido, só vale para estes produtos.',
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Data de Criação',
@@ -182,11 +190,51 @@ class Coupon(models.Model):
         return True
 
 
+class CouponRedemption(models.Model):
+    """Controle de uso: 1 uso por CPF (regra do negócio)."""
+
+    coupon = models.ForeignKey(
+        Coupon,
+        on_delete=models.CASCADE,
+        related_name='redemptions',
+        verbose_name='Cupom',
+    )
+    cpf = models.CharField(
+        max_length=14,
+        verbose_name='CPF',
+        help_text='CPF normalizado/formatado usado na aplicação do cupom.',
+    )
+    order = models.ForeignKey(
+        'Order',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='coupon_redemptions',
+        verbose_name='Pedido',
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
+
+    class Meta:
+        verbose_name = 'Uso de cupom'
+        verbose_name_plural = 'Usos de cupons'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['coupon', 'cpf'],
+                name='uniq_coupon_cpf_redemption',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.coupon.code} — {self.cpf}'
+
+
 class Order(models.Model):
     """Pedido: cliente, total, cupom opcional, status e itens em OrderItem."""
 
     STATUS_CHOICES = [
         ('pendente', 'Pendente'),
+        ('pago', 'Pago'),
+        ('expirado', 'Expirado'),
         ('confirmado', 'Confirmado'),
         ('enviado', 'Enviado'),
         ('entregue', 'Entregue'),
@@ -348,6 +396,13 @@ class UserProfile(models.Model):
     class Meta:
         verbose_name = 'Perfil de usuário'
         verbose_name_plural = 'Perfis de usuário'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['cpf'],
+                condition=~Q(cpf=''),
+                name='uniq_userprofile_cpf_nonempty',
+            ),
+        ]
 
     def __str__(self):
         return f'Perfil de {self.user.email}'
@@ -379,3 +434,65 @@ class Address(models.Model):
 
     def __str__(self):
         return f'{self.label} — {self.user.email}'
+
+
+class Cart(models.Model):
+    """Carrinho persistido por usuário autenticado."""
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='cart',
+        verbose_name='Usuário',
+    )
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
+
+    class Meta:
+        verbose_name = 'Carrinho'
+        verbose_name_plural = 'Carrinhos'
+
+    def __str__(self):
+        return f'Carrinho — {self.user.email}'
+
+
+class CartItem(models.Model):
+    """Item do carrinho: produto + quantidade + variantes opcionais."""
+
+    cart = models.ForeignKey(
+        Cart,
+        on_delete=models.CASCADE,
+        related_name='items',
+        verbose_name='Carrinho',
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name='cart_items',
+        verbose_name='Produto',
+    )
+    quantity = models.IntegerField(default=1, verbose_name='Quantidade')
+    size = models.CharField(max_length=50, blank=True, verbose_name='Tamanho')
+    color = models.CharField(max_length=50, blank=True, verbose_name='Cor')
+    cart_item_key = models.CharField(
+        max_length=120,
+        blank=True,
+        verbose_name='Chave do item',
+        help_text='Chave estável vinda do front (ex.: productId-size-color) para diferenciar variantes.',
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
+
+    class Meta:
+        verbose_name = 'Item do carrinho'
+        verbose_name_plural = 'Itens do carrinho'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['cart', 'cart_item_key'],
+                condition=~Q(cart_item_key=''),
+                name='uniq_cart_item_key_per_cart',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.product.name} x{self.quantity} — {self.cart.user.email}'

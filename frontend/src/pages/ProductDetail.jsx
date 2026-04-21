@@ -4,6 +4,7 @@ import { ArrowLeft, ShoppingCart, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
+import { useAlert } from '../context/AlertContext';
 
 const API_URL = 'http://127.0.0.1:8000/api';
 const FALLBACK_IMG = '/imgs/cereon.webp';
@@ -33,6 +34,7 @@ export function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { showAlert } = useAlert();
 
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -123,13 +125,19 @@ export function ProductDetail() {
     );
   }
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product.colors.length && !selectedColor) {
-      alert('Por favor, selecione uma cor');
+      await showAlert('Por favor, selecione uma cor', {
+        title: 'Seleção obrigatória',
+        type: 'warning',
+      });
       return;
     }
     if (product.sizes.length && !selectedSize) {
-      alert('Por favor, selecione um tamanho');
+      await showAlert('Por favor, selecione um tamanho', {
+        title: 'Seleção obrigatória',
+        type: 'warning',
+      });
       return;
     }
 
@@ -140,7 +148,7 @@ export function ProductDetail() {
         ? `${product.id}-${size || '—'}-${color || '—'}`
         : `${product.id}`;
 
-    addToCart({
+    const added = addToCart({
       ...product,
       image: product.image_url || product.image,
       price: product.price,
@@ -149,6 +157,14 @@ export function ProductDetail() {
       quantity,
       cartId,
     });
+    if (!added) {
+      await showAlert('É necessário estar logado para colocar itens no carrinho.', {
+        title: 'Acesso necessário',
+        type: 'warning',
+      });
+      navigate('/login');
+      return;
+    }
 
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);

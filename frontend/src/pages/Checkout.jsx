@@ -45,6 +45,11 @@ export function Checkout() {
 
   const [paymentMethod, setPaymentMethod] = useState('pix');
   const [customerNotes, setCustomerNotes] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [couponsLoading, setCouponsLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponFeedback, setCouponFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
@@ -54,12 +59,68 @@ export function Checkout() {
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
   const [orderId, setOrderId] = useState(null);
+  const [orderCode, setOrderCode] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState('');
   const [showPaymentSection, setShowPaymentSection] = useState(false);
   const [statusCheckInterval, setStatusCheckInterval] = useState(null);
 
   const subtotal = getTotal();
+  const cartProductIds = new Set(
+    cartItems.map((item) => Number(item.id)).filter((id) => Number.isInteger(id) && id > 0)
+  );
+
+  const isCouponActive = (coupon) => {
+    if (!coupon || coupon.is_active === false) return false;
+    if (coupon.max_uses != null && coupon.uses_count != null && coupon.uses_count >= coupon.max_uses) {
+      return false;
+    }
+    if (!coupon.expiry_date) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiry = new Date(coupon.expiry_date);
+    expiry.setHours(0, 0, 0, 0);
+    return expiry >= today;
+  };
+
+  const isCouponApplicableToCart = (coupon) => {
+    const eligible = Array.isArray(coupon?.eligible_products) ? coupon.eligible_products : [];
+    if (eligible.length === 0) return true;
+    return eligible.some((pid) => cartProductIds.has(Number(pid)));
+  };
+
+  const getCouponEligibleSubtotal = (coupon) => {
+    if (!coupon) return 0;
+    const eligible = Array.isArray(coupon.eligible_products) ? coupon.eligible_products.map(Number) : [];
+    return cartItems.reduce((acc, item) => {
+      const lineTotal = (parseFloat(item.price) || 0) * (item.quantity || 1);
+      if (eligible.length === 0 || eligible.includes(Number(item.id))) {
+        return acc + lineTotal;
+      }
+      return acc;
+    }, 0);
+  };
+
+  const getItemDiscount = (item, coupon) => {
+    if (!coupon) return 0;
+    const eligible = Array.isArray(coupon.eligible_products) ? coupon.eligible_products.map(Number) : [];
+    const isEligible = eligible.length === 0 || eligible.includes(Number(item.id));
+    if (!isEligible) return 0;
+    const lineTotal = (parseFloat(item.price) || 0) * (item.quantity || 1);
+    const pct = Number(coupon.discount_percent || 0) / 100;
+    return Number((lineTotal * pct).toFixed(2));
+  };
+
+  const applicableCoupons = availableCoupons.filter((c) => isCouponActive(c) && isCouponApplicableToCart(c));
+  const appliedDiscount = appliedCoupon
+    ? Math.min(
+        subtotal,
+        Number(
+          (getCouponEligibleSubtotal(appliedCoupon) * (Number(appliedCoupon.discount_percent || 0) / 100)).toFixed(2)
+        )
+      )
+    : 0;
+  const discountedSubtotal = Math.max(0, subtotal - appliedDiscount);
 
   const loadAddresses = useCallback(async () => {
     setLoadingAddresses(true);
@@ -84,6 +145,23 @@ export function Checkout() {
   useEffect(() => {
     loadAddresses();
   }, [loadAddresses]);
+
+  const loadCoupons = useCallback(async () => {
+    setCouponsLoading(true);
+    try {
+      const res = await axios.get(`${API_URL}/coupons/`);
+      const list = Array.isArray(res.data) ? res.data : res.data.results || [];
+      setAvailableCoupons(list);
+    } catch {
+      setAvailableCoupons([]);
+    } finally {
+      setCouponsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCoupons();
+  }, [loadCoupons]);
 
   // Limpa o intervalo quando o componente é desmontado
   useEffect(() => {
@@ -140,6 +218,48 @@ export function Checkout() {
         return;
       }
 
+      // 1) Cria o pedido (pendente) no backend
+      const orderItems = cartItems.map((item) => ({
+        product_id: item.id,
+        quantity: item.quantity || 1,
+      }));
+
+      const notes = customerNotes.slice(0, 500);
+      const orderBody = {
+        items: orderItems,
+        payment_method: paymentMethod,
+        customer_notes: notes,
+      };
+      if (appliedCoupon?.code) {
+        orderBody.coupon_code = appliedCoupon.code.toUpperCase();
+      }
+      if (useNewAddress) {
+        orderBody.delivery = delivery;
+      } else {
+        orderBody.address_id = parseInt(addressId, 10);
+      }
+
+      const orderRes = await axios.post(`${API_URL}/checkout/place/`, orderBody, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const createdOrder = orderRes.data;
+      setOrderId(createdOrder.id);
+      setOrderCode(createdOrder.public_code || `#${createdOrder.id}`);
+      try {
+        const raw = localStorage.getItem('unseen_order_ids');
+        const prev = raw ? JSON.parse(raw) : [];
+        const next = Array.isArray(prev) ? prev.map(String) : [];
+        const orderKey = String(createdOrder.id);
+        if (!next.includes(orderKey)) next.push(orderKey);
+        localStorage.setItem('unseen_order_ids', JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+
       // Prepara dados do pagamento
       const items = cartItems.map((item) => ({
         id: item.id,
@@ -148,8 +268,8 @@ export function Checkout() {
         price: String(item.price),
       }));
 
-      // Formata o valor final corretamente (máximo 2 casas decimais)
-      const valorFormatado = parseFloat(grandTotal).toFixed(2);
+      // Formata o valor do pedido vindo do backend
+      const valorFormatado = parseFloat(createdOrder.total).toFixed(2);
       
       console.log(`💰 Valor final: ${valorFormatado} (${valorFormatado.length} caracteres)`);
 
@@ -157,7 +277,8 @@ export function Checkout() {
         valor: valorFormatado,
         metodo_pagamento: paymentMethod,
         items: items,
-        descricao: `Compra com ${cartItems.length} item(ns)`,
+        descricao: `Pedido ${createdOrder.public_code || createdOrder.id} (${cartItems.length} item(ns))`,
+        pedido_id: String(createdOrder.id),
       };
 
       console.log('📤 Enviando pagamento:', paymentPayload);
@@ -174,7 +295,6 @@ export function Checkout() {
 
       const pagamento = res.data;
       setPaymentData(pagamento);
-      setOrderId(pagamento.pagamento_id);
       setShowPaymentSection(true);
 
       // Se for PIX, começa a verificar o status
@@ -232,54 +352,14 @@ export function Checkout() {
         clearInterval(statusCheckInterval);
         setStatusCheckInterval(null);
         
-        // Cria o pedido no sistema
-        handlePlaceOrderAfterPayment(token);
+        clearCart();
+        alert(`Pagamento aprovado! Pedido ${orderCode || ''} atualizado.`);
+        navigate('/minha-conta?secao=compras&sub=pedidos');
       }
     } catch (err) {
       console.error('Erro ao verificar status:', err);
     } finally {
       setCheckingStatus(false);
-    }
-  };
-
-  const handlePlaceOrderAfterPayment = async (token) => {
-    // Cria o pedido após o pagamento ser aprovado
-    try {
-      const items = cartItems.map((item) => ({
-        product_id: item.id,
-        quantity: item.quantity || 1,
-      }));
-
-      const notes = customerNotes.slice(0, 500);
-      const body = {
-        items,
-        payment_method: paymentMethod,
-        customer_notes: notes,
-      };
-
-      if (useNewAddress) {
-        body.delivery = delivery;
-      } else {
-        body.address_id = parseInt(addressId, 10);
-      }
-
-      const res = await axios.post(`${API_URL}/checkout/place/`, body, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      clearCart();
-      const code = res.data.public_code || `#${res.data.id}`;
-      alert(`Pagamento aprovado! Pedido ${code} foi criado com sucesso.`);
-      navigate('/minha-conta?secao=compras&sub=pedidos');
-    } catch (err) {
-      const d = err.response?.data;
-      const msg = typeof d?.detail === 'string' 
-        ? d.detail 
-        : 'Erro ao criar pedido. Tente novamente.';
-      setPaymentError(msg);
     }
   };
 
@@ -308,6 +388,46 @@ export function Checkout() {
     await handleProcessPayment();
   };
 
+  const applyCouponByCode = useCallback((rawCode) => {
+    const normalized = String(rawCode || '').trim().toUpperCase();
+    if (!normalized) {
+      setAppliedCoupon(null);
+      setCouponCode('');
+      setCouponFeedback('Informe um código para aplicar.');
+      return;
+    }
+
+    const found = availableCoupons.find((c) => String(c.code || '').toUpperCase() === normalized);
+    if (!found) {
+      setAppliedCoupon(null);
+      setCouponFeedback('Cupom não encontrado.');
+      return;
+    }
+    if (!isCouponActive(found)) {
+      setAppliedCoupon(null);
+      setCouponFeedback('Cupom expirado ou indisponível.');
+      return;
+    }
+    if (!isCouponApplicableToCart(found)) {
+      setAppliedCoupon(null);
+      setCouponFeedback('Este cupom não se aplica aos produtos do seu carrinho.');
+      return;
+    }
+
+    setCouponCode(normalized);
+    setAppliedCoupon(found);
+    setCouponFeedback(`Cupom ${normalized} aplicado com sucesso.`);
+  }, [availableCoupons, isCouponApplicableToCart]);
+
+  useEffect(() => {
+    if (!appliedCoupon) return;
+    const stillApplicable = isCouponActive(appliedCoupon) && isCouponApplicableToCart(appliedCoupon);
+    if (!stillApplicable) {
+      setAppliedCoupon(null);
+      setCouponFeedback('Cupom removido: não se aplica mais ao carrinho atual.');
+    }
+  }, [cartItems, appliedCoupon]);
+
   if (!cartItems.length) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6">
@@ -319,7 +439,7 @@ export function Checkout() {
     );
   }
 
-  const grandTotal = subtotal + (shippingFee || 0);
+  const grandTotal = discountedSubtotal + (shippingFee || 0);
 
   return (
     <div className="min-h-screen bg-cereon-light/30 py-10 px-4">
@@ -364,13 +484,28 @@ export function Checkout() {
                         {[item.selectedSize, item.selectedColor].filter(Boolean).join(' · ')}
                       </p>
                     )}
-                    <p className="text-sm text-gray-600">
-                      Qtd {item.quantity} × R$ {formatMoney(item.price)}
+                    <p className="text-sm text-gray-600">Qtd {item.quantity} × R$ {formatMoney(item.price)}</p>
+                    <p className="text-xs text-gray-500">
+                      Subtotal do item: R$ {formatMoney((parseFloat(item.price) || 0) * (item.quantity || 1))}
                     </p>
+                    {appliedCoupon && (
+                      <p className={`text-xs ${getItemDiscount(item, appliedCoupon) > 0 ? 'text-green-700' : 'text-gray-500'}`}>
+                        {getItemDiscount(item, appliedCoupon) > 0
+                          ? `Desconto (${appliedCoupon.code}) aplicado neste item: -R$ ${formatMoney(getItemDiscount(item, appliedCoupon))}`
+                          : `Cupom ${appliedCoupon.code} não se aplica a este item`}
+                      </p>
+                    )}
                   </div>
-                  <p className="font-semibold text-cereon-green whitespace-nowrap">
-                    R$ {formatMoney(parseFloat(item.price) * item.quantity)}
-                  </p>
+                  <div className="text-right whitespace-nowrap">
+                    <p className="font-semibold text-cereon-green">
+                      R$ {formatMoney((parseFloat(item.price) || 0) * (item.quantity || 1))}
+                    </p>
+                    {appliedCoupon && getItemDiscount(item, appliedCoupon) > 0 && (
+                      <p className="text-xs text-green-700">
+                        Total com desconto: R$ {formatMoney(((parseFloat(item.price) || 0) * (item.quantity || 1)) - getItemDiscount(item, appliedCoupon))}
+                      </p>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -556,6 +691,70 @@ export function Checkout() {
           <motion.section
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.13 }}
+            className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
+          >
+            <h2 className="text-lg font-bold text-cereon-dark flex items-center gap-2 mb-4">
+              <Package className="text-cereon-green" size={22} />
+              Cupom
+            </h2>
+            <div className="flex flex-wrap gap-3 items-center">
+              <input
+                value={couponCode}
+                onChange={(e) => {
+                  setCouponCode(e.target.value.toUpperCase());
+                  setAppliedCoupon(null);
+                  setCouponFeedback('');
+                }}
+                placeholder="Código do cupom (opcional)"
+                className="flex-1 min-w-[220px] border-2 border-gray-200 rounded-lg px-3 py-2"
+              />
+              <button
+                type="button"
+                onClick={() => applyCouponByCode(couponCode)}
+                className="px-4 py-2 bg-cereon-green text-white rounded-lg text-sm font-semibold hover:bg-green-600"
+              >
+                Aplicar
+              </button>
+              <p className="text-xs text-gray-500">
+                O cupom é validado no checkout (produtos elegíveis, validade, limite e 1 uso por CPF).
+              </p>
+            </div>
+            {couponFeedback && (
+              <p className={`text-sm mt-3 ${appliedCoupon ? 'text-green-700' : 'text-amber-700'}`}>
+                {couponFeedback}
+              </p>
+            )}
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-cereon-dark mb-2">Cupons disponíveis para este carrinho</p>
+              {couponsLoading ? (
+                <p className="text-sm text-gray-500">Carregando cupons...</p>
+              ) : applicableCoupons.length === 0 ? (
+                <p className="text-sm text-gray-500">Nenhum cupom aplicável aos itens atuais.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {applicableCoupons.map((coupon) => (
+                    <button
+                      key={coupon.id}
+                      type="button"
+                      onClick={() => applyCouponByCode(coupon.code)}
+                      className={`px-3 py-2 rounded-lg border text-sm font-semibold transition-colors ${
+                        appliedCoupon?.id === coupon.id
+                          ? 'bg-cereon-green text-white border-cereon-green'
+                          : 'bg-white text-cereon-dark border-cereon-green/40 hover:bg-cereon-light'
+                      }`}
+                    >
+                      {coupon.code} - {coupon.discount_percent}% OFF
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.section>
+
+          <motion.section
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
             className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
           >
@@ -673,6 +872,10 @@ export function Checkout() {
             <div className="flex justify-between text-cereon-dark mb-2">
               <span>Subtotal</span>
               <span>R$ {formatMoney(subtotal)}</span>
+            </div>
+            <div className="flex justify-between text-cereon-dark mb-2">
+              <span>Desconto {appliedCoupon ? `(${appliedCoupon.code})` : ''}</span>
+              <span>- R$ {formatMoney(appliedDiscount)}</span>
             </div>
             <div className="flex justify-between text-cereon-dark mb-2">
               <span>Frete</span>

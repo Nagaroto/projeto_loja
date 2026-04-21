@@ -15,6 +15,7 @@ class PagamentoListSerializer(serializers.ModelSerializer):
             'valor',
             'status',
             'metodo_pagamento',
+            'pedido_id',
             'data_criacao',
             'data_pagamento',
             'mercado_pago_id',
@@ -37,7 +38,7 @@ class PagamentoCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Pagamento
-        fields = ['valor', 'metodo_pagamento', 'items', 'descricao']
+        fields = ['valor', 'metodo_pagamento', 'items', 'descricao', 'pedido_id']
     
     def create(self, validated_data):
         # Remover items pois é write_only
@@ -59,6 +60,7 @@ class PagamentoDetailSerializer(serializers.ModelSerializer):
             'valor',
             'status',
             'metodo_pagamento',
+            'pedido_id',
             'mercado_pago_id',
             'qr_code_base64',
             'copia_cola',

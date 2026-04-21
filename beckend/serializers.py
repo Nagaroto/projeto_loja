@@ -2,7 +2,19 @@
 
 from rest_framework import serializers
 from django.utils.text import slugify
-from .models import Product, Coupon, Order, OrderItem, Category, UserProfile, Address
+import requests
+from .models import (
+    Product,
+    Coupon,
+    CouponRedemption,
+    Order,
+    OrderItem,
+    Category,
+    UserProfile,
+    Address,
+    Cart,
+    CartItem,
+)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -43,12 +55,88 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    def validate_full_name(self, value):
+        name = (value or '').strip()
+        if not name:
+            return ''
+        if len(name) < 3:
+            raise serializers.ValidationError('Nome inválido.')
+        parts = [p for p in name.split(' ') if p]
+        if len(parts) < 2:
+            raise serializers.ValidationError('Informe nome e sobrenome.')
+        return name
+
+    def validate_cpf(self, value):
+        raw = (value or '').strip()
+        if raw == '':
+            return ''
+        digits = ''.join(c for c in raw if c.isdigit())
+        if len(digits) != 11:
+            raise serializers.ValidationError('CPF deve conter 11 dígitos.')
+        formatted = f'{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}'
+        if self.instance and self.instance.cpf and self.instance.cpf != formatted:
+            raise serializers.ValidationError('CPF não pode ser alterado após cadastro.')
+        return formatted
+
     class Meta:
         model = UserProfile
         fields = ['full_name', 'cpf', 'phone']
 
 
 class AddressSerializer(serializers.ModelSerializer):
+    @staticmethod
+    def _validate_real_cep(cep_digits):
+        try:
+            r = requests.get(
+                f'https://viacep.com.br/ws/{cep_digits}/json/',
+                timeout=3,
+            )
+            if r.status_code != 200:
+                raise serializers.ValidationError({'detail': 'Não foi possível validar o CEP.'})
+            data = r.json() if r.content else {}
+            if isinstance(data, dict) and data.get('erro') is True:
+                raise serializers.ValidationError({'detail': 'CEP inválido (não encontrado).'})
+        except serializers.ValidationError:
+            raise
+        except Exception:
+            raise serializers.ValidationError({'detail': 'Não foi possível validar o CEP.'})
+
+    def validate(self, attrs):
+        current = {}
+        if self.instance:
+            for k in ('cep', 'street', 'number', 'neighborhood', 'city', 'state'):
+                current[k] = getattr(self.instance, k, '')
+        data = {**current, **attrs}
+
+        required = ('cep', 'street', 'number', 'neighborhood', 'city', 'state')
+        for k in required:
+            v = data.get(k) or ''
+            if not str(v).strip():
+                raise serializers.ValidationError({'detail': f'Campo obrigatório: {k}.'})
+
+        cep_digits = ''.join(c for c in str(data.get('cep') or '') if c.isdigit())
+        if len(cep_digits) != 8:
+            raise serializers.ValidationError({'detail': 'CEP deve conter 8 dígitos.'})
+        self._validate_real_cep(cep_digits)
+        attrs['cep'] = cep_digits
+
+        state = (data.get('state') or '').strip().upper()
+        if len(state) != 2:
+            raise serializers.ValidationError({'detail': 'UF deve ter 2 letras.'})
+        attrs['state'] = state
+
+        # Validações mínimas para evitar endereços irreais/lixo
+        def _min_len(field, n, msg):
+            v = str(data.get(field) or '').strip()
+            if len(v) < n:
+                raise serializers.ValidationError({'detail': msg})
+
+        _min_len('street', 3, 'Logradouro inválido.')
+        _min_len('neighborhood', 2, 'Bairro inválido.')
+        _min_len('city', 2, 'Cidade inválida.')
+
+        return attrs
+
     class Meta:
         model = Address
         fields = [
@@ -77,6 +165,30 @@ class CouponSerializer(serializers.ModelSerializer):
         model = Coupon
         fields = '__all__'
         read_only_fields = ['id', 'uses_count', 'created_at', 'updated_at']
+
+
+class CartItemProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'price', 'image_url', 'stock', 'is_active']
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    product = CartItemProductSerializer(read_only=True)
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'quantity', 'size', 'color', 'cart_item_key']
+        read_only_fields = ['id', 'product']
+
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = Cart
+        fields = ['items', 'updated_at', 'created_at']
+        read_only_fields = ['items', 'updated_at', 'created_at']
 
 
 class OrderItemSerializer(serializers.ModelSerializer):

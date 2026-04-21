@@ -9,6 +9,10 @@ export function CartDrawer() {
   const navigate = useNavigate();
   const { token } = useAuth();
   const { cartItems, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, getTotal } = useCart();
+  const getSafeQty = (qty) => {
+    const parsed = Number.parseInt(qty, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  };
 
   const goCheckout = () => {
     setIsCartOpen(false);
@@ -101,16 +105,16 @@ export function CartDrawer() {
                       {/* Quantidade */}
                       <div className="flex items-center space-x-2 mt-3">
                         <button
-                          onClick={() => updateQuantity(item.itemId, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.itemId, getSafeQty(item.quantity) - 1)}
                           className="p-1 hover:bg-gray-100 rounded transition-colors"
                         >
                           <Minus size={16} />
                         </button>
                         <span className="w-8 text-center font-semibold">
-                          {item.quantity}
+                          {getSafeQty(item.quantity)}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.itemId, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.itemId, getSafeQty(item.quantity) + 1)}
                           className="p-1 hover:bg-gray-100 rounded transition-colors"
                         >
                           <Plus size={16} />

@@ -12,6 +12,8 @@ import {
   Trash2,
   Plus,
   Home,
+  Eye,
+  Copy,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,11 +29,33 @@ const NAV = [
 
 const ORDER_STATUS_LABEL = {
   pendente: 'Aguardando pagamento',
+  pago: 'Pago',
+  expirado: 'Expirado',
   confirmado: 'Confirmado',
   enviado: 'Enviado',
   entregue: 'Entregue',
   cancelado: 'Cancelado',
 };
+
+// Mapa de cores e labels curtos para badges de status
+const STATUS_BADGE_CONFIG = {
+  pendente: { color: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pendente', border: 'border-yellow-300' },
+  pago: { color: 'bg-green-100', text: 'text-green-800', label: 'Pago', border: 'border-green-300' },
+  expirado: { color: 'bg-red-100', text: 'text-red-800', label: 'Expirado', border: 'border-red-300' },
+  confirmado: { color: 'bg-blue-100', text: 'text-blue-800', label: 'Confirmado', border: 'border-blue-300' },
+  enviado: { color: 'bg-blue-100', text: 'text-blue-800', label: 'Enviado', border: 'border-blue-300' },
+  entregue: { color: 'bg-green-100', text: 'text-green-800', label: 'Entregue', border: 'border-green-300' },
+  cancelado: { color: 'bg-red-100', text: 'text-red-800', label: 'Cancelado', border: 'border-red-300' },
+};
+
+function StatusBadge({ status }) {
+  const config = STATUS_BADGE_CONFIG[status] || STATUS_BADGE_CONFIG.pendente;
+  return (
+    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold border ${config.color} ${config.text} ${config.border}`}>
+      {config.label}
+    </span>
+  );
+}
 
 function formatOrderItemsLine(order) {
   const items = order.items;
@@ -42,6 +66,32 @@ function formatOrderItemsLine(order) {
       return `${it.quantity}× ${name}`;
     })
     .join(', ');
+}
+
+function getOrderPricingBreakdown(order, coupon) {
+  const items = Array.isArray(order?.items) ? order.items : [];
+  const subtotal = items.reduce((acc, it) => acc + (parseFloat(it?.subtotal) || 0), 0);
+  const shipping = parseFloat(order?.shipping_fee) || 0;
+  const total = parseFloat(order?.total) || 0;
+  if (!coupon) {
+    return { subtotal, shipping, total, discount: Math.max(0, subtotal + shipping - total), itemDiscounts: {} };
+  }
+
+  const pct = Number(coupon.discount_percent || 0) / 100;
+  const eligibleIds = Array.isArray(coupon.eligible_products) ? coupon.eligible_products.map(Number) : [];
+  const itemDiscounts = {};
+  let discount = 0;
+  for (const it of items) {
+    const pid = Number(it?.product?.id);
+    const lineSubtotal = parseFloat(it?.subtotal) || 0;
+    const applies = eligibleIds.length === 0 || eligibleIds.includes(pid);
+    const lineDiscount = applies ? Number((lineSubtotal * pct).toFixed(2)) : 0;
+    itemDiscounts[pid] = lineDiscount;
+    discount += lineDiscount;
+  }
+  const maxDiscount = Math.max(0, subtotal);
+  discount = Math.min(maxDiscount, Number(discount.toFixed(2)));
+  return { subtotal, shipping, total, discount, itemDiscounts };
 }
 
 async function loadAllPages(url, headers = null) {
@@ -69,6 +119,7 @@ export function UserAccount() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [section, setSection] = useState('dados');
   const [comprasTab, setComprasTab] = useState('pedidos');
+  const [ordersFilter, setOrdersFilter] = useState('pendentes');
   const [loading, setLoading] = useState(true);
 
   const [profile, setProfile] = useState({
@@ -77,9 +128,15 @@ export function UserAccount() {
     phone: '',
     email: '',
   });
+  const [initialCpf, setInitialCpf] = useState('');
+  const [profileErr, setProfileErr] = useState('');
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
   const [coupons, setCoupons] = useState([]);
+  const [unseenOrderIds, setUnseenOrderIds] = useState([]);
+  const [paymentsByOrder, setPaymentsByOrder] = useState({});
+  const [paymentDetailsByOrder, setPaymentDetailsByOrder] = useState({});
+  const [selectedOrderId, setSelectedOrderId] = useState('');
 
   const [addrForm, setAddrForm] = useState({
     label: 'Principal',
@@ -92,6 +149,8 @@ export function UserAccount() {
     state: '',
     is_default: false,
   });
+  const [addrErr, setAddrErr] = useState('');
+  const [editingAddressId, setEditingAddressId] = useState(null);
 
   const [pwdForm, setPwdForm] = useState({ old_password: '', new_password: '' });
   const [emailForm, setEmailForm] = useState({ new_email: '', password: '' });
@@ -107,12 +166,14 @@ export function UserAccount() {
     const h = await authHeader();
     if (!h) return;
     const res = await axios.get(`${API_URL}/me/profile/`, { headers: h });
-    setProfile({
+    const next = {
       full_name: res.data.full_name || '',
       cpf: res.data.cpf || '',
       phone: res.data.phone || '',
       email: res.data.email || user?.email || '',
-    });
+    };
+    setProfile(next);
+    setInitialCpf(next.cpf || '');
   }, [authHeader, user?.email]);
 
   const loadAddresses = useCallback(async () => {
@@ -134,14 +195,42 @@ export function UserAccount() {
     setCoupons(list);
   }, []);
 
+  const loadPayments = useCallback(async () => {
+    const h = await authHeader();
+    if (!h) return;
+    const res = await axios.get(`${API_URL}/pagamentos/`, { headers: h });
+    const list = Array.isArray(res.data) ? res.data : res.data.results || [];
+    const map = {};
+    for (const p of list) {
+      const key = String(p?.pedido_id || '');
+      if (!key) continue;
+      map[key] = p;
+    }
+    setPaymentsByOrder(map);
+  }, [authHeader]);
+
   useEffect(() => {
-    const secao = searchParams.get('secao');
+    const secao = searchParams.get('secao') || 'dados';
     const sub = searchParams.get('sub');
-    if (secao === 'compras') {
-      setSection('compras');
-      if (sub === 'pedidos') setComprasTab('pedidos');
+    const pedido = searchParams.get('pedido');
+    if (NAV.some((i) => i.id === secao)) setSection(secao);
+    else setSection('dados');
+    if (secao === 'compras' && sub === 'pedidos') setComprasTab('pedidos');
+    if (secao === 'compras' && sub === 'pedido' && pedido) {
+      setComprasTab('pedido');
+      setSelectedOrderId(String(pedido));
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('unseen_order_ids');
+      const parsed = raw ? JSON.parse(raw) : [];
+      setUnseenOrderIds(Array.isArray(parsed) ? parsed.map(String) : []);
+    } catch {
+      setUnseenOrderIds([]);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,6 +244,8 @@ export function UserAccount() {
         await loadOrders();
         if (cancelled) return;
         await loadCoupons();
+        if (cancelled) return;
+        await loadPayments();
       } catch (e) {
         console.error(e);
       } finally {
@@ -164,13 +255,41 @@ export function UserAccount() {
     return () => {
       cancelled = true;
     };
-  }, [loadProfile, loadAddresses, loadOrders, loadCoupons]);
+  }, [loadProfile, loadAddresses, loadOrders, loadCoupons, loadPayments]);
 
   useEffect(() => {
     if (section === 'compras') {
       loadOrders();
+      loadPayments();
     }
-  }, [section, loadOrders]);
+  }, [section, loadOrders, loadPayments]);
+
+  useEffect(() => {
+    if (section !== 'compras' || comprasTab !== 'pedidos') return;
+    if (!unseenOrderIds.length) return;
+    const visibleOrderIds = new Set(orders.map((o) => String(o.id)));
+    const remaining = unseenOrderIds.filter((id) => !visibleOrderIds.has(id));
+    try {
+      localStorage.setItem('unseen_order_ids', JSON.stringify(remaining));
+    } catch {
+      /* ignore */
+    }
+    setUnseenOrderIds(remaining);
+  }, [section, comprasTab, orders, unseenOrderIds]);
+
+  // Remove notificação quando o cliente acessa detalhes via URL ou volta à página
+  useEffect(() => {
+    if (section !== 'compras' || comprasTab !== 'pedido' || !selectedOrderId) return;
+    if (!unseenOrderIds.includes(selectedOrderId)) return;
+    
+    const remaining = unseenOrderIds.filter((id) => id !== selectedOrderId);
+    try {
+      localStorage.setItem('unseen_order_ids', JSON.stringify(remaining));
+    } catch {
+      /* ignore */
+    }
+    setUnseenOrderIds(remaining);
+  }, [comprasTab, selectedOrderId, unseenOrderIds, section]);
 
   const openComprasPedidos = () => {
     setSection('compras');
@@ -178,9 +297,75 @@ export function UserAccount() {
     setSearchParams({ secao: 'compras', sub: 'pedidos' });
   };
 
+  const copyText = async (text) => {
+    try {
+      await navigator.clipboard.writeText(String(text || ''));
+      alert('Copiado com sucesso.');
+    } catch {
+      alert('Não foi possível copiar.');
+    }
+  };
+
+  const loadPaymentDetailsForOrder = async (orderId) => {
+    const orderKey = String(orderId);
+    const paymentListRow = paymentsByOrder[orderKey];
+    if (!paymentListRow?.id || paymentDetailsByOrder[orderKey]) return;
+    try {
+      const h = await authHeader();
+      if (!h) return;
+      const res = await axios.get(`${API_URL}/pagamentos/${paymentListRow.id}/`, { headers: h });
+      setPaymentDetailsByOrder((prev) => ({ ...prev, [orderKey]: res.data }));
+    } catch (err) {
+      console.error('Erro ao carregar detalhes do pagamento:', err);
+    }
+  };
+
+  const openOrderDetailsTab = async (orderId) => {
+    const id = String(orderId);
+    
+    // Remove notificação imediatamente (antes de atualizar state)
+    const remaining = unseenOrderIds.filter((o) => o !== id);
+    if (remaining.length !== unseenOrderIds.length) {
+      try {
+        localStorage.setItem('unseen_order_ids', JSON.stringify(remaining));
+      } catch {
+        /* ignore */
+      }
+      setUnseenOrderIds(remaining);
+    }
+    
+    setSection('compras');
+    setComprasTab('pedido');
+    setSelectedOrderId(id);
+    setSearchParams({ secao: 'compras', sub: 'pedido', pedido: id });
+    await loadPaymentDetailsForOrder(id);
+  };
+
   const saveProfile = async (e) => {
     e.preventDefault();
+    setProfileErr('');
     try {
+      const fullName = (profile.full_name || '').trim();
+      if (fullName && fullName.split(' ').filter(Boolean).length < 2) {
+        setProfileErr('Informe nome e sobrenome.');
+        return;
+      }
+
+      const cpfDigits = String(profile.cpf || '').replace(/\D/g, '');
+      const cpfLocked = Boolean(initialCpf);
+      if (cpfLocked && profile.cpf !== initialCpf) {
+        setProfileErr('CPF não pode ser alterado após definido.');
+        return;
+      }
+      if (!cpfDigits) {
+        setProfileErr('CPF é obrigatório.');
+        return;
+      }
+      if (cpfDigits.length !== 11) {
+        setProfileErr('CPF deve conter 11 dígitos.');
+        return;
+      }
+
       const h = await authHeader();
       if (!h) return;
       await axios.patch(
@@ -192,6 +377,7 @@ export function UserAccount() {
         },
         { headers: { ...h, 'Content-Type': 'application/json' } }
       );
+      await loadProfile();
       alert('Dados salvos.');
     } catch (err) {
       alert('Erro ao salvar: ' + (err.response?.data?.detail || err.message));
@@ -200,12 +386,38 @@ export function UserAccount() {
 
   const addAddress = async (e) => {
     e.preventDefault();
+    setAddrErr('');
     try {
+      const required = ['cep', 'street', 'number', 'neighborhood', 'city', 'state'];
+      for (const k of required) {
+        if (!String(addrForm[k] || '').trim()) {
+          setAddrErr(`Campo obrigatório: ${k}.`);
+          return;
+        }
+      }
+      const cepDigits = String(addrForm.cep || '').replace(/\D/g, '');
+      if (cepDigits.length !== 8) {
+        setAddrErr('CEP deve conter 8 dígitos.');
+        return;
+      }
+      const uf = String(addrForm.state || '').trim().toUpperCase();
+      if (uf.length !== 2) {
+        setAddrErr('UF deve ter 2 letras.');
+        return;
+      }
+
       const h = await authHeader();
       if (!h) return;
-      await axios.post(`${API_URL}/me/addresses/`, addrForm, {
-        headers: { ...h, 'Content-Type': 'application/json' },
-      });
+      const payload = { ...addrForm, cep: cepDigits, state: uf };
+      if (editingAddressId) {
+        await axios.patch(`${API_URL}/me/addresses/${editingAddressId}/`, payload, {
+          headers: { ...h, 'Content-Type': 'application/json' },
+        });
+      } else {
+        await axios.post(`${API_URL}/me/addresses/`, payload, {
+          headers: { ...h, 'Content-Type': 'application/json' },
+        });
+      }
       setAddrForm({
         label: 'Principal',
         cep: '',
@@ -217,10 +429,12 @@ export function UserAccount() {
         state: '',
         is_default: false,
       });
+      setEditingAddressId(null);
       await loadAddresses();
-      alert('Endereço adicionado.');
+      alert(editingAddressId ? 'Endereço atualizado.' : 'Endereço adicionado.');
     } catch (err) {
-      alert('Erro: ' + (err.response?.data?.detail || JSON.stringify(err.response?.data) || err.message));
+      const msg = err.response?.data?.detail || JSON.stringify(err.response?.data) || err.message;
+      setAddrErr(typeof msg === 'string' ? msg : 'Erro ao salvar endereço.');
     }
   };
 
@@ -277,6 +491,22 @@ export function UserAccount() {
       await loadOrders();
     } catch (err) {
       alert(err.response?.data?.detail || 'Não foi possível cancelar o pedido.');
+    }
+  };
+
+  // Função para filtrar pedidos por status
+  const getFilteredOrders = () => {
+    const conclusionStatuses = ['pago', 'confirmado', 'enviado', 'entregue'];
+    
+    switch (ordersFilter) {
+      case 'pendentes':
+        return orders.filter((o) => o.status === 'pendente');
+      case 'cancelados':
+        return orders.filter((o) => o.status === 'cancelado');
+      case 'concluidos':
+        return orders.filter((o) => conclusionStatuses.includes(o.status));
+      default:
+        return orders;
     }
   };
 
@@ -347,6 +577,11 @@ export function UserAccount() {
                 >
                   <Icon className="w-5 h-5 shrink-0" />
                   {item.label}
+                  {item.id === 'compras' && unseenOrderIds.length > 0 && (
+                    <span className="ml-auto text-[10px] bg-red-500 text-white rounded-full min-w-5 h-5 px-1 flex items-center justify-center font-bold">
+                      {unseenOrderIds.length}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -362,6 +597,11 @@ export function UserAccount() {
               <div>
                 <h2 className="text-xl font-bold text-cereon-dark mb-6">Dados pessoais</h2>
                 <form onSubmit={saveProfile} className="space-y-4 max-w-lg">
+                  {profileErr && (
+                    <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                      {profileErr}
+                    </p>
+                  )}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Nome completo</label>
                     <input
@@ -373,11 +613,19 @@ export function UserAccount() {
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">CPF</label>
                     <input
-                      className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green outline-none"
+                      className={`w-full px-4 py-2 border-2 rounded-lg outline-none ${
+                        initialCpf
+                          ? 'border-gray-100 bg-gray-50 text-gray-500'
+                          : 'border-gray-200 focus:border-cereon-green'
+                      }`}
                       value={profile.cpf}
                       onChange={(e) => setProfile({ ...profile, cpf: e.target.value })}
                       placeholder="000.000.000-00"
+                      disabled={Boolean(initialCpf)}
                     />
+                    {initialCpf && (
+                      <p className="text-xs text-gray-500 mt-1">CPF não pode ser alterado após definido.</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Telefone</label>
@@ -410,6 +658,11 @@ export function UserAccount() {
             {section === 'enderecos' && (
               <div>
                 <h2 className="text-xl font-bold text-cereon-dark mb-6">Endereços</h2>
+                {addrErr && (
+                  <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">
+                    {addrErr}
+                  </p>
+                )}
                 <div className="space-y-4 mb-8">
                   {addresses.length === 0 ? (
                     <p className="text-gray-500">Nenhum endereço cadastrado.</p>
@@ -431,21 +684,48 @@ export function UserAccount() {
                             {a.neighborhood} — {a.city}/{a.state} — CEP {a.cep}
                           </p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => removeAddress(a.id)}
-                          className="text-red-500 p-2 hover:bg-red-50 rounded-lg"
-                          aria-label="Remover"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAddrErr('');
+                              setEditingAddressId(a.id);
+                              setAddrForm({
+                                label: a.label || 'Principal',
+                                cep: a.cep || '',
+                                street: a.street || '',
+                                number: a.number || '',
+                                complement: a.complement || '',
+                                neighborhood: a.neighborhood || '',
+                                city: a.city || '',
+                                state: a.state || '',
+                                is_default: Boolean(a.is_default),
+                              });
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="text-cereon-dark p-2 hover:bg-gray-50 rounded-lg"
+                            aria-label="Editar"
+                            title="Editar"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeAddress(a.id)}
+                            className="text-red-500 p-2 hover:bg-red-50 rounded-lg"
+                            aria-label="Remover"
+                            title="Remover"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
                 </div>
 
                 <h3 className="font-bold text-cereon-dark mb-3 flex items-center gap-2">
-                  <Plus className="w-5 h-5" /> Novo endereço
+                  <Plus className="w-5 h-5" /> {editingAddressId ? 'Editar endereço' : 'Novo endereço'}
                 </h3>
                 <form onSubmit={addAddress} className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
                   <input
@@ -509,8 +789,31 @@ export function UserAccount() {
                     type="submit"
                     className="md:col-span-2 bg-cereon-green text-white py-2 rounded-lg font-semibold"
                   >
-                    Adicionar endereço
+                    {editingAddressId ? 'Salvar alterações' : 'Adicionar endereço'}
                   </button>
+                  {editingAddressId && (
+                    <button
+                      type="button"
+                      className="md:col-span-2 bg-gray-200 text-cereon-dark py-2 rounded-lg font-semibold"
+                      onClick={() => {
+                        setEditingAddressId(null);
+                        setAddrErr('');
+                        setAddrForm({
+                          label: 'Principal',
+                          cep: '',
+                          street: '',
+                          number: '',
+                          complement: '',
+                          neighborhood: '',
+                          city: '',
+                          state: '',
+                          is_default: false,
+                        });
+                      }}
+                    >
+                      Cancelar edição
+                    </button>
+                  )}
                 </form>
               </div>
             )}
@@ -592,7 +895,7 @@ export function UserAccount() {
               <div>
                 <h2 className="text-xl font-bold text-cereon-dark mb-4">Minhas compras</h2>
                 <p className="text-sm text-gray-600 mb-6">
-                  Pedidos em aberto devem ser pagos em até 24 horas; após isso são removidos automaticamente.
+                  Pedidos em aberto devem ser pagos em até 1 hora; após isso expiram automaticamente.
                 </p>
                 <div className="flex gap-2 border-b border-gray-200 mb-6">
                   <button
@@ -608,7 +911,24 @@ export function UserAccount() {
                     }`}
                   >
                     Meus pedidos
+                    {unseenOrderIds.length > 0 && (
+                      <span className="ml-2 text-[10px] bg-red-500 text-white rounded-full min-w-5 h-5 px-1 inline-flex items-center justify-center font-bold">
+                        {unseenOrderIds.length}
+                      </span>
+                    )}
                   </button>
+                  {comprasTab === 'pedido' && selectedOrderId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setComprasTab('pedido');
+                        setSearchParams({ secao: 'compras', sub: 'pedido', pedido: selectedOrderId });
+                      }}
+                      className="px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors border-cereon-green text-cereon-green"
+                    >
+                      Pedido {selectedOrderId}
+                    </button>
+                  )}
                 </div>
 
                 {comprasTab === 'pedidos' && (
@@ -616,71 +936,274 @@ export function UserAccount() {
                     {orders.length === 0 ? (
                       <p className="text-gray-500">Você ainda não tem pedidos.</p>
                     ) : (
-                      <div className="space-y-4">
-                        {orders.map((o) => (
-                          <div key={o.id} className="border border-gray-200 rounded-lg p-4 space-y-2">
-                            <div className="flex flex-wrap justify-between gap-2 items-start">
-                              <div>
-                                <span className="font-bold text-cereon-dark">
-                                  Pedido {o.public_code || `#${o.id}`}
-                                </span>
-                                <p className="text-sm text-gray-700 mt-1">{formatOrderItemsLine(o)}</p>
-                              </div>
-                              <span className="text-cereon-green font-bold whitespace-nowrap">
-                                R$ {parseFloat(o.total).toFixed(2)}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-600">
-                              {new Date(o.created_at).toLocaleString('pt-BR')} —{' '}
-                              {ORDER_STATUS_LABEL[o.status] || o.status}
+                      <>
+                        {/* Filtros */}
+                        <div className="flex flex-wrap gap-3 mb-6 pb-4 border-b border-gray-200">
+                          <button
+                            type="button"
+                            onClick={() => setOrdersFilter('pendentes')}
+                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                              ordersFilter === 'pendentes'
+                                ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                                : 'bg-gray-100 text-gray-600 border border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            Pendentes ({orders.filter((o) => o.status === 'pendente').length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOrdersFilter('concluidos')}
+                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                              ordersFilter === 'concluidos'
+                                ? 'bg-green-100 text-green-800 border border-green-300'
+                                : 'bg-gray-100 text-gray-600 border border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            Concluídos ({orders.filter((o) => ['pago', 'confirmado', 'enviado', 'entregue'].includes(o.status)).length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOrdersFilter('cancelados')}
+                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                              ordersFilter === 'cancelados'
+                                ? 'bg-red-100 text-red-800 border border-red-300'
+                                : 'bg-gray-100 text-gray-600 border border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            Cancelados ({orders.filter((o) => o.status === 'cancelado').length})
+                          </button>
+                        </div>
+
+                        {/* Pedidos Filtrados */}
+                        <div className="space-y-4">
+                          {getFilteredOrders().length === 0 ? (
+                            <p className="text-gray-500 py-8 text-center">
+                              Nenhum pedido {ordersFilter === 'pendentes' ? 'pendente' : ordersFilter === 'concluidos' ? 'concluído' : 'cancelado'}.
                             </p>
-                            {o.status === 'pendente' && o.expires_at && (
-                              <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                                Prazo para pagamento até{' '}
-                                {new Date(o.expires_at).toLocaleString('pt-BR', {
-                                  dateStyle: 'short',
-                                  timeStyle: 'short',
-                                })}
-                              </p>
-                            )}
-                            {o.shipping_fee != null && (
-                              <p className="text-sm text-gray-600">
-                                Frete: R$ {parseFloat(o.shipping_fee).toFixed(2)}
-                              </p>
-                            )}
-                            {o.payment_method && (
-                              <p className="text-sm text-gray-600">
-                                Pagamento:{' '}
-                                {{
-                                  pix: 'PIX',
-                                  cartao: 'Cartão',
-                                  boleto: 'Boleto',
-                                }[o.payment_method] || o.payment_method}
-                              </p>
-                            )}
-                            {o.delivery_summary && (
-                              <p className="text-sm text-cereon-dark">Entrega: {o.delivery_summary}</p>
-                            )}
-                            {o.customer_notes && (
-                              <p className="text-sm text-gray-600">Obs.: {o.customer_notes}</p>
-                            )}
-                            {o.is_cancelable && (
-                              <div className="pt-2">
-                                <button
-                                  type="button"
-                                  onClick={() => cancelOrder(o.id)}
-                                  className="text-sm font-semibold text-red-600 hover:text-red-700 underline"
-                                >
-                                  Cancelar pedido
-                                </button>
+                          ) : (
+                            getFilteredOrders().map((o) => (
+                              <div key={o.id} className="border border-gray-200 rounded-lg p-4 space-y-2">
+                                <div className="flex flex-wrap justify-between gap-2 items-start">
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <StatusBadge status={o.status} />
+                                      <span className="font-bold text-cereon-dark">
+                                        Pedido {o.public_code || `#${o.id}`}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mt-1">{formatOrderItemsLine(o)}</p>
+                                  </div>
+                                  <span className="text-cereon-green font-bold whitespace-nowrap">
+                                    R$ {parseFloat(o.total).toFixed(2)}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-600">
+                                  {new Date(o.created_at).toLocaleString('pt-BR')}
+                                </p>
+                                {o.status === 'pendente' && o.expires_at && (
+                                  <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                                    Prazo para pagamento até{' '}
+                                    {new Date(o.expires_at).toLocaleString('pt-BR', {
+                                      dateStyle: 'short',
+                                      timeStyle: 'short',
+                                    })}
+                                  </p>
+                                )}
+                                {o.shipping_fee != null && (
+                                  <p className="text-sm text-gray-600">
+                                    Frete: R$ {parseFloat(o.shipping_fee).toFixed(2)}
+                                  </p>
+                                )}
+                                {o.payment_method && (
+                                  <p className="text-sm text-gray-600">
+                                    Pagamento:{' '}
+                                    {{
+                                      pix: 'PIX',
+                                      cartao: 'Cartão',
+                                      boleto: 'Boleto',
+                                    }[o.payment_method] || o.payment_method}
+                                  </p>
+                                )}
+                                {o.delivery_summary && (
+                                  <p className="text-sm text-cereon-dark">Entrega: {o.delivery_summary}</p>
+                                )}
+                                {o.customer_notes && (
+                                  <p className="text-sm text-gray-600">Obs.: {o.customer_notes}</p>
+                                )}
+                                {o.is_cancelable && (
+                                  <div className="pt-2 flex flex-wrap gap-4 items-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => cancelOrder(o.id)}
+                                      className="text-sm font-semibold text-red-600 hover:text-red-700 underline"
+                                    >
+                                      Cancelar pedido
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => o.status !== 'cancelado' && openOrderDetailsTab(o.id)}
+                                      disabled={o.status === 'cancelado'}
+                                      className={`text-sm font-semibold inline-flex items-center gap-1 ${
+                                        o.status === 'cancelado'
+                                          ? 'text-gray-400 cursor-not-allowed opacity-50'
+                                          : 'text-cereon-green hover:text-green-700 underline'
+                                      }`}
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                      Ver detalhes
+                                    </button>
+                                  </div>
+                                )}
+                                {!o.is_cancelable && (
+                                  <div className="pt-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => o.status !== 'cancelado' && openOrderDetailsTab(o.id)}
+                                      disabled={o.status === 'cancelado'}
+                                      className={`text-sm font-semibold inline-flex items-center gap-1 ${
+                                        o.status === 'cancelado'
+                                          ? 'text-gray-400 cursor-not-allowed opacity-50'
+                                          : 'text-cereon-green hover:text-green-700 underline'
+                                      }`}
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                      Ver detalhes
+                                    </button>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                            ))
+                          )}
+                        </div>
+                      </>
                     )}
                   </>
                 )}
+
+                {comprasTab === 'pedido' && (() => {
+                  const order = orders.find((o) => String(o.id) === String(selectedOrderId));
+                  if (!order) {
+                    return (
+                      <p className="text-gray-500">
+                        Pedido não encontrado. Volte para "Meus pedidos" e selecione novamente.
+                      </p>
+                    );
+                  }
+                  const payment = paymentDetailsByOrder[String(order.id)];
+                  const coupon = coupons.find((c) => Number(c.id) === Number(order.coupon));
+                  const breakdown = getOrderPricingBreakdown(order, coupon);
+
+                  return (
+                    <div className="space-y-5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold text-cereon-dark">
+                          Detalhes do pedido {order.public_code || `#${order.id}`}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setComprasTab('pedidos');
+                            setSearchParams({ secao: 'compras', sub: 'pedidos' });
+                          }}
+                          className="text-sm font-semibold text-cereon-green underline"
+                        >
+                          Voltar para pedidos
+                        </button>
+                      </div>
+
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm text-gray-600">
+                            {new Date(order.created_at).toLocaleString('pt-BR')}
+                          </span>
+                          <span className="text-gray-300">•</span>
+                          <StatusBadge status={order.status} />
+                        </div>
+                        <ul className="mt-3 divide-y divide-gray-100">
+                          {order.items?.map((it) => {
+                            const lineSubtotal = parseFloat(it.subtotal) || 0;
+                            const pid = Number(it.product?.id);
+                            const lineDiscount = breakdown.itemDiscounts[pid] || 0;
+                            return (
+                              <li key={it.id} className="py-3">
+                                <p className="font-medium text-cereon-dark">{it.product?.name || 'Produto'}</p>
+                                <p className="text-sm text-gray-600">
+                                  {it.quantity} x R$ {parseFloat(it.price).toFixed(2)} = R$ {lineSubtotal.toFixed(2)}
+                                </p>
+                                {coupon && (
+                                  <p className={`text-xs ${lineDiscount > 0 ? 'text-green-700' : 'text-gray-500'}`}>
+                                    {lineDiscount > 0
+                                      ? `Desconto (${coupon.code}) neste item: -R$ ${lineDiscount.toFixed(2)}`
+                                      : `Cupom ${coupon.code} não aplicado neste item`}
+                                  </p>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+
+                      <div className="border border-gray-200 rounded-lg p-4 text-sm space-y-1">
+                        <div className="flex justify-between"><span>Subtotal</span><span>R$ {breakdown.subtotal.toFixed(2)}</span></div>
+                        <div className="flex justify-between">
+                          <span>Desconto {coupon ? `(${coupon.code})` : ''}</span>
+                          <span>- R$ {breakdown.discount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between"><span>Frete</span><span>R$ {breakdown.shipping.toFixed(2)}</span></div>
+                        <div className="flex justify-between border-t pt-2 font-bold text-cereon-green">
+                          <span>Total</span><span>R$ {breakdown.total.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <div className="border border-cereon-green/20 bg-cereon-light/40 rounded-lg p-4 space-y-2">
+                        <h4 className="font-semibold text-cereon-dark">Pagamento</h4>
+                        {paymentsByOrder[String(order.id)] ? (
+                          <>
+                            {!payment && (
+                              <button
+                                type="button"
+                                onClick={() => loadPaymentDetailsForOrder(order.id)}
+                                className="text-sm text-cereon-green underline"
+                              >
+                                Carregar detalhes do pagamento
+                              </button>
+                            )}
+                            {payment && (
+                              <div className="space-y-2 text-sm text-cereon-dark">
+                                <p>Status do pagamento: <strong>{payment.status}</strong></p>
+                                <p>ID do pagamento: <span className="font-mono break-all">{payment.id}</span></p>
+                                {payment.copia_cola && (
+                                  <div className="bg-white border border-gray-200 rounded p-2">
+                                    <p className="text-xs text-gray-500 mb-1">Chave PIX (copia e cola)</p>
+                                    <div className="flex gap-2 items-start">
+                                      <code className="text-xs break-all flex-1">{payment.copia_cola}</code>
+                                      <button
+                                        type="button"
+                                        onClick={() => copyText(payment.copia_cola)}
+                                        className="px-2 py-1 bg-cereon-green text-white rounded text-xs inline-flex items-center gap-1"
+                                      >
+                                        <Copy className="w-3 h-3" />
+                                        Copiar
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                                {payment.qr_code_base64 && (
+                                  <div className="bg-white border border-gray-200 rounded p-2 inline-block">
+                                    <p className="text-xs text-gray-500 mb-1">QR Code PIX</p>
+                                    <img src={payment.qr_code_base64} alt="QR Code PIX do pedido" className="w-44 h-44 object-contain" />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-600">Nenhum pagamento vinculado encontrado para este pedido.</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 

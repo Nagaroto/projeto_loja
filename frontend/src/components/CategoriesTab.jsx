@@ -253,7 +253,7 @@ export function CategoriesTab() {
             >
               <h4 className="font-bold text-cereon-dark text-lg mb-1">{category.name}</h4>
               {category.description && (
-                <p className="text-sm text-cereon-dark/70 mb-4 line-clamp-2">{category.description}</p>
+                <p className="text-sm text-cereon-dark mb-4 line-clamp-2">{category.description}</p>
               )}
               <div className="flex gap-2">
                 <button

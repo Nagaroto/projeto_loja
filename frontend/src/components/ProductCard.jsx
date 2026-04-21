@@ -1,15 +1,26 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAlert } from '../context/AlertContext';
 import { motion } from 'framer-motion';
 
 export function ProductCard({ product, categories = [] }) {
   const { addToCart } = useCart();
+  const { showAlert } = useAlert();
+  const navigate = useNavigate();
   const [isAdded, setIsAdded] = React.useState(false);
 
-  const handleAddToCart = () => {
-    addToCart(product);
+  const handleAddToCart = async () => {
+    const added = addToCart(product);
+    if (!added) {
+      await showAlert('É necessário estar logado para colocar itens no carrinho.', {
+        title: 'Acesso necessário',
+        type: 'warning',
+      });
+      navigate('/login');
+      return;
+    }
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };

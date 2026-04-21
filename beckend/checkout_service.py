@@ -4,6 +4,7 @@ import re
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+import requests
 
 CONTROL_CHARS = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
 
@@ -21,6 +22,17 @@ def _cep_digits(cep_raw):
     d = ''.join(c for c in (cep_raw or '') if c.isdigit())
     if len(d) != 8:
         raise ValidationError('CEP deve conter 8 dígitos.')
+    try:
+        r = requests.get(f'https://viacep.com.br/ws/{d}/json/', timeout=3)
+        if r.status_code != 200:
+            raise ValidationError('Não foi possível validar o CEP.')
+        data = r.json() if r.content else {}
+        if isinstance(data, dict) and data.get('erro') is True:
+            raise ValidationError('CEP inválido (não encontrado).')
+    except ValidationError:
+        raise
+    except Exception:
+        raise ValidationError('Não foi possível validar o CEP.')
     return d
 
 

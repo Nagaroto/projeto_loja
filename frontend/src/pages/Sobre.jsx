@@ -1,9 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Users, Leaf, Zap } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import cereonImg from '../imgs/cereon.webp';
 
 export function Sobre() {
+  const { isDark } = useTheme();
   const values = [
     {
       icon: Heart,
@@ -30,7 +32,7 @@ export function Sobre() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-cereon-green to-green-400 text-white py-20">
+      <section className={`${isDark ? 'bg-cereon-green/20' : 'bg-gradient-to-r from-cereon-green to-green-400'} text-white py-20`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -171,7 +173,7 @@ export function Sobre() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-r from-cereon-green to-green-400 text-white">
+      <section className={`py-20 ${isDark ? 'bg-cereon-green/20' : 'bg-gradient-to-r from-cereon-green to-green-400'} text-white`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

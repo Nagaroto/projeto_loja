@@ -10,6 +10,7 @@ from .views import (
     CouponViewSet,
     OrderViewSet,
     CategoryViewSet,
+    AdminCustomersView,
     analytics_view,
     PublishedProductsView,
 )
@@ -17,10 +18,14 @@ from .checkout_views import CheckoutView, ShippingQuoteView
 from .user_account_views import (
     AddressDetailView,
     AddressListCreateView,
+    CartAddItemView,
+    CartRemoveItemView,
+    CartSyncView,
     CancelOrderView,
     ChangeEmailView,
     ChangePasswordView,
     DeleteAccountView,
+    MyCartView,
     MyOrdersView,
     UserProfileMeView,
 )
@@ -32,6 +37,7 @@ router.register(r'coupons', CouponViewSet)
 router.register(r'orders', OrderViewSet)
 
 urlpatterns = [
+    path('admin/customers/', AdminCustomersView.as_view(), name='admin-customers'),
     path('checkout/shipping/', ShippingQuoteView.as_view(), name='checkout-shipping'),
     path('checkout/place/', CheckoutView.as_view(), name='checkout-place'),
     path('products/published/', PublishedProductsView.as_view(), name='published-products'),
@@ -41,6 +47,10 @@ urlpatterns = [
     path('me/profile/', UserProfileMeView.as_view(), name='me-profile'),
     path('me/addresses/', AddressListCreateView.as_view(), name='me-addresses'),
     path('me/addresses/<int:pk>/', AddressDetailView.as_view(), name='me-address-detail'),
+    path('me/cart/', MyCartView.as_view(), name='me-cart'),
+    path('me/cart/add/', CartAddItemView.as_view(), name='me-cart-add'),
+    path('me/cart/remove/', CartRemoveItemView.as_view(), name='me-cart-remove'),
+    path('me/cart/sync/', CartSyncView.as_view(), name='me-cart-sync'),
     path('me/change-password/', ChangePasswordView.as_view(), name='me-change-password'),
     path('me/change-email/', ChangeEmailView.as_view(), name='me-change-email'),
     path('me/delete-account/', DeleteAccountView.as_view(), name='me-delete-account'),

@@ -1,8 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Award, Leaf, Sparkles, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export function WhyChoose() {
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          setIsDark(document.documentElement.classList.contains('dark'));
+        }
+      });
+    });
+    observer.observe(document.documentElement, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
   const reasons = [
     {
       icon: Award,
@@ -47,7 +61,7 @@ export function WhyChoose() {
   };
 
   return (
-    <section className="py-20 bg-cereon-light">
+    <section className={`py-20 ${isDark ? 'bg-cereon-green/20' : 'bg-cereon-light'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Título */}
         <motion.div

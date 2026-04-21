@@ -8,7 +8,7 @@ from django.db.models import F, Q
 from django.utils import timezone
 
 ORDER_CODE_PREFIX = 'qwrt'
-UNPAID_RETENTION = timedelta(hours=24)
+UNPAID_RETENTION = timedelta(hours=1)
 
 
 def generate_public_code():
@@ -43,7 +43,7 @@ def order_is_unpaid_expired(order, now=None):
 
 
 def purge_expired_unpaid_orders(now=None):
-    """Remove pedidos pendentes não pagos após o prazo; devolve estoque."""
+    """Marca pedidos pendentes não pagos como expirados; devolve estoque."""
     from .models import Order
 
     now = now or timezone.now()
@@ -59,6 +59,7 @@ def purge_expired_unpaid_orders(now=None):
     for order in qs:
         with transaction.atomic():
             restore_stock_for_order(order)
-            order.delete()
+            order.status = 'expirado'
+            order.save(update_fields=['status', 'updated_at'])
             deleted += 1
     return deleted
