@@ -20,6 +20,17 @@ export default {
       fontFamily: {
         sans: ['Poppins', 'system-ui', 'sans-serif'],
       },
+      keyframes: {
+        fadeInOut: {
+          '0%': { opacity: '0' },
+          '10%': { opacity: '1' },
+          '90%': { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
+      },
+      animation: {
+        'fade-in-out': 'fadeInOut 4s ease-in-out forwards',
+      },
     },
   },
   plugins: [],

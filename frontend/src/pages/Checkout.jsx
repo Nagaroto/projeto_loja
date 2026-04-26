@@ -64,6 +64,11 @@ export function Checkout() {
   const [paymentError, setPaymentError] = useState('');
   const [showPaymentSection, setShowPaymentSection] = useState(false);
   const [statusCheckInterval, setStatusCheckInterval] = useState(null);
+  const [paymentTimer, setPaymentTimer] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [qrExpired, setQrExpired] = useState(false);
+  const [duplicateOrderError, setDuplicateOrderError] = useState('');
+  const [duplicateOrderId, setDuplicateOrderId] = useState(null);
 
   const subtotal = getTotal();
   const cartProductIds = new Set(
@@ -146,6 +151,81 @@ export function Checkout() {
     loadAddresses();
   }, [loadAddresses]);
 
+  // Carregar dados de pagamento da sessionStorage se existirem (para sobreviver a refresh)
+  useEffect(() => {
+    const storedPaymentData = sessionStorage.getItem('checkout_payment_data');
+    const storedOrderId = sessionStorage.getItem('checkout_order_id');
+    const storedShowPayment = sessionStorage.getItem('checkout_show_payment');
+    const storedPaymentMethod = sessionStorage.getItem('checkout_payment_method');
+
+    if (storedPaymentData && storedOrderId && storedShowPayment === 'true') {
+      const expiryTime = parseInt(sessionStorage.getItem('checkout_expiry_time') || '0', 10);
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((expiryTime - now) / 1000));
+
+      if (remaining <= 0) {
+        // Já expirou
+        setQrExpired(true);
+        sessionStorage.removeItem('checkout_payment_data');
+        sessionStorage.removeItem('checkout_order_id');
+        sessionStorage.removeItem('checkout_show_payment');
+        sessionStorage.removeItem('checkout_payment_method');
+        sessionStorage.removeItem('checkout_expiry_time');
+      } else {
+        // Ainda tem tempo
+        setPaymentData(JSON.parse(storedPaymentData));
+        setOrderId(storedOrderId);
+        setShowPaymentSection(true);
+        setPaymentMethod(storedPaymentMethod || 'pix');
+        setTimeLeft(remaining);
+        setQrExpired(false);
+
+        // Continuar contador sem reiniciar
+        const timer = setInterval(() => {
+          setTimeLeft((prev) => {
+            const currentTime = Date.now();
+            const timeRemaining = Math.max(0, Math.ceil((expiryTime - currentTime) / 1000));
+            
+            if (timeRemaining <= 0) {
+              setQrExpired(true);
+              setProcessingPayment(false);
+              setSubmitting(false);
+              clearInterval(timer);
+              setPaymentTimer(null);
+              setShowPaymentSection(false);
+              setPaymentData(null);
+              setPaymentStatus(null);
+              setOrderCode('');
+              sessionStorage.removeItem('checkout_payment_data');
+              sessionStorage.removeItem('checkout_order_id');
+              sessionStorage.removeItem('checkout_show_payment');
+              sessionStorage.removeItem('checkout_payment_method');
+              sessionStorage.removeItem('checkout_expiry_time');
+              return 0;
+            }
+            return timeRemaining;
+          });
+        }, 1000);
+        setPaymentTimer(timer);
+
+        // Se for PIX, retomar verificação de status
+        if (storedPaymentMethod === 'pix') {
+          const pagamentoId = JSON.parse(storedPaymentData).pagamento_id;
+          if (pagamentoId) {
+            getValidToken().then((token) => {
+              if (token) {
+                const interval = setInterval(() => {
+                  checkPaymentStatus(pagamentoId, token);
+                }, 5000);
+                setStatusCheckInterval(interval);
+              }
+            });
+          }
+        }
+      }
+    }
+  }, [getValidToken]);
+
   const loadCoupons = useCallback(async () => {
     setCouponsLoading(true);
     try {
@@ -163,14 +243,22 @@ export function Checkout() {
     loadCoupons();
   }, [loadCoupons]);
 
-  // Limpa o intervalo quando o componente é desmontado
+  // Limpar erro de duplicação quando o carrinho muda
+  useEffect(() => {
+    setDuplicateOrderError('');
+  }, [cartItems]);
+
+  // Limpa o intervalo e timer quando o componente é desmontado
   useEffect(() => {
     return () => {
       if (statusCheckInterval) {
         clearInterval(statusCheckInterval);
       }
+      if (paymentTimer) {
+        clearTimeout(paymentTimer);
+      }
     };
-  }, [statusCheckInterval]);
+  }, [statusCheckInterval, paymentTimer]);
 
   const quoteFromCep = useCallback(async (cepRaw) => {
     setShippingErr('');
@@ -204,6 +292,43 @@ export function Checkout() {
   const handleDeliveryChange = (e) => {
     const { name, value } = e.target;
     setDelivery((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const checkForDuplicateOrder = async (token) => {
+    // Verifica no backend se o pedido atual já existe em Minhas Compras
+    try {
+      const res = await axios.post(
+        `${API_URL}/me/orders/check-duplicate/`,
+        {
+          items: cartItems.map((item) => ({
+            product_id: item.id,
+            quantity: item.quantity || 1,
+          })),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const data = res.data;
+      if (data.duplicate) {
+        return {
+          hasDuplicate: true,
+          message: data.message || `Este pedido já existe em "Minhas Compras" (${data.order_code || data.order_id}).`,
+          orderId: data.order_id,
+          orderCode: data.order_code,
+        };
+      }
+
+      console.log('✅ Nenhum pedido duplicado');
+      return { hasDuplicate: false, message: '', orderId: null, orderCode: null };
+    } catch (err) {
+      console.error('❌ Erro ao verificar pedido duplicado:', err);
+      return { hasDuplicate: false, message: '', orderId: null, orderCode: null };
+    }
   };
 
   const handleProcessPayment = async () => {
@@ -296,6 +421,43 @@ export function Checkout() {
       const pagamento = res.data;
       setPaymentData(pagamento);
       setShowPaymentSection(true);
+      setTimeLeft(30);
+      setQrExpired(false);
+
+      // Salvar timestamp de início na sessionStorage
+      const expiryTime = Date.now() + 30000; // 30 segundos a partir de agora
+      
+      // Persistir dados do pagamento na sessionStorage para sobreviver a refresh
+      sessionStorage.setItem('checkout_payment_data', JSON.stringify(pagamento));
+      sessionStorage.setItem('checkout_order_id', String(createdOrder.id));
+      sessionStorage.setItem('checkout_show_payment', 'true');
+      sessionStorage.setItem('checkout_payment_method', paymentMethod);
+      sessionStorage.setItem('checkout_expiry_time', expiryTime);
+
+      // Iniciar contador visível de expiração do QR code (30 segundos)
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          const now = Date.now();
+          const remaining = Math.max(0, Math.ceil((expiryTime - now) / 1000));
+          
+          if (remaining <= 0) {
+            // Expirou
+            setQrExpired(true);
+            setProcessingPayment(false); // Permitir novo clique
+            setSubmitting(false); // Permitir novo clique
+            clearInterval(timer);
+            setPaymentTimer(null);
+            // Permitir mudar para novo estado para reiniciar tudo
+            setShowPaymentSection(false);
+            setPaymentData(null);
+            setPaymentStatus(null);
+            setOrderCode('');
+            return 0;
+          }
+          return remaining;
+        });
+      }, 1000);
+      setPaymentTimer(timer);
 
       // Se for PIX, começa a verificar o status
       if (paymentMethod === 'pix') {
@@ -351,6 +513,17 @@ export function Checkout() {
       if (status === 'aprovado') {
         clearInterval(statusCheckInterval);
         setStatusCheckInterval(null);
+        if (paymentTimer) {
+          clearInterval(paymentTimer);
+          setPaymentTimer(null);
+        }
+        setQrExpired(false); // Reset
+        
+        // Limpar dados persistidos da sessionStorage
+        sessionStorage.removeItem('checkout_payment_data');
+        sessionStorage.removeItem('checkout_order_id');
+        sessionStorage.removeItem('checkout_show_payment');
+        sessionStorage.removeItem('checkout_payment_method');
         
         clearCart();
         alert(`Pagamento aprovado! Pedido ${orderCode || ''} atualizado.`);
@@ -375,6 +548,7 @@ export function Checkout() {
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
     setFormError('');
+    setDuplicateOrderError('');
     if (!cartItems.length) {
       navigate('/catalogo');
       return;
@@ -382,6 +556,17 @@ export function Checkout() {
     if (shippingFee == null) {
       setFormError('Calcule o frete antes de finalizar.');
       return;
+    }
+
+    // Verificar se existe pedido duplicado
+    const token = await getValidToken();
+    if (token) {
+      const duplicateCheck = await checkForDuplicateOrder(token);
+      if (duplicateCheck.hasDuplicate) {
+        setDuplicateOrderError(duplicateCheck.message);
+        setDuplicateOrderId(duplicateCheck.orderId);
+        return;
+      }
     }
 
     // Chama o processamento de pagamento
@@ -770,6 +955,39 @@ export function Checkout() {
               </p>
             </div>
 
+            {duplicateOrderError && (
+              <div className="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-5 mb-4 shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="text-3xl flex-shrink-0">⚠️</div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-amber-900 text-lg mb-2">Pedido Duplicado Detectado</h3>
+                    <p className="text-amber-800 mb-4">
+                      {duplicateOrderError}
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/minha-conta?secao=compras&sub=pedidos')}
+                        className="px-5 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition-colors flex items-center gap-2"
+                      >
+                        📋 Ver Pedido Existente
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDuplicateOrderError('');
+                          setDuplicateOrderId(null);
+                        }}
+                        className="px-5 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+                      >
+                        Fechar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {showPaymentSection && paymentData && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -781,6 +999,14 @@ export function Checkout() {
                   Pagamento processado!
                 </div>
 
+                {!qrExpired && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-center">
+                    <p className="text-red-700 font-semibold">
+                      QR Code expira em: <span className="text-xl font-bold">{timeLeft}</span> segundos
+                    </p>
+                  </div>
+                )}
+
                 {paymentMethod === 'pix' && paymentData.qr_code_base64 && (
                   <div className="space-y-4">
                     <div className="bg-white p-4 rounded-lg inline-block">
@@ -789,6 +1015,11 @@ export function Checkout() {
                         alt="QR Code PIX" 
                         className="w-48 h-48"
                       />
+                      {qrExpired && (
+                        <p className="text-center text-red-600 font-semibold mt-2">
+                          QR Code expirado. Confirme o pedido novamente para gerar um novo.
+                        </p>
+                      )}
                     </div>
 
                     <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
@@ -895,13 +1126,15 @@ export function Checkout() {
                 <strong>❌ Erro:</strong> {paymentError}
               </div>
             )}
-            <button
-              type="submit"
-              disabled={submitting || shippingFee == null || processingPayment}
-              className="w-full mt-6 py-3 rounded-lg bg-cereon-green text-white font-bold hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {processingPayment ? 'Processando pagamento…' : submitting ? 'Processando…' : 'Confirmar pedido'}
-            </button>
+            {!showPaymentSection || qrExpired ? (
+              <button
+                type="submit"
+                disabled={submitting || shippingFee == null || processingPayment || !!duplicateOrderError}
+                className="w-full mt-6 py-3 rounded-lg bg-cereon-green text-white font-bold hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {processingPayment ? 'Processando pagamento…' : submitting ? 'Processando…' : 'Confirmar pedido'}
+              </button>
+            ) : null}
           </div>
         </form>
 

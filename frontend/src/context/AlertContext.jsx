@@ -13,8 +13,10 @@ export function AlertProvider({ children }) {
     title: 'Aviso',
     message: '',
     type: 'info',
+    isToast: false,
   });
   const resolverRef = useRef(null);
+  const timeoutRef = useRef(null);
   const nativeAlertRef = useRef(window.alert.bind(window));
 
   const closeAlert = useCallback(() => {
@@ -23,17 +25,36 @@ export function AlertProvider({ children }) {
       resolverRef.current();
       resolverRef.current = null;
     }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
   }, []);
 
   const showAlert = useCallback((message, options = {}) => {
     return new Promise((resolve) => {
       resolverRef.current = resolve;
+      const isToast = options.toast === true;
+      const duration = options.duration || 2000;
+      
       setAlertState({
         isOpen: true,
         title: options.title || 'Aviso',
         message: normalizeMessage(message),
         type: options.type || 'info',
+        isToast: isToast,
       });
+
+      // Se for toast, fechar automaticamente
+      if (isToast) {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
+          setAlertState((prev) => ({ ...prev, isOpen: false }));
+          resolve();
+          resolverRef.current = null;
+          timeoutRef.current = null;
+        }, duration);
+      }
     });
   }, []);
 
@@ -54,30 +75,47 @@ export function AlertProvider({ children }) {
     info: 'bg-white border-gray-200 text-cereon-dark',
   };
 
-  const cardClass = typeClassMap[alertState.type] || typeClassMap.info;
+  const toastClassMap = {
+    success: 'bg-cereon-green text-white',
+    error: 'bg-red-500 text-white',
+    warning: 'bg-yellow-500 text-white',
+    info: 'bg-blue-500 text-white',
+  };
+
+  const cardClass = alertState.isToast ? toastClassMap[alertState.type] : typeClassMap[alertState.type];
 
   return (
     <AlertContext.Provider value={{ showAlert }}>
       {children}
 
       {alertState.isOpen ? (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className={`w-full max-w-md rounded-xl border shadow-xl ${cardClass}`}>
-            <div className="p-6 space-y-3">
-              <h3 className="text-xl font-semibold">{alertState.title}</h3>
-              <p className="text-sm leading-relaxed break-words">{alertState.message}</p>
-            </div>
-            <div className="px-6 pb-6 flex justify-end">
-              <button
-                type="button"
-                onClick={closeAlert}
-                className="px-5 py-2 rounded-lg font-medium bg-cereon-green text-white hover:bg-green-600 transition-colors"
-              >
-                OK
-              </button>
+        alertState.isToast ? (
+          // Toast notification (sutil, top-right, auto-close)
+          <div className="fixed top-4 right-4 z-[1000]">
+            <div className={`px-4 py-3 rounded-lg shadow-lg font-medium text-sm ${cardClass} animate-fade-in-out`}>
+              {alertState.message}
             </div>
           </div>
-        </div>
+        ) : (
+          // Modal alert (intrusivo, requer clique)
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className={`w-full max-w-md rounded-xl border shadow-xl ${cardClass}`}>
+              <div className="p-6 space-y-3">
+                <h3 className="text-xl font-semibold">{alertState.title}</h3>
+                <p className="text-sm leading-relaxed break-words">{alertState.message}</p>
+              </div>
+              <div className="px-6 pb-6 flex justify-end">
+                <button
+                  type="button"
+                  onClick={closeAlert}
+                  className="px-5 py-2 rounded-lg font-medium bg-cereon-green text-white hover:bg-green-600 transition-colors"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )
       ) : null}
     </AlertContext.Provider>
   );

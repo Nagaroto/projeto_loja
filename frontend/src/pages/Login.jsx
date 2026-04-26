@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 
 const API_URL = 'http://127.0.0.1:8000/api';
 
@@ -20,13 +21,56 @@ function messageFromApiError(data) {
 
 export function Login() {
   const { login } = useAuth();
+  const { showAlert } = useAlert();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [countdownMessage, setCountdownMessage] = useState('');
+  const [isBlocked, setIsBlocked] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   });
+
+  useEffect(() => {
+    // Check localStorage for existing block
+    const blockEnd = localStorage.getItem('loginBlockEnd');
+    if (blockEnd) {
+      const endTime = parseInt(blockEnd);
+      const now = Date.now();
+      if (now < endTime) {
+        const remaining = Math.ceil((endTime - now) / 1000);
+        setCountdownMessage(`Muitas tentativas. Tente novamente em ${remaining} segundos.`);
+      } else {
+        localStorage.removeItem('loginBlockEnd');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (countdownMessage) {
+      setIsBlocked(true);
+      const interval = setInterval(() => {
+        setCountdownMessage(prev => {
+          const match = prev.match(/(\d+)/);
+          if (match) {
+            const seconds = parseInt(match[1]) - 1;
+            if (seconds > 0) {
+              return prev.replace(/\d+/, seconds);
+            } else {
+              setIsBlocked(false);
+              localStorage.removeItem('loginBlockEnd');
+              return '';
+            }
+          }
+          return prev;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setIsBlocked(false);
+    }
+  }, [countdownMessage]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,7 +100,10 @@ export function Login() {
       };
       
       login(access, userData, refresh);
-      alert('Login realizado com sucesso! Bem-vindo.');
+      
+      // Mensagem diferente para admin e usuário comum
+      const mensagem = userData.is_staff ? 'Login admin realizado' : 'Login realizado';
+      showAlert(mensagem, { toast: true, type: 'success', duration: 4000 });
       
       // Redirecionar para admin se for admin, senão para home
       if (userData.is_staff) {
@@ -68,7 +115,13 @@ export function Login() {
       const status = error.response?.status;
       const data = error.response?.data;
 
-      if (status === 400 || status === 401) {
+      if (status === 429) {
+        // Rate limit exceeded
+        const wait = data?.wait || 60;
+        const endTime = Date.now() + wait * 1000;
+        localStorage.setItem('loginBlockEnd', endTime.toString());
+        setCountdownMessage(`Muitas tentativas. Tente novamente em ${wait} segundos.`);
+      } else if (status === 400 || status === 401) {
         const msg = messageFromApiError(data);
         const notFound =
           /não encontramos|não encontrado|não foi encontrado/i.test(msg);
@@ -170,9 +223,10 @@ export function Login() {
                   type="email"
                   name="email"
                   required
+                  disabled={isBlocked}
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full bg-cereon-light border-2 border-gray-200 text-cereon-dark rounded-lg py-3 pl-11 pr-4 outline-none focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 transition-all duration-300 font-medium placeholder:text-cereon-dark/40"
+                  className="w-full bg-cereon-light border-2 border-gray-200 text-cereon-dark rounded-lg py-3 pl-11 pr-4 outline-none focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 transition-all duration-300 font-medium placeholder:text-cereon-dark/40 disabled:opacity-50"
                   placeholder="seu@email.com"
                 />
               </div>
@@ -194,8 +248,7 @@ export function Login() {
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
-                  required
-                  value={formData.password}
+                  required                  disabled={isBlocked}                  value={formData.password}
                   onChange={handleChange}
                   className="w-full bg-cereon-light border-2 border-gray-200 text-cereon-dark rounded-lg py-3 pl-11 pr-12 outline-none focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 transition-all duration-300 font-medium placeholder:text-cereon-dark/40"
                   placeholder="••••••••"
@@ -214,7 +267,7 @@ export function Login() {
             <motion.button
               variants={itemVariants}
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isBlocked}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="w-full bg-cereon-green hover:bg-cereon-green/90 disabled:opacity-60 text-white font-bold py-3 rounded-lg transition-all duration-300 shadow-lg shadow-cereon-green/20 flex items-center justify-center gap-2 group"
@@ -232,6 +285,18 @@ export function Login() {
               )}
             </motion.button>
           </form>
+
+          {/* Mensagem de Contagem Regressiva */}
+          {countdownMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm font-medium text-center"
+            >
+              {countdownMessage}
+            </motion.div>
+          )}
 
           {/* Google acima do divisor; depois Cadastrar */}
           <motion.div variants={itemVariants} className="mt-4 space-y-3">

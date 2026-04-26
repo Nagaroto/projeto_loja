@@ -1,5 +1,7 @@
 # Endpoints autenticados: perfil, endereços, credenciais e pedidos do cliente.
 
+from collections import Counter
+
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
@@ -140,6 +142,68 @@ class DeleteAccountView(APIView):
         return Response({'detail': 'Conta excluída com sucesso.'})
 
 
+def _normalize_cart_items(items):
+    if not isinstance(items, list):
+        raise ValueError('items precisa ser uma lista de objetos com product_id e quantity')
+
+    counts = Counter()
+    for item in items:
+        if isinstance(item, dict):
+            product_id = item.get('product_id') or item.get('id') or item.get('product')
+            quantity = item.get('quantity') or item.get('qty') or 1
+        else:
+            product_id = item
+            quantity = 1
+
+        try:
+            product_id = int(product_id)
+        except (TypeError, ValueError):
+            continue
+
+        try:
+            quantity = int(quantity)
+        except (TypeError, ValueError):
+            quantity = 1
+
+        if product_id <= 0 or quantity <= 0:
+            continue
+
+        counts[product_id] += quantity
+
+    if not counts:
+        raise ValueError('Nenhum item válido foi fornecido para verificação de duplicação.')
+
+    return counts
+
+
+def _order_items_to_counter(order):
+    counts = Counter()
+    for item in order.items.all():
+        counts[int(item.product_id)] += int(item.quantity or 1)
+    return counts
+
+
+def _find_duplicate_order(user, current_items):
+    purge_expired_unpaid_orders()
+    current_counts = _normalize_cart_items(current_items)
+
+    active_statuses = {'pendente', 'pago', 'confirmado', 'enviado'}
+    orders = (
+        Order.objects.filter(Q(user=user) | Q(customer_email=user.email))
+        .distinct()
+        .prefetch_related('items__product')
+        .order_by('-created_at')
+    )
+
+    for order in orders:
+        if order.status not in active_statuses:
+            continue
+        if _order_items_to_counter(order) == current_counts:
+            return order
+
+    return None
+
+
 class MyOrdersView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -153,6 +217,31 @@ class MyOrdersView(APIView):
             .order_by('-created_at')
         )
         return Response(OrderSerializer(orders, many=True).data)
+
+
+class DuplicateOrderCheckView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            items = request.data.get('items')
+            duplicate_order = _find_duplicate_order(request.user, items)
+        except ValueError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if duplicate_order is not None:
+            return Response({
+                'duplicate': True,
+                'order_id': duplicate_order.id,
+                'order_code': duplicate_order.public_code or f'#{duplicate_order.id}',
+                'message': (
+                    f'Este pedido já existe em "Minhas Compras" ' 
+                    f'({duplicate_order.public_code or f"#{duplicate_order.id}"}). '
+                    'Por favor, finalize o pedido existente antes de criar um novo.'
+                ),
+            })
+
+        return Response({'duplicate': False})
 
 
 class CancelOrderView(APIView):

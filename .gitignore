@@ -1,6 +1,9 @@
 venv/
+.venv/
 node_modules/
 __pycache__/
 *.pyc
 .env
 .secrets/
+db.sqlite3
+logs/

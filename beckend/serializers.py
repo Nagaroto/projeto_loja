@@ -193,11 +193,12 @@ class CartSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
     subtotal = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'quantity', 'price', 'subtotal']
+        fields = ['id', 'product', 'product_name', 'quantity', 'price', 'subtotal']
         read_only_fields = ['id', 'subtotal']
 
     def get_subtotal(self, obj):
@@ -207,12 +208,14 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(read_only=True, many=True)
     is_cancelable = serializers.SerializerMethodField()
+    customer_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
             'id',
             'customer_email',
+            'customer_name',
             'user',
             'total',
             'shipping_fee',
@@ -251,3 +254,8 @@ class OrderSerializer(serializers.ModelSerializer):
         if obj.expires_at:
             return obj.expires_at > now
         return obj.created_at + UNPAID_RETENTION > now
+
+    def get_customer_name(self, obj):
+        if obj.user:
+            return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.username
+        return None

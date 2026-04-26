@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 import { motion } from 'framer-motion';
 import { Package, Ticket, ShoppingBag, BarChart3, Plus, Trash2, Edit2, LogOut, Menu, X, Search, Tags, Users } from 'lucide-react';
 import axios from 'axios';
@@ -29,13 +30,14 @@ function StatusBadge({ status }) {
 }
 
 // Agrega todas as páginas de um endpoint paginado (lista completa no admin).
-const loadAllPages = async (url) => {
+const loadAllPages = async (url, token = null) => {
   let allResults = [];
   let nextPage = url;
   
   while (nextPage) {
     try {
-      const response = await axios.get(nextPage);
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await axios.get(nextPage, { headers });
       const data = response.data;
       
       if (data.results) {
@@ -144,7 +146,7 @@ function ProductsTab() {
     try {
       const validToken = await getValidToken();
       if (!validToken) {
-        alert('Sessão expirada. Faça login novamente.');
+        showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
 
@@ -153,15 +155,15 @@ function ProductsTab() {
       const stockValue = Number(formData.stock);
 
       if (!Number.isInteger(categoryId) || categoryId <= 0) {
-        alert('Selecione uma categoria válida.');
+        showAlert('Selecione uma categoria válida.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
       if (!Number.isFinite(priceValue) || priceValue < 0) {
-        alert('Informe um preço válido.');
+        showAlert('Informe um preço válido.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
       if (!Number.isInteger(stockValue) || stockValue < 0) {
-        alert('Informe um estoque válido.');
+        showAlert('Informe um estoque válido.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
 
@@ -199,7 +201,7 @@ function ProductsTab() {
       const errorMessage =
         apiError?.detail ||
         (apiError ? JSON.stringify(apiError) : error.message);
-      alert('Erro ao adicionar produto: ' + errorMessage);
+      showAlert('Erro ao adicionar produto: ' + errorMessage, { toast: true, type: 'error', duration: 4000 });
     }
   };
 
@@ -208,7 +210,7 @@ function ProductsTab() {
       try {
         const validToken = await getValidToken();
         if (!validToken) {
-          alert('Sessão expirada. Faça login novamente.');
+          showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
           return;
         }
         await axios.delete(`${API_URL}/products/${id}/`, {
@@ -216,7 +218,7 @@ function ProductsTab() {
         });
         loadProducts();
       } catch (error) {
-        alert('Erro ao deletar produto');
+        showAlert('Erro ao deletar produto', { toast: true, type: 'error', duration: 4000 });
       }
     }
   };
@@ -242,7 +244,7 @@ function ProductsTab() {
     try {
       const validToken = await getValidToken();
       if (!validToken) {
-        alert('Sessão expirada. Faça login novamente.');
+        showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
 
@@ -251,15 +253,15 @@ function ProductsTab() {
       const stockValue = Number(editFormData.stock);
 
       if (!Number.isInteger(categoryId) || categoryId <= 0) {
-        alert('Selecione uma categoria válida.');
+        showAlert('Selecione uma categoria válida.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
       if (!Number.isFinite(priceValue) || priceValue < 0) {
-        alert('Informe um preço válido.');
+        showAlert('Informe um preço válido.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
       if (!Number.isInteger(stockValue) || stockValue < 0) {
-        alert('Informe um estoque válido.');
+        showAlert('Informe um estoque válido.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
 
@@ -292,14 +294,14 @@ function ProductsTab() {
         is_active: true
       });
       loadProducts();
-      alert('Produto atualizado com sucesso!');
+      showAlert('Produto atualizado com sucesso!', { toast: true, type: 'success', duration: 4000 });
     } catch (error) {
       console.error('Erro ao atualizar produto:', error);
       const apiError = error.response?.data;
       const errorMessage =
         apiError?.detail ||
         (apiError ? JSON.stringify(apiError) : error.message);
-      alert('Erro ao atualizar produto: ' + errorMessage);
+      showAlert('Erro ao atualizar produto: ' + errorMessage, { toast: true, type: 'error', duration: 4000 });
     }
   };
 
@@ -785,7 +787,7 @@ function CouponsTab() {
     try {
       const validToken = await getValidToken();
       if (!validToken) {
-        alert('Sessão expirada. Faça login novamente.');
+        showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
 
@@ -816,7 +818,7 @@ function CouponsTab() {
       const errorMessage =
         apiError?.detail ||
         (apiError ? JSON.stringify(apiError) : error.message);
-      alert('Erro ao adicionar cupom: ' + errorMessage);
+      showAlert('Erro ao adicionar cupom: ' + errorMessage, { toast: true, type: 'error', duration: 4000 });
     }
   };
 
@@ -825,7 +827,7 @@ function CouponsTab() {
       try {
         const validToken = await getValidToken();
         if (!validToken) {
-          alert('Sessão expirada. Faça login novamente.');
+          showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
           return;
         }
         await axios.delete(`${API_URL}/coupons/${id}/`, {
@@ -833,7 +835,7 @@ function CouponsTab() {
         });
         loadCoupons();
       } catch (error) {
-        alert('Erro ao deletar cupom');
+        showAlert('Erro ao deletar cupom', { toast: true, type: 'error', duration: 4000 });
       }
     }
   };
@@ -860,7 +862,7 @@ function CouponsTab() {
     try {
       const validToken = await getValidToken();
       if (!validToken) {
-        alert('Sessão expirada. Faça login novamente.');
+        showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
 
@@ -892,7 +894,7 @@ function CouponsTab() {
       const errorMessage =
         apiError?.detail ||
         (apiError ? JSON.stringify(apiError) : error.message);
-      alert('Erro ao atualizar cupom: ' + errorMessage);
+      showAlert('Erro ao atualizar cupom: ' + errorMessage, { toast: true, type: 'error', duration: 4000 });
     }
   };
 
@@ -1109,79 +1111,131 @@ function CouponsTab() {
 // Componente de Pedidos
 function OrdersTab() {
   const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('todos');
   const { token } = useAuth();
 
   useEffect(() => {
     loadOrders();
   }, []);
 
+  useEffect(() => {
+    filterOrders();
+  }, [orders, statusFilter]);
+
   const loadOrders = async () => {
     try {
       // Carrega TODOS os pedidos (não apenas a primeira pagina)
-      const allOrders = await loadAllPages(`${API_URL}/orders/`);
+      const allOrders = await loadAllPages(`${API_URL}/orders/`, token);
       setOrders(allOrders);
     } catch (error) {
       console.error('Erro ao carregar pedidos:', error);
     }
   };
 
+  const filterOrders = () => {
+    if (statusFilter === 'todos') {
+      setFilteredOrders(orders);
+    } else if (statusFilter === 'vendidos') {
+      setFilteredOrders(orders.filter(order => ['pago', 'confirmado', 'enviado', 'entregue'].includes(order.status)));
+    } else if (statusFilter === 'cancelados') {
+      setFilteredOrders(orders.filter(order => order.status === 'cancelado'));
+    } else if (statusFilter === 'expirados') {
+      setFilteredOrders(orders.filter(order => order.status === 'expirado'));
+    } else if (statusFilter === 'pendentes') {
+      setFilteredOrders(orders.filter(order => order.status === 'pendente'));
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      pendente: 'Pendente',
+      pago: 'Pago',
+      expirado: 'Expirado',
+      confirmado: 'Confirmado',
+      enviado: 'Enviado',
+      entregue: 'Entregue',
+      cancelado: 'Cancelado',
+    };
+    return labels[status] || status;
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-cereon-dark">Pedidos dos Clientes</h2>
 
-      {orders.length === 0 ? (
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-4 items-center">
+        <label className="text-sm font-semibold text-cereon-dark">Filtrar por Status:</label>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cereon-green"
+        >
+          <option value="todos">Todos</option>
+          <option value="vendidos">Vendidos (Concluídos)</option>
+          <option value="cancelados">Cancelados</option>
+          <option value="expirados">Expirados</option>
+          <option value="pendentes">Pendentes</option>
+        </select>
+      </div>
+
+      {filteredOrders.length === 0 ? (
         <div className="bg-cereon-light p-8 rounded-lg text-center">
           <ShoppingBag className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-cereon-dark/70">Nenhum pedido ainda</p>
+          <p className="text-cereon-dark/70">Nenhum pedido encontrado</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {orders.map((order) => (
-            <motion.div
-              key={order.id}
-              className="bg-white border border-gray-200 rounded-lg p-6 shadow-md"
-              whileHover={{ y: -2 }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-gray-500">Número do Pedido</p>
-                  <p className="font-bold text-cereon-dark">#{order.public_code || order.id}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Status</p>
-                  <StatusBadge status={order.status} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Cliente</p>
-                  <p className="font-bold text-cereon-dark">{order.customer_email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Data</p>
-                  <p className="font-bold text-cereon-dark">
-                    {new Date(order.created_at).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-gray-500">Total</p>
-                  <p className="font-bold text-cereon-green">
-                    R$ {parseFloat(order.total).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-              <div className="border-t pt-4">
-                <p className="text-sm text-gray-500 mb-2">Produtos:</p>
-                <div className="space-y-1">
-                  {order.items?.map((item, idx) => (
-                    <p key={idx} className="text-cereon-dark">
-                      • {item.product_name} x{item.quantity}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-md">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Nome do Usuário</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Número do Pedido</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email do Usuário</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Valor do Pedido</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status do Pedido</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredOrders.map((order) => (
+                <React.Fragment key={order.id}>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm text-gray-700">
+                      {order.customer_name || 'Cliente'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-700 font-medium">
+                      #{order.public_code || order.id}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-700">
+                      {order.customer_email}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-green-600 font-bold">
+                      R$ {parseFloat(order.total).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <StatusBadge status={order.status} />
+                    </td>
+                  </tr>
+                  <tr className="bg-gray-50">
+                    <td colSpan="5" className="px-6 py-4 text-sm text-gray-700">
+                      <div className="space-y-1">
+                        {order.items && order.items.length > 0 ? (
+                          order.items.map((item, idx) => (
+                            <div key={idx} className="text-xs">
+                              x{item.quantity}: {item.product_name || 'Produto'}
+                            </div>
+                          ))
+                        ) : (
+                          <span className="text-gray-500 italic">Nenhum produto</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
@@ -1411,6 +1465,7 @@ function AnalyticsTab() {
 // Dashboard Principal
 export function Dashboard() {
   const { user, logout } = useAuth();
+  const { showAlert } = useAlert();
   const [activeTab, setActiveTab] = useState('analytics');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

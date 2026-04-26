@@ -14,8 +14,10 @@ import {
   Home,
   Eye,
   Copy,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 
 const API_URL = 'http://127.0.0.1:8000/api';
 
@@ -116,6 +118,7 @@ async function loadAllPages(url, headers = null) {
 
 export function UserAccount() {
   const { getValidToken, logout, user, updateUser } = useAuth();
+  const { showAlert } = useAlert();
   const [searchParams, setSearchParams] = useSearchParams();
   const [section, setSection] = useState('dados');
   const [comprasTab, setComprasTab] = useState('pedidos');
@@ -155,6 +158,11 @@ export function UserAccount() {
   const [pwdForm, setPwdForm] = useState({ old_password: '', new_password: '' });
   const [emailForm, setEmailForm] = useState({ new_email: '', password: '' });
   const [deletePwd, setDeletePwd] = useState('');
+
+  // States para modal de cancelamento de pedido
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelingOrderId, setCancelingOrderId] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   const authHeader = useCallback(async () => {
     const t = await getValidToken();
@@ -483,14 +491,36 @@ export function UserAccount() {
   };
 
   const cancelOrder = async (orderId) => {
-    if (!window.confirm('Cancelar este pedido? Os itens voltam ao estoque da loja.')) return;
+    // Abrir modal de confirmação
+    setShowCancelModal(true);
+    setCancelingOrderId(orderId);
+  };
+
+  const confirmCancelOrder = async () => {
+    if (!cancelingOrderId) return;
+    
+    setCancelLoading(true);
     try {
       const h = await authHeader();
       if (!h) return;
-      await axios.post(`${API_URL}/me/orders/${orderId}/cancel/`, {}, { headers: h });
+      await axios.post(`${API_URL}/me/orders/${cancelingOrderId}/cancel/`, {}, { headers: h });
+      showAlert('Pedido cancelado com sucesso!', { toast: true, type: 'success', duration: 4000 });
+      setShowCancelModal(false);
+      setCancelingOrderId(null);
       await loadOrders();
     } catch (err) {
-      alert(err.response?.data?.detail || 'Não foi possível cancelar o pedido.');
+      showAlert(err.response?.data?.detail || 'Não foi possível cancelar o pedido.', { toast: true, type: 'error', duration: 4000 });
+      setShowCancelModal(false);
+      setCancelingOrderId(null);
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  const closeCancelModal = () => {
+    if (!cancelLoading) {
+      setShowCancelModal(false);
+      setCancelingOrderId(null);
     }
   };
 
@@ -501,8 +531,6 @@ export function UserAccount() {
     switch (ordersFilter) {
       case 'pendentes':
         return orders.filter((o) => o.status === 'pendente');
-      case 'cancelados':
-        return orders.filter((o) => o.status === 'cancelado');
       case 'concluidos':
         return orders.filter((o) => conclusionStatuses.includes(o.status));
       default:
@@ -961,24 +989,13 @@ export function UserAccount() {
                           >
                             Concluídos ({orders.filter((o) => ['pago', 'confirmado', 'enviado', 'entregue'].includes(o.status)).length})
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => setOrdersFilter('cancelados')}
-                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                              ordersFilter === 'cancelados'
-                                ? 'bg-red-100 text-red-800 border border-red-300'
-                                : 'bg-gray-100 text-gray-600 border border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            Cancelados ({orders.filter((o) => o.status === 'cancelado').length})
-                          </button>
                         </div>
 
-                        {/* Pedidos Filtrados */}
+                        {/* Pedidos Filtrados */}}
                         <div className="space-y-4">
                           {getFilteredOrders().length === 0 ? (
                             <p className="text-gray-500 py-8 text-center">
-                              Nenhum pedido {ordersFilter === 'pendentes' ? 'pendente' : ordersFilter === 'concluidos' ? 'concluído' : 'cancelado'}.
+                              Nenhum pedido {ordersFilter === 'pendentes' ? 'pendente' : 'concluído'}.
                             </p>
                           ) : (
                             getFilteredOrders().map((o) => (
@@ -1233,6 +1250,59 @@ export function UserAccount() {
           </motion.div>
         </div>
       </div>
+
+      {/* Modal de Confirmação de Cancelamento de Pedido */}
+      {showCancelModal && (
+        <motion.div
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="w-full max-w-md rounded-xl bg-white shadow-2xl"
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+          >
+            {/* Header com X */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-cereon-dark">Cancelar Pedido</h3>
+              <button
+                onClick={closeCancelModal}
+                disabled={cancelLoading}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+
+            {/* Conteúdo */}
+            <div className="p-6">
+              <p className="text-gray-700 font-medium mb-2">Cancelar este pedido?</p>
+              <p className="text-gray-600 text-sm">Os itens voltam ao estoque da loja.</p>
+            </div>
+
+            {/* Botões */}
+            <div className="px-6 pb-6 flex justify-end">
+              <button
+                onClick={confirmCancelOrder}
+                disabled={cancelLoading}
+                className="px-6 py-2 rounded-lg font-medium bg-cereon-green text-white hover:bg-cereon-green/80 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {cancelLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Cancelando...
+                  </>
+                ) : (
+                  'Continuar'
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }

@@ -92,7 +92,7 @@ export function Footer() {
             © {currentYear} Cereon Digital Systems. Todos os direitos reservados.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="text-gray-400 hover:text-cereon-green transition-colors">
+            <a href="https://www.instagram.com/cereonsystems/" className="text-gray-400 hover:text-cereon-green transition-colors">
               Instagram
             </a>
             <a href="#" className="text-gray-400 hover:text-cereon-green transition-colors">

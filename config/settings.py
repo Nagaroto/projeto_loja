@@ -136,23 +136,15 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'file': {
-            'level': os.getenv('LOG_LEVEL', 'INFO'),
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'app.log',
-            'maxBytes': 1024 * 1024 * 10,  # 10 MB
-            'backupCount': 10,
-            'formatter': 'verbose',
-        },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': os.getenv('LOG_LEVEL', 'INFO'),
             'propagate': False,
         },
         'pagamentos': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console'],
             'level': os.getenv('LOG_LEVEL', 'INFO'),
             'propagate': False,
         },

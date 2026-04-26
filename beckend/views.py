@@ -1,5 +1,6 @@
 # Views da API REST: auth, CRUD, catálogo público e analytics.
 
+import logging
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Sum, Count, Q
@@ -12,6 +13,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import Throttled
 
 from .autenticacao import EmailTokenObtainPairSerializer
 from .models import Product, Coupon, Order, Category, UserProfile
@@ -21,17 +23,56 @@ from .serializers import (
     OrderSerializer,
     CategorySerializer,
 )
+from pagamentos.models import Pagamento
+from .rate_limiter import rate_limiter, get_client_ip
+
+logger = logging.getLogger(__name__)
 
 
 class EmailTokenObtainView(APIView):
-    """Autentica por e-mail e senha e devolve par de tokens JWT."""
+    """
+    Autentica por e-mail e senha com rate limiting híbrido (IP + email).
+    
+    Rate limits:
+    - 5 tentativas por minuto (por IP ou por email)
+    - Bloqueio progressivo após 3 falhas
+    - Bloqueio longo após 5 bloqueios
+    """
 
     permission_classes = (AllowAny,)
 
     def post(self, request):
+        email = (request.data.get('email') or '').strip().lower()
+        
+        try:
+            # Aplica rate limit híbrido (por IP e por email)
+            rate_status = rate_limiter.check_rate_limit(request, email=email)
+            logger.info(
+                f"Login attempt for {email}. "
+                f"Attempts: {rate_status['current_attempts']}/{rate_status['max_attempts']}. "
+                f"IP: {rate_status['ip']}"
+            )
+        except Throttled as e:
+            # Rate limit atingido
+            return Response(
+                {'detail': str(e.detail)},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
+        # Tenta autenticar
         serializer = EmailTokenObtainPairSerializer(data=request.data)
+        
         if serializer.is_valid():
+            # Login bem-sucedido: limpa contadores
+            rate_limiter.record_successful_login(request, email=email)
+            logger.info(f"Successful login for {email}")
             return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        # Login falhou: registra falha para bloqueio progressivo
+        ip = get_client_ip(request)
+        rate_limiter._record_failure(ip, email=email)
+        logger.warning(f"Failed login attempt for {email}. IP: {ip}")
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -42,6 +83,9 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
+        # Rate limit check
+        rate_limiter.check_rate_limit(request)
+        
         email = (request.data.get('email') or '').strip().lower()
         password = request.data.get('password')
         username = (request.data.get('username') or email or '').strip()
@@ -132,8 +176,10 @@ def analytics_view(request):
     """Agrega totais de vendas, pedidos, destaques e receita do mês."""
 
     try:
-        total_sales = Order.objects.aggregate(Sum('total'))['total__sum'] or 0
-        total_orders = Order.objects.count()
+        # Usar pagamentos aprovados para métricas reais
+        approved_payments = Pagamento.objects.filter(status='aprovado')
+        total_sales = approved_payments.aggregate(Sum('valor'))['valor__sum'] or 0
+        total_orders = approved_payments.count()
 
         top_products = Product.objects.annotate(
             quantity_sold=Count('orderitem'),
@@ -154,9 +200,9 @@ def analytics_view(request):
 
         now = timezone.now()
         first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        monthly_revenue = Order.objects.filter(
-            created_at__gte=first_day_of_month,
-        ).aggregate(Sum('total'))['total__sum'] or 0
+        monthly_revenue = approved_payments.filter(
+            data_criacao__gte=first_day_of_month,
+        ).aggregate(Sum('valor'))['valor__sum'] or 0
 
         analytics_data = {
             "total_sales": float(total_sales),
