@@ -5,5 +5,4 @@ __pycache__/
 *.pyc
 .env
 .secrets/
-db.sqlite3
 logs/
