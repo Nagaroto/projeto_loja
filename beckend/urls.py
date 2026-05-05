@@ -8,12 +8,15 @@ from .views import (
     RegisterView,
     ProductViewSet,
     CouponViewSet,
+    PromotionViewSet,
     OrderViewSet,
     CategoryViewSet,
     AdminCustomersView,
     analytics_view,
     PublishedProductsView,
+    admin_customer_orders_view,
 )
+from .upload_views import upload_product_image, delete_product_image, list_product_images
 from .checkout_views import CheckoutView, ShippingQuoteView
 from .user_account_views import (
     AddressDetailView,
@@ -35,10 +38,15 @@ router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
 router.register(r'products', ProductViewSet)
 router.register(r'coupons', CouponViewSet)
+router.register(r'promotions', PromotionViewSet)
 router.register(r'orders', OrderViewSet)
 
 urlpatterns = [
     path('admin/customers/', AdminCustomersView.as_view(), name='admin-customers'),
+    path('admin/customers/<int:user_id>/orders/', admin_customer_orders_view, name='admin-customer-orders'),
+    path('upload/product-image/', upload_product_image, name='upload-product-image'),
+    path('upload/product-image/<str:filename>/', delete_product_image, name='delete-product-image'),
+    path('upload/product-images/', list_product_images, name='list-product-images'),
     path('checkout/shipping/', ShippingQuoteView.as_view(), name='checkout-shipping'),
     path('checkout/place/', CheckoutView.as_view(), name='checkout-place'),
     path('products/published/', PublishedProductsView.as_view(), name='published-products'),

@@ -20,6 +20,9 @@ import { Sobre } from './pages/Sobre'
 import { ProductDetail } from './pages/ProductDetail'
 import { Checkout } from './pages/Checkout'
 import { Dashboard } from './pages/Dashboard'
+import { PoliticaPrivacidade } from './pages/PoliticaPrivacidade'
+import { TermosUso } from './pages/TermosUso'
+import { TrocasDevolucoes } from './pages/TrocasDevolucoes'
 
 function Layout() {
   return (
@@ -75,6 +78,9 @@ function App() {
                     }
                   />
                   <Route path="/sobre" element={<Sobre />} />
+                  <Route path="/privacidade" element={<PoliticaPrivacidade />} />
+                  <Route path="/termos" element={<TermosUso />} />
+                  <Route path="/trocas-devolucoes" element={<TrocasDevolucoes />} />
                 </Route>
               </Routes>
             </Router>

@@ -44,6 +44,55 @@ class Category(models.Model):
         return self.name
 
 
+class ProductImage(models.Model):
+    """Modelo para armazenar múltiplas imagens de um produto."""
+    product = models.ForeignKey(
+        'Product',
+        on_delete=models.CASCADE,
+        related_name='images',
+        verbose_name='Produto',
+        help_text='Produto ao qual esta imagem pertence',
+    )
+    url = models.URLField(
+        verbose_name='URL da Imagem',
+        help_text='URL da imagem do produto',
+    )
+    filename = models.CharField(
+        max_length=255,
+        verbose_name='Nome do Arquivo',
+        help_text='Nome do arquivo da imagem',
+    )
+    is_cover = models.BooleanField(
+        default=False,
+        verbose_name='Imagem de Capa',
+        help_text='Se esta imagem é a capa do produto',
+    )
+    order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Ordem',
+        help_text='Ordem de exibição da imagem',
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Data de Criação',
+    )
+
+    class Meta:
+        verbose_name = 'Imagem do Produto'
+        verbose_name_plural = 'Imagens dos Produtos'
+        ordering = ['order', 'created_at']
+        unique_together = ['product', 'filename']
+
+    def __str__(self):
+        return f"{self.product.name} - {self.filename}"
+
+    def save(self, *args, **kwargs):
+        # Garantir que apenas uma imagem seja capa por produto
+        if self.is_cover:
+            ProductImage.objects.filter(product=self.product, is_cover=True).update(is_cover=False)
+        super().save(*args, **kwargs)
+
+
 class Product(models.Model):
     """Item vendável: preço, estoque, mídia, variantes JSON e flag de publicação."""
 
@@ -77,8 +126,8 @@ class Product(models.Model):
     image_url = models.URLField(
         blank=True,
         null=True,
-        verbose_name='URL da Imagem',
-        help_text='URL da imagem do produto',
+        verbose_name='URL da Imagem (Legado)',
+        help_text='URL da imagem do produto (campo legado, mantido para compatibilidade)',
     )
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -119,6 +168,30 @@ class Product(models.Model):
 
     def has_low_stock(self, threshold=5):
         return 0 < self.stock <= threshold
+
+    def get_promotional_price(self):
+        """
+        Retorna o preço com desconto promocional aplicado, se houver promoção ativa.
+        Segurança: calculado no servidor, nunca confia no frontend.
+        """
+        from datetime import date
+        valid_promotions = self.promotions.filter(
+            is_active=True,
+            expiry_date__gte=date.today()
+        )
+        if valid_promotions.exists():
+            promo = valid_promotions.first()
+            discount = float(self.price) * (promo.discount_percent / 100)
+            return round(float(self.price) - discount, 2)
+        return float(self.price)
+
+    def has_active_promotion(self):
+        """Verifica se o produto está em promoção ativa."""
+        from datetime import date
+        return self.promotions.filter(
+            is_active=True,
+            expiry_date__gte=date.today()
+        ).exists()
 
 
 class Coupon(models.Model):
@@ -186,6 +259,61 @@ class Coupon(models.Model):
         if date.today() > self.expiry_date:
             return False
         if self.max_uses and self.uses_count >= self.max_uses:
+            return False
+        return True
+
+
+class Promotion(models.Model):
+    """Promoção automática em produtos: desconto aplicado diretamente sem código."""
+
+    name = models.CharField(
+        max_length=100,
+        verbose_name='Nome da Promoção',
+        help_text='Nome identificador da promoção (ex: Black Friday)',
+    )
+    discount_percent = models.IntegerField(
+        default=0,
+        verbose_name='Percentual de Desconto',
+        help_text='Percentual de desconto aplicado aos produtos (0-100)',
+    )
+    expiry_date = models.DateField(
+        verbose_name='Data de Expiração',
+        help_text='Data limite até a qual a promoção é válida',
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Ativa',
+        help_text='Indica se a promoção está ativa',
+    )
+    products = models.ManyToManyField(
+        'Product',
+        blank=True,
+        related_name='promotions',
+        verbose_name='Produtos em Promoção',
+        help_text='Produtos que terão o desconto aplicado automaticamente',
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Data de Criação',
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Data de Atualização',
+    )
+
+    class Meta:
+        verbose_name = 'Promoção'
+        verbose_name_plural = 'Promoções'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.discount_percent}% OFF)"
+
+    def is_valid(self):
+        from datetime import date
+        if not self.is_active:
+            return False
+        if date.today() > self.expiry_date:
             return False
         return True
 

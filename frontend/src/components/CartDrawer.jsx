@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Minus, Plus, Trash2 } from 'lucide-react';
+import { X, Minus, Plus, Trash2, Tag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -95,12 +95,39 @@ export function CartDrawer() {
                           {item.selectedColor ? `Cor: ${item.selectedColor}` : ''}
                         </p>
                       )}
-                      <p className="text-cereon-green font-bold mt-1">
-                        R${' '}
-                        {Number.isFinite(parseFloat(item.price))
-                          ? parseFloat(item.price).toFixed(2)
-                          : '0.00'}
-                      </p>
+                      {/* Preço com/sem promoção */}
+                      <div className="mt-1">
+                        {(() => {
+                          const hasPromotion = item.has_promotion === true;
+                          const originalPrice = parseFloat(item.original_price);
+                          const currentPrice = parseFloat(item.price);
+                          const hasValidDiscount = hasPromotion && 
+                                                  Number.isFinite(originalPrice) && 
+                                                  Number.isFinite(currentPrice) && 
+                                                  originalPrice > currentPrice && 
+                                                  currentPrice > 0;
+                          
+                          return hasValidDiscount ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400 line-through text-sm">
+                                R$ {originalPrice.toFixed(2)}
+                              </span>
+                              <span className="text-red-600 font-bold">
+                                R$ {currentPrice.toFixed(2)}
+                              </span>
+                              <span className="flex items-center text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                                <Tag size={10} className="mr-1" />
+                                Promoção
+                              </span>
+                            </div>
+                          ) : (
+                            <p className="text-cereon-green font-bold">
+                              R${' '}
+                              {Number.isFinite(currentPrice) ? currentPrice.toFixed(2) : '0.00'}
+                            </p>
+                          );
+                        })()}
+                      </div>
 
                       {/* Quantidade */}
                       <div className="flex items-center space-x-2 mt-3">

@@ -135,9 +135,11 @@ class CheckoutView(APIView):
                     if p.stock < qty:
                         raise ValidationError(f'Estoque insuficiente para {p.name}.')
 
-                    line_total = p.price * qty
+                    # Segurança: sempre calcula preço promocional no servidor
+                    unit_price = Decimal(str(p.get_promotional_price()))
+                    line_total = unit_price * qty
                     subtotal += line_total
-                    lines.append((p, qty, p.price))
+                    lines.append((p, qty, unit_price))
 
                 coupon = None
                 discount_amount = Decimal('0')
@@ -160,6 +162,7 @@ class CheckoutView(APIView):
                     eligible_subtotal = Decimal('0')
                     for p, qty, unit_price in lines:
                         if (not eligible_required) or (p.id in eligible_ids):
+                            # Usa o preço já com desconto promocional (se houver)
                             eligible_subtotal += unit_price * qty
                     if eligible_required and eligible_subtotal <= 0:
                         raise ValidationError('Cupom não se aplica aos produtos do carrinho.')

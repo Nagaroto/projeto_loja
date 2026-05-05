@@ -72,7 +72,11 @@ export function Catalogo() {
       );
     }
 
-    return result;
+    // Priorizar produtos em promoção
+    const onPromotion = result.filter(p => p.is_on_promotion || p.promotion_info);
+    const notOnPromotion = result.filter(p => !p.is_on_promotion && !p.promotion_info);
+    
+    return [...onPromotion, ...notOnPromotion];
   }, [selectedCategory, searchTerm, products]);
 
   if (loading) {

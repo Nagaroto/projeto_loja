@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
+import { useTheme } from '../context/ThemeContext';
 import { motion } from 'framer-motion';
-import { Package, Ticket, ShoppingBag, BarChart3, Plus, Trash2, Edit2, LogOut, Menu, X, Search, Tags, Users } from 'lucide-react';
+import { Package, Ticket, ShoppingBag, BarChart3, Plus, Trash2, Edit2, LogOut, Menu, X, Search, Tags, Users, Percent, Loader2, Moon, Sun } from 'lucide-react';
 import axios from 'axios';
 import { CategoriesTab } from '../components/CategoriesTab';
+import { ProductImageUploader } from '../components/ProductImageUploader';
 
 const API_URL = 'http://127.0.0.1:8000/api';
 
@@ -93,9 +95,9 @@ function ProductsTab() {
     price: '',
     stock: '',
     category: '',
-    image_url: '',
-    colors: '',
-    sizes: '',
+    images: [],
+    colors: [],
+    sizes: [],
     is_active: true
   });
   const [editFormData, setEditFormData] = useState({
@@ -104,9 +106,9 @@ function ProductsTab() {
     price: '',
     stock: '',
     category: '',
-    image_url: '',
-    colors: '',
-    sizes: '',
+    images: [],
+    colors: [],
+    sizes: [],
     is_active: true
   });
   const { token, getValidToken } = useAuth();
@@ -177,7 +179,7 @@ function ProductsTab() {
         price: priceValue,
         stock: stockValue,
         category: categoryId,
-        image_url: normalizeImageUrl(formData.image_url),
+        images: formData.images,
         is_active: Boolean(formData.is_active),
       }, {
         headers: { Authorization: `Bearer ${validToken}` }
@@ -188,7 +190,7 @@ function ProductsTab() {
         price: '',
         stock: '',
         category: '',
-        image_url: '',
+        images: [],
         colors: '',
         sizes: '',
         is_active: true
@@ -231,7 +233,7 @@ function ProductsTab() {
       price: product.price.toString(),
       stock: product.stock.toString(),
       category: product.category.toString(),
-      image_url: product.image_url || '',
+      images: product.images || [],
       colors: Array.isArray(product.colors) ? product.colors.join(', ') : '',
       sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : '',
       is_active: product.is_active !== false
@@ -275,7 +277,7 @@ function ProductsTab() {
         price: priceValue,
         stock: stockValue,
         category: categoryId,
-        image_url: normalizeImageUrl(editFormData.image_url),
+        images: editFormData.images,
         is_active: Boolean(editFormData.is_active),
       }, {
         headers: { Authorization: `Bearer ${validToken}` }
@@ -288,7 +290,7 @@ function ProductsTab() {
         price: '',
         stock: '',
         category: '',
-        image_url: '',
+        images: [],
         colors: '',
         sizes: '',
         is_active: true
@@ -312,7 +314,7 @@ function ProductsTab() {
         <motion.button
           onClick={() => {
             setShowEditForm(false);
-            setEditingCoupon(null);
+            setEditingProduct(null);
             setShowForm(!showForm);
           }}
           className="bg-cereon-green text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-cereon-green/90 transition-colors"
@@ -380,13 +382,16 @@ function ProductsTab() {
               className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
               rows="3"
             />
-            <input
-              type="text"
-              placeholder="URL da Imagem"
-              value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-              className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
-            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Imagens do Produto
+              </label>
+              <ProductImageUploader
+                images={formData.images}
+                onChange={(images) => setFormData({ ...formData, images })}
+                maxImages={5}
+              />
+            </div>
             <input
               type="text"
               placeholder="Cores Disponíveis (separadas por vírgula, ex: Vermelho, Azul, Preto)"
@@ -485,13 +490,16 @@ function ProductsTab() {
               className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
               rows="3"
             />
-            <input
-              type="text"
-              placeholder="URL da Imagem"
-              value={editFormData.image_url}
-              onChange={(e) => setEditFormData({ ...editFormData, image_url: e.target.value })}
-              className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
-            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Imagens do Produto
+              </label>
+              <ProductImageUploader
+                images={editFormData.images}
+                onChange={(images) => setEditFormData({ ...editFormData, images })}
+                maxImages={5}
+              />
+            </div>
             <input
               type="text"
               placeholder="Cores Disponíveis (separadas por vírgula, ex: Vermelho, Azul, Preto)"
@@ -618,7 +626,7 @@ function ProductsTab() {
 }
 
 // Componente de Cupons
-function EligibleProductsSelector({ products, selectedIds, onChange }) {
+function EligibleProductsSelector({ products, selectedIds, onChange, label, emptyText }) {
   const [search, setSearch] = useState('');
   const selectedSet = new Set((selectedIds || []).map((x) => String(x)));
   const filteredAvailable = products.filter((p) => {
@@ -649,14 +657,14 @@ function EligibleProductsSelector({ products, selectedIds, onChange }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-cereon-dark">
-          Produtos elegíveis (opcional)
+          {label || 'Produtos elegíveis (opcional)'}
         </p>
         <span className="text-xs bg-cereon-green/10 text-cereon-green px-2 py-1 rounded-full font-semibold">
           Selecionados: {selectedProducts.length}
         </span>
       </div>
       <p className="text-xs text-gray-600">
-        Se não selecionar nenhum produto, o cupom valerá para todos.
+        {emptyText || 'Se não selecionar nenhum produto, o cupom valerá para todos.'}
       </p>
 
       <input
@@ -1108,6 +1116,383 @@ function CouponsTab() {
   );
 }
 
+// Componente de Promoções
+function PromotionsTab() {
+  const [promotions, setPromotions] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingPromotion, setEditingPromotion] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    discount_percent: '',
+    expiry_date: '',
+    products: [],
+  });
+  const { getValidToken } = useAuth();
+  const productsById = products.reduce((acc, p) => {
+    acc[p.id] = p;
+    return acc;
+  }, {});
+
+  useEffect(() => {
+    loadPromotions();
+    loadProducts();
+  }, []);
+
+  const loadPromotions = async () => {
+    try {
+      const allPromotions = await loadAllPages(`${API_URL}/promotions/`);
+      setPromotions(allPromotions);
+    } catch (error) {
+      console.error('Erro ao carregar promoções:', error);
+    }
+  };
+
+  const loadProducts = async () => {
+    try {
+      const allProducts = await loadAllPages(`${API_URL}/products/`);
+      setProducts(allProducts);
+    } catch (e) {
+      setProducts([]);
+    }
+  };
+
+  const handleAddPromotion = async (e) => {
+    e.preventDefault();
+    try {
+      const validToken = await getValidToken();
+      if (!validToken) {
+        showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
+        return;
+      }
+
+      const payload = {
+        name: formData.name,
+        discount_percent: Number(formData.discount_percent),
+        expiry_date: formData.expiry_date,
+        products: Array.isArray(formData.products)
+          ? formData.products.map((x) => Number(x)).filter((n) => Number.isInteger(n) && n > 0)
+          : [],
+      };
+
+      await axios.post(`${API_URL}/promotions/`, payload, {
+        headers: { Authorization: `Bearer ${validToken}` }
+      });
+      setFormData({
+        name: '',
+        discount_percent: '',
+        expiry_date: '',
+        products: [],
+      });
+      setShowForm(false);
+      loadPromotions();
+      showAlert('Promoção criada com sucesso!', { toast: true, type: 'success', duration: 4000 });
+    } catch (error) {
+      const apiError = error.response?.data;
+      const errorMessage =
+        apiError?.detail ||
+        (apiError ? JSON.stringify(apiError) : error.message);
+      showAlert('Erro ao criar promoção: ' + errorMessage, { toast: true, type: 'error', duration: 4000 });
+    }
+  };
+
+  const handleDeletePromotion = async (id) => {
+    if (window.confirm('Tem certeza que deseja deletar esta promoção?')) {
+      try {
+        const validToken = await getValidToken();
+        if (!validToken) {
+          showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
+          return;
+        }
+        await axios.delete(`${API_URL}/promotions/${id}/`, {
+          headers: { Authorization: `Bearer ${validToken}` }
+        });
+        loadPromotions();
+        showAlert('Promoção deletada com sucesso!', { toast: true, type: 'success', duration: 4000 });
+      } catch (error) {
+        showAlert('Erro ao deletar promoção', { toast: true, type: 'error', duration: 4000 });
+      }
+    }
+  };
+
+  const handleOpenEditPromotion = (promo) => {
+    const selectedProducts = Array.isArray(promo.products)
+      ? promo.products.map((x) => String(x))
+      : [];
+    setEditingPromotion(promo);
+    setFormData({
+      name: promo.name || '',
+      discount_percent: promo.discount_percent?.toString?.() || '',
+      expiry_date: promo.expiry_date || '',
+      products: selectedProducts,
+    });
+    setShowEditForm(true);
+    setShowForm(false);
+  };
+
+  const handleUpdatePromotion = async (e) => {
+    e.preventDefault();
+    if (!editingPromotion) return;
+    try {
+      const validToken = await getValidToken();
+      if (!validToken) {
+        showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
+        return;
+      }
+
+      const payload = {
+        name: formData.name,
+        discount_percent: Number(formData.discount_percent),
+        expiry_date: formData.expiry_date,
+        products: Array.isArray(formData.products)
+          ? formData.products.map((x) => Number(x)).filter((n) => Number.isInteger(n) && n > 0)
+          : [],
+      };
+
+      await axios.patch(`${API_URL}/promotions/${editingPromotion.id}/`, payload, {
+        headers: { Authorization: `Bearer ${validToken}` }
+      });
+      setFormData({
+        name: '',
+        discount_percent: '',
+        expiry_date: '',
+        products: [],
+      });
+      setShowEditForm(false);
+      setEditingPromotion(null);
+      loadPromotions();
+      showAlert('Promoção atualizada com sucesso!', { toast: true, type: 'success', duration: 4000 });
+    } catch (error) {
+      const apiError = error.response?.data;
+      const errorMessage =
+        apiError?.detail ||
+        (apiError ? JSON.stringify(apiError) : error.message);
+      showAlert('Erro ao atualizar promoção: ' + errorMessage, { toast: true, type: 'error', duration: 4000 });
+    }
+  };
+
+  const isExpired = (expiryDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiry = new Date(expiryDate);
+    return expiry < today;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-cereon-dark">Gerenciar Promoções</h2>
+        <motion.button
+          onClick={() => {
+            setShowEditForm(false);
+            setEditingPromotion(null);
+            setShowForm(!showForm);
+          }}
+          className="bg-cereon-green text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-cereon-green/90 transition-colors"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Percent className="w-5 h-5" />
+          Nova Promoção
+        </motion.button>
+      </div>
+
+      {showForm && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-cereon-light p-6 rounded-lg border-2 border-cereon-green/30"
+        >
+          <form onSubmit={handleAddPromotion} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Nome da Promoção"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
+              />
+              <input
+                type="number"
+                placeholder="Desconto (%)"
+                required
+                min="1"
+                max="100"
+                value={formData.discount_percent}
+                onChange={(e) => setFormData({ ...formData, discount_percent: e.target.value })}
+                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
+              />
+              <input
+                type="date"
+                placeholder="Data de Expiração"
+                required
+                value={formData.expiry_date}
+                onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
+                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
+              />
+            </div>
+
+            <EligibleProductsSelector
+              products={products}
+              selectedIds={formData.products}
+              onChange={(products) => setFormData({ ...formData, products })}
+              label="Produtos em Promoção"
+              emptyText="Nenhum produto selecionado. Selecione os produtos que terão desconto aplicado automaticamente."
+            />
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="bg-cereon-green text-white px-6 py-2 rounded-lg font-semibold hover:bg-cereon-green/90 transition-colors"
+              >
+                Salvar Promoção
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="bg-gray-300 text-cereon-dark px-6 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      )}
+
+      {showEditForm && editingPromotion && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-cereon-light p-6 rounded-lg border-2 border-cereon-green/30"
+        >
+          <h3 className="text-xl font-bold text-cereon-dark mb-4">
+            Editar Promoção: {editingPromotion.name}
+          </h3>
+          <form onSubmit={handleUpdatePromotion} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Nome da Promoção"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
+              />
+              <input
+                type="number"
+                placeholder="Desconto (%)"
+                required
+                min="1"
+                max="100"
+                value={formData.discount_percent}
+                onChange={(e) => setFormData({ ...formData, discount_percent: e.target.value })}
+                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
+              />
+              <input
+                type="date"
+                placeholder="Data de Expiração"
+                required
+                value={formData.expiry_date}
+                onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
+                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
+              />
+            </div>
+
+            <EligibleProductsSelector
+              products={products}
+              selectedIds={formData.products}
+              onChange={(products) => setFormData({ ...formData, products })}
+              label="Produtos em Promoção"
+              emptyText="Nenhum produto selecionado. Selecione os produtos que terão desconto aplicado automaticamente."
+            />
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="bg-cereon-green text-white px-6 py-2 rounded-lg font-semibold hover:bg-cereon-green/90 transition-colors"
+              >
+                Salvar Alterações
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditForm(false);
+                  setEditingPromotion(null);
+                }}
+                className="bg-gray-300 text-cereon-dark px-6 py-2 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      )}
+
+      <div className="bg-white rounded-lg shadow-lg overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-cereon-light border-b-2 border-cereon-green/30">
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">Nome</th>
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">Desconto</th>
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">Expira em</th>
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">Status</th>
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">Produtos</th>
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {promotions.map((promo) => (
+              <tr key={promo.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-3 font-semibold text-cereon-green">{promo.name}</td>
+                <td className="px-6 py-3 text-cereon-dark">{promo.discount_percent}%</td>
+                <td className="px-6 py-3 text-cereon-dark">
+                  {new Date(promo.expiry_date).toLocaleDateString('pt-BR')}
+                </td>
+                <td className="px-6 py-3">
+                  {promo.is_active && !isExpired(promo.expiry_date) ? (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                      Ativa
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                      {isExpired(promo.expiry_date) ? 'Expirada' : 'Inativa'}
+                    </span>
+                  )}
+                </td>
+                <td className="px-6 py-3 text-cereon-dark text-sm">
+                  {Array.isArray(promo.products) && promo.products.length > 0
+                    ? promo.products
+                        .map((id) => productsById[id]?.name || `#${id}`)
+                        .join(', ')
+                    : 'Nenhum produto'}
+                </td>
+                <td className="px-6 py-3">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleOpenEditPromotion(promo)}
+                      className="bg-blue-500 text-white px-3 py-1 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center gap-1"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDeletePromotion(promo.id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center gap-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Deletar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // Componente de Pedidos
 function OrdersTab() {
   const [orders, setOrders] = useState([]);
@@ -1247,6 +1632,10 @@ function CustomersTab() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+  const [showOrdersModal, setShowOrdersModal] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerOrders, setCustomerOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   const loadCustomers = async () => {
     setErr('');
@@ -1266,6 +1655,39 @@ function CustomersTab() {
       setRows([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const showCustomerOrders = async (customerId, customerName) => {
+    try {
+      console.log('Abrindo pedidos do cliente:', customerId, customerName);
+      setSelectedCustomer({ id: customerId, name: customerName });
+      setShowOrdersModal(true);
+      setOrdersLoading(true);
+      setCustomerOrders([]);
+      
+      const t = await getValidToken();
+      if (!t) {
+        console.error('Token não encontrado');
+        setErr('Sessão expirada. Faça login novamente.');
+        setShowOrdersModal(false);
+        return;
+      }
+      
+      console.log('Fazendo requisição para:', `${API_URL}/admin/customers/${customerId}/orders/`);
+      const res = await axios.get(`${API_URL}/admin/customers/${customerId}/orders/`, {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      
+      console.log('Resposta recebida:', res.data);
+      setCustomerOrders(res.data?.orders || []);
+    } catch (e) {
+      console.error('Erro ao carregar pedidos do cliente:', e);
+      console.error('Detalhes do erro:', e.response?.data || e.message);
+      setCustomerOrders([]);
+      // Não fecha o modal em caso de erro, apenas mostra que não carregou
+    } finally {
+      setOrdersLoading(false);
     }
   };
 
@@ -1302,18 +1724,19 @@ function CustomersTab() {
               <th className="px-6 py-3 text-left font-bold text-cereon-dark">E-mail</th>
               <th className="px-6 py-3 text-left font-bold text-cereon-dark">CPF</th>
               <th className="px-6 py-3 text-left font-bold text-cereon-dark">Cadastro</th>
+              <th className="px-6 py-3 text-left font-bold text-cereon-dark">Ações</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td className="px-6 py-4 text-gray-500" colSpan={5}>
+                <td className="px-6 py-4 text-gray-500" colSpan={6}>
                   Carregando…
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td className="px-6 py-4 text-gray-500" colSpan={5}>
+                <td className="px-6 py-4 text-gray-500" colSpan={6}>
                   Nenhum cliente encontrado.
                 </td>
               </tr>
@@ -1327,12 +1750,102 @@ function CustomersTab() {
                   <td className="px-6 py-3 text-cereon-dark">
                     {r.date_joined ? new Date(r.date_joined).toLocaleDateString('pt-BR') : '—'}
                   </td>
+                  <td className="px-6 py-3">
+                    <button
+                      onClick={() => showCustomerOrders(r.id, r.name_masked)}
+                      className="bg-cereon-green text-white px-3 py-1 rounded text-sm font-medium hover:bg-cereon-green/90 transition-colors"
+                    >
+                      Ver detalhes
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Modal de Pedidos do Cliente */}
+      {showOrdersModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={() => setShowOrdersModal(false)}
+        >
+          <div 
+            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-cereon-dark">
+                Pedidos de {selectedCustomer?.name}
+              </h3>
+              <button
+                onClick={() => setShowOrdersModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              {ordersLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-cereon-green mr-2" />
+                  <span>Carregando pedidos...</span>
+                </div>
+              ) : customerOrders.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  Nenhum pedido encontrado para este cliente.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {customerOrders.map((order) => (
+                    <div key={order.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold text-cereon-dark">
+                            Pedido {order.public_code || `#${order.id}`}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {new Date(order.created_at).toLocaleString('pt-BR')}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-cereon-green">
+                            R$ {parseFloat(order.total || 0).toFixed(2)}
+                          </p>
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                            order.status === 'pago' ? 'bg-green-100 text-green-800' :
+                            order.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
+                            order.status === 'cancelado' ? 'bg-red-100 text-red-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {order.status === 'pago' ? 'Pago' :
+                             order.status === 'pendente' ? 'Pendente' :
+                             order.status === 'cancelado' ? 'Cancelado' :
+                             order.status || 'Desconhecido'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center text-sm text-gray-600">
+                        <span>
+                          {order.items_count || 0} {(order.items_count || 0) === 1 ? 'item' : 'itens'}
+                        </span>
+                        <span>
+                          {order.payment_method === 'pix' ? 'PIX' :
+                           order.payment_method === 'cartao' ? 'Cartão' :
+                           order.payment_method === 'boleto' ? 'Boleto' :
+                           order.payment_method || '—'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1466,6 +1979,7 @@ function AnalyticsTab() {
 export function Dashboard() {
   const { user, logout } = useAuth();
   const { showAlert } = useAlert();
+  const { isDark, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('analytics');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -1474,6 +1988,7 @@ export function Dashboard() {
     { id: 'products', label: 'Produtos', icon: Package },
     { id: 'categories', label: 'Categorias', icon: Tags },
     { id: 'coupons', label: 'Cupons', icon: Ticket },
+    { id: 'promotions', label: 'Promoções', icon: Percent },
     { id: 'customers', label: 'Clientes', icon: Users },
     { id: 'orders', label: 'Pedidos', icon: ShoppingBag }
   ];
@@ -1493,22 +2008,46 @@ export function Dashboard() {
             </div>
           </div>
           
-          <motion.button
-            onClick={logout}
-            className="hidden md:flex bg-red-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors items-center gap-2"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <LogOut className="w-5 h-5" />
-            Sair
-          </motion.button>
+          <div className="hidden md:flex items-center gap-3">
+            <motion.button
+              onClick={toggleTheme}
+              className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title={isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+            >
+              {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            </motion.button>
+            
+            <motion.button
+              onClick={logout}
+              className="bg-red-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <LogOut className="w-5 h-5" />
+              Sair
+            </motion.button>
+          </div>
 
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-cereon-dark"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="md:hidden flex items-center gap-3">
+            <motion.button
+              onClick={toggleTheme}
+              className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title={isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+            >
+              {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            </motion.button>
+            
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-cereon-dark"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1553,6 +2092,7 @@ export function Dashboard() {
           {activeTab === 'products' && <ProductsTab />}
           {activeTab === 'categories' && <CategoriesTab />}
           {activeTab === 'coupons' && <CouponsTab />}
+          {activeTab === 'promotions' && <PromotionsTab />}
           {activeTab === 'customers' && <CustomersTab />}
           {activeTab === 'orders' && <OrdersTab />}
         </motion.div>

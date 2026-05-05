@@ -5,7 +5,9 @@ from django.utils.text import slugify
 import requests
 from .models import (
     Product,
+    ProductImage,
     Coupon,
+    Promotion,
     CouponRedemption,
     Order,
     OrderItem,
@@ -15,6 +17,7 @@ from .models import (
     Cart,
     CartItem,
 )
+from .product_image_serializer import ProductImageSerializer
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -153,11 +156,54 @@ class ProductSerializer(serializers.ModelSerializer):
         source='category.name',
         read_only=True,
     )
+    images = ProductImageSerializer(
+        many=True,
+        read_only=True,
+        source='images.all'
+    )
+    promotion_info = serializers.SerializerMethodField()
+    is_on_promotion = serializers.SerializerMethodField()
+    discounted_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_promotion_info(self, obj):
+        from datetime import date
+        valid_promotions = obj.promotions.filter(
+            is_active=True,
+            expiry_date__gte=date.today()
+        )
+        if valid_promotions.exists():
+            promo = valid_promotions.first()
+            return {
+                'id': promo.id,
+                'name': promo.name,
+                'discount_percent': promo.discount_percent,
+                'expiry_date': promo.expiry_date.isoformat(),
+            }
+        return None
+
+    def get_is_on_promotion(self, obj):
+        from datetime import date
+        return obj.promotions.filter(
+            is_active=True,
+            expiry_date__gte=date.today()
+        ).exists()
+
+    def get_discounted_price(self, obj):
+        from datetime import date
+        valid_promotions = obj.promotions.filter(
+            is_active=True,
+            expiry_date__gte=date.today()
+        )
+        if valid_promotions.exists():
+            promo = valid_promotions.first()
+            discount = float(obj.price) * (promo.discount_percent / 100)
+            return round(float(obj.price) - discount, 2)
+        return None
 
 
 class CouponSerializer(serializers.ModelSerializer):
@@ -167,10 +213,26 @@ class CouponSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uses_count', 'created_at', 'updated_at']
 
 
+class PromotionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Promotion
+        fields = '__all__'
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
 class CartItemProductSerializer(serializers.ModelSerializer):
+    promotional_price = serializers.SerializerMethodField()
+    has_promotion = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
-        fields = ['id', 'name', 'price', 'image_url', 'stock', 'is_active']
+        fields = ['id', 'name', 'price', 'promotional_price', 'has_promotion', 'image_url', 'stock', 'is_active']
+
+    def get_promotional_price(self, obj):
+        return obj.get_promotional_price()
+
+    def get_has_promotion(self, obj):
+        return obj.has_active_promotion()
 
 
 class CartItemSerializer(serializers.ModelSerializer):

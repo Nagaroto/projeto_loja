@@ -16,10 +16,11 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import Throttled
 
 from .autenticacao import EmailTokenObtainPairSerializer
-from .models import Product, Coupon, Order, Category, UserProfile
+from .models import Product, Coupon, Promotion, Order, Category, UserProfile
 from .serializers import (
     ProductSerializer,
     CouponSerializer,
+    PromotionSerializer,
     OrderSerializer,
     CategorySerializer,
 )
@@ -147,6 +148,20 @@ class CouponViewSet(viewsets.ModelViewSet):
 
     queryset = Coupon.objects.all()
     serializer_class = CouponSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            from rest_framework.permissions import IsAdminUser
+            return [IsAdminUser()]
+        return super().get_permissions()
+
+
+class PromotionViewSet(viewsets.ModelViewSet):
+    """CRUD de promoções: leitura pública; escrita só staff."""
+
+    queryset = Promotion.objects.all()
+    serializer_class = PromotionSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_permissions(self):
@@ -342,14 +357,31 @@ def _mask_email(email):
     if '@' not in s:
         return '***'
     user, domain = s.split('@', 1)
+    
+    # Máscara do usuário: 2 primeiras letras + resto com *
     if len(user) <= 2:
-        user_masked = user[:1] + '*'
+        user_masked = user + '*' * (5 - len(user))
     else:
-        user_masked = user[:2] + '*' * max(1, len(user) - 2)
+        user_masked = user[:2] + '*' * (len(user) - 2)
+    
+    # Máscara do domínio: primeira letra + resto com * + extensão
     parts = domain.split('.')
-    if parts:
-        parts[0] = (parts[0][:1] + '*' * max(1, len(parts[0]) - 1)) if parts[0] else '*'
-    return f'{user_masked}@{".".join(parts)}'
+    if len(parts) >= 2:
+        domain_main = parts[0]
+        if len(domain_main) <= 1:
+            domain_masked = domain_main + '*' * 4
+        else:
+            domain_masked = domain_main[:1] + '*' * (len(domain_main) - 1)
+        extension = parts[-1]
+        return f'{user_masked}@{domain_masked}.{extension}'
+    else:
+        # Se não tiver extensão, mascara o domínio inteiro
+        domain_main = domain
+        if len(domain_main) <= 1:
+            domain_masked = domain_main + '*' * 4
+        else:
+            domain_masked = domain_main[:1] + '*' * (len(domain_main) - 1)
+        return f'{user_masked}@{domain_masked}'
 
 
 def _mask_name(name):
@@ -400,3 +432,34 @@ class AdminCustomersView(APIView):
             })
 
         return Response({'count': len(results), 'results': results})
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_customer_orders_view(request, user_id):
+    """Retorna todos os pedidos de um cliente específico (admin only)."""
+    try:
+        orders = Order.objects.filter(user_id=user_id).order_by('-created_at')
+        
+        results = []
+        for order in orders:
+            results.append({
+                'id': order.id,
+                'public_code': order.public_code,
+                'status': order.status,
+                'total': float(order.total),
+                'created_at': order.created_at,
+                'payment_method': order.payment_method,
+                'items_count': order.items.count() if order.items else 0,
+            })
+        
+        return Response({
+            'customer_id': user_id,
+            'orders_count': len(results),
+            'orders': results
+        })
+    except Exception as e:
+        return Response(
+            {'error': 'Erro ao carregar pedidos do cliente'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

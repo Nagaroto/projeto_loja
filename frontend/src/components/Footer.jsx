@@ -46,19 +46,19 @@ export function Footer() {
             <h4 className="text-lg font-semibold mb-4 text-white">Política</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className={`${isDark ? 'text-white/70 hover:text-cereon-green' : 'text-gray-400 hover:text-cereon-green'} transition-colors`}>
+                <Link to="/privacidade" className={`${isDark ? 'text-white/70 hover:text-cereon-green' : 'text-gray-400 hover:text-cereon-green'} transition-colors`}>
                   Privacidade
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className={`${isDark ? 'text-white/70 hover:text-cereon-green' : 'text-gray-400 hover:text-cereon-green'} transition-colors`}>
+                <Link to="/termos" className={`${isDark ? 'text-white/70 hover:text-cereon-green' : 'text-gray-400 hover:text-cereon-green'} transition-colors`}>
                   Termos de Uso
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className={`${isDark ? 'text-white/70 hover:text-cereon-green' : 'text-gray-400 hover:text-cereon-green'} transition-colors`}>
+                <Link to="/trocas-devolucoes" className={`${isDark ? 'text-white/70 hover:text-cereon-green' : 'text-gray-400 hover:text-cereon-green'} transition-colors`}>
                   Trocas e Devoluções
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

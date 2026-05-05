@@ -85,10 +85,29 @@ export function ProductCard({ product, categories = [] }) {
         </Link>
 
         {/* Preço */}
-        <div className="flex items-baseline space-x-2 mb-4">
-          <span className="text-2xl font-bold text-cereon-green">
-            R$ {formatPrice(product.price)}
-          </span>
+        <div className="flex flex-col mb-4">
+          {product.is_on_promotion || product.promotion_info ? (
+            <>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-lg text-gray-400 line-through">
+                  R$ {formatPrice(product.price)}
+                </span>
+                <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full font-semibold">
+                  -{product.promotion_info?.discount_percent || Math.round((1 - (product.discounted_price / product.price)) * 100)}%
+                </span>
+              </div>
+              <span className="text-2xl font-bold text-red-600">
+                R$ {formatPrice(product.discounted_price || (product.price * (1 - (product.promotion_info?.discount_percent || 0) / 100)))}
+              </span>
+              <span className="text-xs text-green-600 font-medium">
+                {product.promotion_info?.name || 'Promoção'}
+              </span>
+            </>
+          ) : (
+            <span className="text-2xl font-bold text-cereon-green">
+              R$ {formatPrice(product.price)}
+            </span>
+          )}
         </div>
 
         {/* Botão */}

@@ -26,13 +26,22 @@ function parseCartId(cartId) {
 function backendItemToFront(item) {
   const p = item?.product;
   const priceNum = parseFloat(p?.price);
+  const promoPriceNum = parseFloat(p?.promotional_price);
+  const hasPromotion = p?.has_promotion || false;
+  // Usa preço promocional se disponível e válido
+  const finalPrice = (hasPromotion && Number.isFinite(promoPriceNum) && promoPriceNum > 0)
+    ? promoPriceNum
+    : (Number.isFinite(priceNum) ? priceNum : 0);
   const image = p?.image_url || '/imgs/cereon.webp';
   const itemId = item?.cart_item_key || String(p?.id || item?.id || '');
   return {
     ...p,
     id: p?.id,
     name: p?.name,
-    price: Number.isFinite(priceNum) ? priceNum : 0,
+    price: finalPrice,
+    original_price: priceNum,
+    promotional_price: promoPriceNum,
+    has_promotion: hasPromotion,
     image_url: p?.image_url,
     image,
     quantity: toPositiveInt(item?.quantity, 1),
@@ -105,9 +114,18 @@ export function CartProvider({ children }) {
     }
 
     const priceNum = parseFloat(product.price);
+    const promoPriceNum = parseFloat(product.promotional_price || product.discounted_price);
+    const hasPromotion = product.is_on_promotion || product.has_promotion || product.promotion_info;
+    // Usa preço promocional se disponível
+    const finalPrice = (hasPromotion && Number.isFinite(promoPriceNum) && promoPriceNum > 0)
+      ? promoPriceNum
+      : (Number.isFinite(priceNum) ? priceNum : 0);
     const normalized = {
       ...product,
-      price: Number.isFinite(priceNum) ? priceNum : 0,
+      price: finalPrice,
+      original_price: priceNum,
+      promotional_price: promoPriceNum,
+      has_promotion: !!hasPromotion,
       image: product.image_url || product.image || '/imgs/cereon.webp',
     };
 
@@ -212,13 +230,27 @@ export function CartProvider({ children }) {
     }
   };
 
-  // Calcular total
+  // Calcular total (já usa preço promocional quando disponível)
   const getTotal = () => {
     return cartItems.reduce((total, item) => {
       const p = parseFloat(item.price);
       const q = item.quantity || 1;
       return total + (Number.isFinite(p) ? p : 0) * q;
     }, 0);
+  };
+
+  // Calcular total sem descontos (preço original)
+  const getOriginalTotal = () => {
+    return cartItems.reduce((total, item) => {
+      const originalPrice = parseFloat(item.original_price || item.price);
+      const q = item.quantity || 1;
+      return total + (Number.isFinite(originalPrice) ? originalPrice : 0) * q;
+    }, 0);
+  };
+
+  // Calcular economia total com promoções
+  const getSavings = () => {
+    return getOriginalTotal() - getTotal();
   };
 
   // Limpar carrinho
@@ -247,6 +279,8 @@ export function CartProvider({ children }) {
     removeFromCart,
     updateQuantity,
     getTotal,
+    getOriginalTotal,
+    getSavings,
     clearCart,
     isCartOpen,
     setIsCartOpen,

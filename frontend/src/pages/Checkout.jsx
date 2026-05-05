@@ -4,7 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Package, MapPin, Truck, CreditCard, MessageSquare, Copy, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, Package, MapPin, Truck, CreditCard, MessageSquare, Copy, CheckCircle, Clock, X } from 'lucide-react';
 
 const API_URL = 'http://127.0.0.1:8000/api';
 
@@ -126,6 +126,12 @@ export function Checkout() {
       )
     : 0;
   const discountedSubtotal = Math.max(0, subtotal - appliedDiscount);
+
+  const removeCoupon = () => {
+    setCouponCode('');
+    setAppliedCoupon(null);
+    setCouponFeedback('');
+  };
 
   const loadAddresses = useCallback(async () => {
     setLoadingAddresses(true);
@@ -669,9 +675,51 @@ export function Checkout() {
                         {[item.selectedSize, item.selectedColor].filter(Boolean).join(' · ')}
                       </p>
                     )}
-                    <p className="text-sm text-gray-600">Qtd {item.quantity} × R$ {formatMoney(item.price)}</p>
+                    {/* Preço unitário - mostra desconto quando aplicável */}
+                    <div className="text-sm text-gray-600">
+                      {(() => {
+                        const hasPromotion = item.has_promotion === true;
+                        const originalPrice = parseFloat(item.original_price);
+                        const currentPrice = parseFloat(item.price);
+                        const hasValidDiscount = hasPromotion && 
+                                                Number.isFinite(originalPrice) && 
+                                                Number.isFinite(currentPrice) && 
+                                                originalPrice > currentPrice && 
+                                                currentPrice > 0;
+                        
+                        return hasValidDiscount ? (
+                          <span className="flex items-center gap-1">
+                            Qtd {item.quantity} ×
+                            <span className="line-through text-gray-400">R$ {formatMoney(originalPrice)}</span>
+                            <span className="text-red-600 font-semibold">R$ {formatMoney(currentPrice)}</span>
+                            <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">Promoção</span>
+                          </span>
+                        ) : (
+                          <span>Qtd {item.quantity} × R$ {formatMoney(currentPrice)}</span>
+                        );
+                      })()}
+                    </div>
                     <p className="text-xs text-gray-500">
                       Subtotal do item: R$ {formatMoney((parseFloat(item.price) || 0) * (item.quantity || 1))}
+                      {(() => {
+                        const hasPromotion = item.has_promotion === true;
+                        const originalPrice = parseFloat(item.original_price);
+                        const currentPrice = parseFloat(item.price);
+                        const hasValidDiscount = hasPromotion && 
+                                                Number.isFinite(originalPrice) && 
+                                                Number.isFinite(currentPrice) && 
+                                                originalPrice > currentPrice && 
+                                                currentPrice > 0;
+                        
+                        if (hasValidDiscount) {
+                          return (
+                            <span className="text-red-600 ml-1">
+                              (Economia: R$ {formatMoney((originalPrice - currentPrice) * item.quantity)})
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                     </p>
                     {appliedCoupon && (
                       <p className={`text-xs ${getItemDiscount(item, appliedCoupon) > 0 ? 'text-green-700' : 'text-gray-500'}`}>
@@ -682,9 +730,29 @@ export function Checkout() {
                     )}
                   </div>
                   <div className="text-right whitespace-nowrap">
-                    <p className="font-semibold text-cereon-green">
-                      R$ {formatMoney((parseFloat(item.price) || 0) * (item.quantity || 1))}
-                    </p>
+                    {(() => {
+                      const hasPromotion = item.has_promotion === true;
+                      const originalPrice = parseFloat(item.original_price);
+                      const currentPrice = parseFloat(item.price);
+                      const hasValidDiscount = hasPromotion && 
+                                              Number.isFinite(originalPrice) && 
+                                              Number.isFinite(currentPrice) && 
+                                              originalPrice > currentPrice && 
+                                              currentPrice > 0;
+                      
+                      return (
+                        <>
+                          <p className={`font-semibold ${hasValidDiscount ? 'text-red-600' : 'text-cereon-green'}`}>
+                            R$ {formatMoney(currentPrice * item.quantity)}
+                          </p>
+                          {hasValidDiscount && (
+                            <p className="text-xs text-gray-400 line-through">
+                              R$ {formatMoney(originalPrice * item.quantity)}
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
                     {appliedCoupon && getItemDiscount(item, appliedCoupon) > 0 && (
                       <p className="text-xs text-green-700">
                         Total com desconto: R$ {formatMoney(((parseFloat(item.price) || 0) * (item.quantity || 1)) - getItemDiscount(item, appliedCoupon))}
@@ -884,16 +952,28 @@ export function Checkout() {
               Cupom
             </h2>
             <div className="flex flex-wrap gap-3 items-center">
-              <input
-                value={couponCode}
-                onChange={(e) => {
-                  setCouponCode(e.target.value.toUpperCase());
-                  setAppliedCoupon(null);
-                  setCouponFeedback('');
-                }}
-                placeholder="Código do cupom (opcional)"
-                className="flex-1 min-w-[220px] border-2 border-gray-200 rounded-lg px-3 py-2"
-              />
+              <div className="flex-1 min-w-[220px] relative">
+                <input
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value.toUpperCase());
+                    setAppliedCoupon(null);
+                    setCouponFeedback('');
+                  }}
+                  placeholder="Código do cupom (opcional)"
+                  className={`w-full border-2 rounded-lg px-3 py-2 pr-10 ${appliedCoupon ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}
+                />
+                {appliedCoupon && (
+                  <button
+                    type="button"
+                    onClick={removeCoupon}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                    title="Remover cupom"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => applyCouponByCode(couponCode)}
@@ -1104,6 +1184,34 @@ export function Checkout() {
               <span>Subtotal</span>
               <span>R$ {formatMoney(subtotal)}</span>
             </div>
+            {/* Mostrar economia com promoções se houver */}
+            {(() => {
+              const promoSavings = cartItems.reduce((acc, item) => {
+                const hasPromotion = item.has_promotion === true;
+                const originalPrice = parseFloat(item.original_price);
+                const currentPrice = parseFloat(item.price);
+                const hasValidDiscount = hasPromotion && 
+                                        Number.isFinite(originalPrice) && 
+                                        Number.isFinite(currentPrice) && 
+                                        originalPrice > currentPrice && 
+                                        currentPrice > 0;
+                
+                if (hasValidDiscount) {
+                  const saving = (originalPrice - currentPrice) * item.quantity;
+                  return acc + saving;
+                }
+                return acc;
+              }, 0);
+              if (promoSavings > 0) {
+                return (
+                  <div className="flex justify-between text-red-600 mb-2 text-sm">
+                    <span>Economia em promoções</span>
+                    <span>- R$ {formatMoney(promoSavings)}</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
             <div className="flex justify-between text-cereon-dark mb-2">
               <span>Desconto {appliedCoupon ? `(${appliedCoupon.code})` : ''}</span>
               <span>- R$ {formatMoney(appliedDiscount)}</span>

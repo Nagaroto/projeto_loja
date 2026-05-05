@@ -1,13 +1,63 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Hero } from '../components/Hero';
 import { WhyChoose } from '../components/WhyChoose';
 import { ProductCard } from '../components/ProductCard';
-import { mockProducts } from '../data/mockProducts';
 import { motion } from 'framer-motion';
+import axios from 'axios';
+
+const API_URL = 'http://127.0.0.1:8000/api';
 
 export function Home() {
-  // Mostrar apenas 6 produtos na home
-  const featuredProducts = mockProducts.slice(0, 6);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadPublishedProducts();
+    loadCategories();
+  }, []);
+
+  const loadPublishedProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_URL}/products/published/`);
+      const data = response.data;
+      const productsList = Array.isArray(data) ? data : (data.results || []);
+      setProducts(productsList);
+    } catch (error) {
+      console.error('Erro ao carregar produtos:', error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/categories/`);
+      const data = response.data;
+      const categoriesList = Array.isArray(data) ? data : (data.results || []);
+      setCategories(categoriesList);
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+      setCategories([]);
+    }
+  };
+
+  // Priorizar produtos em promoção - máximo 6 produtos
+  const featuredProducts = React.useMemo(() => {
+    if (!products.length) return [];
+    
+    // Separar produtos em promoção e sem promoção
+    const onPromotion = products.filter(p => p.is_on_promotion || p.promotion_info);
+    const notOnPromotion = products.filter(p => !p.is_on_promotion && !p.promotion_info);
+    
+    // Priorizar produtos em promoção, depois os demais, limitando a 6
+    return [...onPromotion, ...notOnPromotion].slice(0, 6);
+  }, [products]);
+
+  // Verificar se há produtos em promoção para mostrar mensagem diferente
+  const hasPromotions = featuredProducts.some(p => p.is_on_promotion || p.promotion_info);
 
   return (
     <div>
@@ -26,19 +76,31 @@ export function Home() {
             className="text-center mb-12"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-cereon-dark mb-4">
-              Produtos em Destaque
+              {hasPromotions ? 'Ofertas Imperdíveis' : 'Produtos em Destaque'}
             </h2>
             <p className="text-lg text-gray-600">
-              Confira nossas melhores peças desta coleção
+              {hasPromotions 
+                ? 'Aproveite nossas promoções por tempo limitado!' 
+                : 'Confira nossas melhores peças desta coleção'}
             </p>
           </motion.div>
 
           {/* Grid de Produtos */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-gray-600">Carregando produtos...</p>
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} categories={categories} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-lg text-gray-600">Nenhum produto disponível no momento.</p>
+            </div>
+          )}
 
           {/* CTA */}
           <motion.div
