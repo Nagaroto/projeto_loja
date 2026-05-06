@@ -3,6 +3,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 
 
 class Category(models.Model):
@@ -192,6 +193,14 @@ class Product(models.Model):
             is_active=True,
             expiry_date__gte=date.today()
         ).exists()
+
+    def delete(self, *args, **kwargs):
+        """Bloqueia exclusão de produtos vinculados a pedidos."""
+        if self.orderitem_set.exists():
+            raise ValidationError(
+                "Este produto já está vinculado a pedidos e não pode ser excluído."
+            )
+        super().delete(*args, **kwargs)
 
 
 class Coupon(models.Model):

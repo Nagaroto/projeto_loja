@@ -42,6 +42,7 @@ export function Navbar() {
     { to: '/', label: 'Início' },
     { to: '/sobre', label: 'Sobre' },
     { to: '/catalogo', label: 'Catálogo' },
+    { to: '/favoritos', label: 'Favoritos' },
   ];
 
   const toggleMenu = () => {

@@ -13,6 +13,7 @@ import { CartDrawer } from './components/CartDrawer'
 import { ScrollToTop } from './components/ScrollToTop'
 import { Home } from './pages/Home'
 import { Catalogo } from './pages/Catalogo'
+import { Favoritos } from './pages/Favoritos'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { UserAccount } from './pages/UserAccount'
@@ -58,6 +59,7 @@ function App() {
                 <Route element={<Layout />}>
                   <Route path="/" element={<Home />} />
                   <Route path="/catalogo" element={<Catalogo />} />
+                  <Route path="/favoritos" element={<Favoritos />} />
                   <Route path="/produto/:id" element={<ProductDetail />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/cadastro" element={<Register />} />

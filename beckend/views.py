@@ -138,6 +138,13 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
+    def get_queryset(self):
+        """Filtra produtos ativos para usuários não-staff."""
+        queryset = Product.objects.all()
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(is_active=True)
+        return queryset
+
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             from rest_framework.permissions import IsAdminUser

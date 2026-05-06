@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useAlert } from '../context/AlertContext';
+import { isFavoriteProduct, toggleFavoriteProduct } from '../utils/favorites';
 
 const API_URL = 'http://127.0.0.1:8000/api';
 const FALLBACK_IMG = '/imgs/cereon.webp';
@@ -46,6 +47,7 @@ export function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
   const [mainImage, setMainImage] = useState(null);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +61,7 @@ export function ProductDetail() {
       setSelectedColor('');
       setQuantity(1);
       setMainImage(null);
+      setIsFavorite(false);
 
       try {
         const prodRes = await axios.get(`${API_URL}/products/${id}/`);
@@ -67,6 +70,7 @@ export function ProductDetail() {
         const normalized = normalizeProduct(prodRes.data);
         setProduct(normalized);
         setMainImage(normalized.images[0]);
+        setIsFavorite(isFavoriteProduct(normalized.id));
 
         if (normalized.categoryId) {
           try {
@@ -168,6 +172,24 @@ export function ProductDetail() {
 
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!product?.id) return;
+    const { isFavorite: nextFavorite } = toggleFavoriteProduct(product.id);
+    setIsFavorite(nextFavorite);
+
+    showAlert(
+      nextFavorite
+        ? 'Produto adicionado aos favoritos.'
+        : 'Produto removido dos favoritos.',
+      {
+        title: 'Favoritos',
+        type: nextFavorite ? 'success' : 'info',
+        toast: true,
+        duration: 1800,
+      },
+    );
   };
 
   return (
@@ -376,13 +398,19 @@ export function ProductDetail() {
 
               <motion.button
                 type="button"
+                onClick={handleToggleFavorite}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-6 py-4 border-2 border-gray-300 rounded-lg hover:border-cereon-green transition-colors"
+                className={`px-6 py-4 border-2 rounded-lg transition-colors ${
+                  isFavorite
+                    ? 'border-red-300 bg-red-50 hover:border-red-400'
+                    : 'border-gray-300 hover:border-cereon-green'
+                }`}
+                aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
               >
                 <Heart
                   size={24}
-                  className="text-gray-400 hover:text-red-500"
+                  className={isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-400 hover:text-red-500'}
                 />
               </motion.button>
             </div>
