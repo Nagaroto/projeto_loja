@@ -3,58 +3,16 @@ import { motion } from 'framer-motion';
 import { Upload, X, Star, Loader2, AlertCircle } from 'lucide-react';
 import api from '../services/api';
 
-// Função para converter imagem para WebP
-const convertToWebP = (file, quality = 0.8) => {
-  return new Promise((resolve, reject) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const webpFile = new File([blob], `${file.name.split('.')[0]}.webp`, {
-              type: 'image/webp',
-              lastModified: Date.now(),
-            });
-            resolve(webpFile);
-          } else {
-            reject(new Error('Falha na conversão para WebP'));
-          }
-        },
-        'image/webp',
-        quality
-      );
-    };
-
-    img.onerror = () => reject(new Error('Falha ao carregar a imagem'));
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-};
-
-// Validação
+// Validação leve: o servidor valida e converte com Pillow (JPEG, PNG, WebP, GIF, AVIF, HEIC, etc.)
 const validateImageFile = (file) => {
-  const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-
-  if (!validTypes.includes(file.type)) {
-    throw new Error('Formato inválido. Apenas JPG, JPEG e PNG.');
-  }
-
   const maxSize = 10 * 1024 * 1024;
   if (file.size > maxSize) {
     throw new Error('Arquivo muito grande. Máx: 10MB.');
   }
-
+  const t = (file.type || '').toLowerCase();
+  if (t && !t.startsWith('image/')) {
+    throw new Error('Selecione um arquivo de imagem.');
+  }
   return true;
 };
 
@@ -81,10 +39,8 @@ export function ProductImageUploader({
 
       setUploadingImages((prev) => new Set(prev).add(tempId));
 
-      const webpFile = await convertToWebP(file, 0.8);
-
       const formData = new FormData();
-      formData.append('image', webpFile);
+      formData.append('image', file);
 
       // ✅ USO CORRETO DO API (COM TOKEN AUTOMÁTICO)
       const response = await api.post('/upload/product-image/', formData);
@@ -189,7 +145,7 @@ export function ProductImageUploader({
             ref={fileInputRef}
             type="file"
             multiple
-            accept="image/jpeg,image/png"
+            accept="image/*"
             onChange={handleInputChange}
             className="hidden"
           />
@@ -215,7 +171,9 @@ export function ProductImageUploader({
       <div className="grid grid-cols-2 gap-4">
         {images.map((img, index) => (
           <div key={img.id} className="relative">
-            <img src={img.url} className="rounded" />
+            <div className="aspect-square w-full overflow-hidden rounded">
+              <img src={img.url} className="w-full h-full object-cover" />
+            </div>
 
             {img.isCover && (
               <span className="absolute top-1 left-1 bg-green-500 text-white text-xs px-2">

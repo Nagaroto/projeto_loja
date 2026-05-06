@@ -624,3 +624,96 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f'{self.product.name} x{self.quantity} — {self.cart.user.email}'
+
+
+class Notification(models.Model):
+    """Notificação enviada aos usuários (lida por usuário via NotificationRead)."""
+
+    TYPE_PROMO = 'promocao'
+    TYPE_COUPON = 'cupom'
+    TYPE_NOTICE = 'aviso'
+    TYPE_CHOICES = [
+        (TYPE_PROMO, 'Promoção'),
+        (TYPE_COUPON, 'Cupom'),
+        (TYPE_NOTICE, 'Aviso'),
+    ]
+
+    title = models.CharField(max_length=120, verbose_name='Título')
+    message = models.TextField(verbose_name='Mensagem')
+    type = models.CharField(
+        max_length=20,
+        choices=TYPE_CHOICES,
+        default=TYPE_NOTICE,
+        verbose_name='Tipo',
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notifications',
+        verbose_name='Categoria (opcional)',
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notifications',
+        verbose_name='Produto (opcional)',
+    )
+    is_active = models.BooleanField(default=True, verbose_name='Ativa')
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Expira em',
+        help_text='Se preenchido, a notificação deixa de aparecer após esta data/hora.',
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Criada em')
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_notifications',
+        verbose_name='Criada por',
+    )
+
+    class Meta:
+        verbose_name = 'Notificação'
+        verbose_name_plural = 'Notificações'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'[{self.type}] {self.title}'
+
+
+class NotificationRead(models.Model):
+    """Registro de leitura por usuário (uma linha por notificação lida)."""
+
+    notification = models.ForeignKey(
+        Notification,
+        on_delete=models.CASCADE,
+        related_name='reads',
+        verbose_name='Notificação',
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='notification_reads',
+        verbose_name='Usuário',
+    )
+    read_at = models.DateTimeField(auto_now_add=True, verbose_name='Lida em')
+
+    class Meta:
+        verbose_name = 'Leitura de notificação'
+        verbose_name_plural = 'Leituras de notificações'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['notification', 'user'],
+                name='uniq_notification_read_per_user',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.user.email} leu #{self.notification_id}'

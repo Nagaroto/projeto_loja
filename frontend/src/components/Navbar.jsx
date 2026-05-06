@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { NotificationsBell } from './NotificationsBell';
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -168,6 +169,9 @@ export function Navbar() {
             >
               {isDark ? <Sun size={22} /> : <Moon size={22} />}
             </button>
+
+            {/* Notificações */}
+            <NotificationsBell />
 
             {/* Carrinho */}
             <button

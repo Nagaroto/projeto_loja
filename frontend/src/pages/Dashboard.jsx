@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
 import { useTheme } from '../context/ThemeContext';
 import { motion } from 'framer-motion';
-import { Package, Ticket, ShoppingBag, BarChart3, Plus, Trash2, Edit2, LogOut, Menu, X, Search, Tags, Users, Percent, Loader2, Moon, Sun } from 'lucide-react';
+import { Package, Ticket, ShoppingBag, BarChart3, Plus, Trash2, Edit2, LogOut, Menu, X, Search, Tags, Users, Percent, Loader2, Moon, Sun, Bell } from 'lucide-react';
 import axios from 'axios';
 import { CategoriesTab } from '../components/CategoriesTab';
 import { ProductImageUploader } from '../components/ProductImageUploader';
@@ -81,6 +81,12 @@ const normalizeImageUrl = (value) => {
   return `${base}${normalizedPath}`;
 };
 
+const getCoverImageUrl = (images = []) => {
+  if (!Array.isArray(images) || images.length === 0) return null;
+  const cover = images.find((img) => img?.isCover);
+  return cover?.url || images[0]?.url || null;
+};
+
 function ProductsTab() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -112,6 +118,7 @@ function ProductsTab() {
     is_active: true
   });
   const { token, getValidToken } = useAuth();
+  const { showAlert, showConfirm } = useAlert();
 
   useEffect(() => {
     loadProducts();
@@ -180,6 +187,7 @@ function ProductsTab() {
         stock: stockValue,
         category: categoryId,
         images: formData.images,
+        image_url: getCoverImageUrl(formData.images),
         is_active: Boolean(formData.is_active),
       }, {
         headers: { Authorization: `Bearer ${validToken}` }
@@ -208,20 +216,31 @@ function ProductsTab() {
   };
 
   const handleDeleteProduct = async (id) => {
-    if (window.confirm('Tem certeza que deseja deletar este produto?')) {
-      try {
-        const validToken = await getValidToken();
-        if (!validToken) {
-          showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
-          return;
-        }
-        await axios.delete(`${API_URL}/products/${id}/`, {
-          headers: { Authorization: `Bearer ${validToken}` }
-        });
-        loadProducts();
-      } catch (error) {
-        showAlert('Erro ao deletar produto', { toast: true, type: 'error', duration: 4000 });
+    const confirmed = await showConfirm(
+      'Esta ação não pode ser desfeita. O produto será removido permanentemente do painel e do catálogo.',
+      {
+        title: 'Excluir este produto?',
+        confirmLabel: 'Sim, excluir',
+        cancelLabel: 'Cancelar',
+        danger: true,
+        type: 'warning',
       }
+    );
+    if (!confirmed) return;
+
+    try {
+      const validToken = await getValidToken();
+      if (!validToken) {
+        showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
+        return;
+      }
+      await axios.delete(`${API_URL}/products/${id}/`, {
+        headers: { Authorization: `Bearer ${validToken}` }
+      });
+      loadProducts();
+      showAlert('Produto excluído com sucesso.', { toast: true, type: 'success', duration: 3000 });
+    } catch (error) {
+      showAlert('Erro ao excluir produto.', { toast: true, type: 'error', duration: 4000 });
     }
   };
 
@@ -278,6 +297,7 @@ function ProductsTab() {
         stock: stockValue,
         category: categoryId,
         images: editFormData.images,
+        image_url: getCoverImageUrl(editFormData.images),
         is_active: Boolean(editFormData.is_active),
       }, {
         headers: { Authorization: `Bearer ${validToken}` }
@@ -577,12 +597,14 @@ function ProductsTab() {
             className="bg-white border border-gray-200 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow"
             whileHover={{ y: -5 }}
           >
-            {product.image_url && (
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-lg mb-3"
-              />
+            {(product.image_url || getCoverImageUrl(product.images)) && (
+              <div className="w-full aspect-square overflow-hidden rounded-lg mb-3">
+                <img
+                  src={product.image_url || getCoverImageUrl(product.images)}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             )}
             <div className="flex justify-between items-start mb-2">
               <h3 className="font-bold text-cereon-dark flex-1">{product.name}</h3>
@@ -1975,6 +1997,317 @@ function AnalyticsTab() {
   );
 }
 
+function NotificationsTab() {
+  const { showAlert } = useAlert();
+  const { token, getValidToken } = useAuth();
+  const { isDark } = useTheme();
+  const [loading, setLoading] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [formData, setFormData] = useState({
+    title: '',
+    message: '',
+    type: 'aviso',
+    category: '',
+    product: '',
+    expires_at: '',
+    is_active: true,
+  });
+
+  const loadNotifications = async () => {
+    setLoading(true);
+    try {
+      const validToken = await getValidToken();
+      if (!validToken) return;
+      const all = await loadAllPages(`${API_URL}/admin/notifications/`, validToken);
+      setNotifications(all);
+    } catch (e) {
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMeta = async () => {
+    try {
+      const [allCategories, allProducts] = await Promise.all([
+        loadAllPages(`${API_URL}/categories/`),
+        loadAllPages(`${API_URL}/products/`),
+      ]);
+      setCategories(allCategories);
+      setProducts(allProducts);
+    } catch (_) {
+      setCategories([]);
+      setProducts([]);
+    }
+  };
+
+  useEffect(() => {
+    if (!token) return;
+    loadNotifications();
+    loadMeta();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    try {
+      const validToken = await getValidToken();
+      if (!validToken) {
+        showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
+        return;
+      }
+
+      const payload = {
+        title: formData.title.trim(),
+        message: formData.message.trim(),
+        type: formData.type,
+        is_active: Boolean(formData.is_active),
+        category: formData.category ? Number(formData.category) : null,
+        product: formData.product ? Number(formData.product) : null,
+        expires_at: formData.expires_at ? new Date(formData.expires_at).toISOString() : null,
+      };
+
+      if (!payload.title || payload.title.length < 3) {
+        showAlert('Informe um título válido.', { toast: true, type: 'error', duration: 4000 });
+        return;
+      }
+      if (!payload.message || payload.message.length < 3) {
+        showAlert('Informe uma mensagem válida.', { toast: true, type: 'error', duration: 4000 });
+        return;
+      }
+
+      await axios.post(`${API_URL}/admin/notifications/`, payload, {
+        headers: { Authorization: `Bearer ${validToken}` },
+      });
+
+      setFormData({
+        title: '',
+        message: '',
+        type: 'aviso',
+        category: '',
+        product: '',
+        expires_at: '',
+        is_active: true,
+      });
+      showAlert('Notificação criada com sucesso.', { toast: true, type: 'success', duration: 3000 });
+      loadNotifications();
+    } catch (error) {
+      const apiError = error.response?.data;
+      const msg = apiError?.detail || (apiError ? JSON.stringify(apiError) : error.message);
+      showAlert('Erro ao criar notificação: ' + msg, { toast: true, type: 'error', duration: 5000 });
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Tem certeza que deseja deletar esta notificação?')) return;
+    try {
+      const validToken = await getValidToken();
+      if (!validToken) return;
+      await axios.delete(`${API_URL}/admin/notifications/${id}/`, {
+        headers: { Authorization: `Bearer ${validToken}` },
+      });
+      showAlert('Notificação removida.', { toast: true, type: 'success', duration: 2500 });
+      loadNotifications();
+    } catch (e) {
+      showAlert('Erro ao deletar notificação.', { toast: true, type: 'error', duration: 4000 });
+    }
+  };
+
+  const badge = (type) => {
+    const base = 'text-[11px] font-bold px-2 py-1 rounded-full';
+    if (type === 'promocao') return `${base} ${isDark ? 'bg-green-900/40 text-green-200' : 'bg-green-100 text-green-800'}`;
+    if (type === 'cupom') return `${base} ${isDark ? 'bg-yellow-900/40 text-yellow-200' : 'bg-yellow-100 text-yellow-800'}`;
+    return `${base} ${isDark ? 'bg-blue-900/40 text-blue-200' : 'bg-blue-100 text-blue-800'}`;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-cereon-dark">Notificações</h2>
+          <p className="text-sm text-gray-600">Crie avisos que aparecem para os usuários no sino da navbar.</p>
+        </div>
+        <button
+          type="button"
+          onClick={loadNotifications}
+          className="px-4 py-2 rounded-lg font-semibold bg-cereon-green text-white hover:bg-cereon-green/90 transition-colors flex items-center gap-2"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
+          Atualizar
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <h3 className="text-lg font-bold text-cereon-dark mb-4 flex items-center gap-2">
+          <Plus className="w-5 h-5 text-cereon-green" />
+          Nova notificação
+        </h3>
+
+        <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-bold text-gray-700 mb-1">Título</label>
+            <input
+              value={formData.title}
+              onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
+              className="w-full border rounded-lg px-3 py-2"
+              placeholder="Ex.: Novos cupons disponíveis!"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-bold text-gray-700 mb-1">Mensagem</label>
+            <textarea
+              value={formData.message}
+              onChange={(e) => setFormData((p) => ({ ...p, message: e.target.value }))}
+              className="w-full border rounded-lg px-3 py-2 min-h-24"
+              placeholder="Escreva o conteúdo da notificação..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Tipo</label>
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData((p) => ({ ...p, type: e.target.value }))}
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="promocao">Promoção</option>
+              <option value="cupom">Cupom</option>
+              <option value="aviso">Aviso</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Status</label>
+            <select
+              value={formData.is_active ? '1' : '0'}
+              onChange={(e) => setFormData((p) => ({ ...p, is_active: e.target.value === '1' }))}
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="1">Ativa</option>
+              <option value="0">Inativa</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Categoria (opcional)</label>
+            <select
+              value={formData.category}
+              onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))}
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="">—</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Produto (opcional)</label>
+            <select
+              value={formData.product}
+              onChange={(e) => setFormData((p) => ({ ...p, product: e.target.value }))}
+              className="w-full border rounded-lg px-3 py-2"
+            >
+              <option value="">—</option>
+              {products.map((prod) => (
+                <option key={prod.id} value={prod.id}>
+                  {prod.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Expira em (opcional)</label>
+            <input
+              type="datetime-local"
+              value={formData.expires_at}
+              onChange={(e) => setFormData((p) => ({ ...p, expires_at: e.target.value }))}
+              className="w-full border rounded-lg px-3 py-2"
+            />
+            <p className="mt-1 text-xs text-gray-500">Após expirar, a notificação é removida automaticamente.</p>
+          </div>
+
+          <div className="md:col-span-2">
+            <button
+              type="submit"
+              className="w-full md:w-auto px-6 py-2 rounded-lg font-semibold bg-cereon-green text-white hover:bg-cereon-green/90 transition-colors"
+            >
+              Criar notificação
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="px-6 py-4 border-b flex items-center justify-between">
+          <h3 className="text-lg font-bold text-cereon-dark">Lista</h3>
+          <span className="text-sm text-gray-600">Total: {notifications.length}</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left font-bold text-cereon-dark">Tipo</th>
+                <th className="px-6 py-3 text-left font-bold text-cereon-dark">Título</th>
+                <th className="px-6 py-3 text-left font-bold text-cereon-dark">Ativa</th>
+                <th className="px-6 py-3 text-left font-bold text-cereon-dark">Expira</th>
+                <th className="px-6 py-3 text-right font-bold text-cereon-dark">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {notifications.map((n) => (
+                <tr key={n.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-3">
+                    <span className={badge(n.type)}>{n.type}</span>
+                  </td>
+                  <td className="px-6 py-3">
+                    <div className="font-semibold text-cereon-dark">{n.title}</div>
+                    <div className="text-xs text-gray-500 truncate max-w-[36rem]">{n.message}</div>
+                  </td>
+                  <td className="px-6 py-3">
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${n.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+                      {n.is_active ? 'Sim' : 'Não'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3 text-sm text-gray-600">
+                    {n.expires_at ? new Date(n.expires_at).toLocaleString() : '—'}
+                  </td>
+                  <td className="px-6 py-3 text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(n.id)}
+                      className="text-red-600 hover:text-red-800 font-semibold inline-flex items-center gap-1"
+                      title="Deletar"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Deletar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {notifications.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-6 text-sm text-gray-600">
+                    Nenhuma notificação cadastrada.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Dashboard Principal
 export function Dashboard() {
   const { user, logout } = useAuth();
@@ -1986,6 +2319,7 @@ export function Dashboard() {
   const tabs = [
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'products', label: 'Produtos', icon: Package },
+    { id: 'notifications', label: 'Notificações', icon: Bell },
     { id: 'categories', label: 'Categorias', icon: Tags },
     { id: 'coupons', label: 'Cupons', icon: Ticket },
     { id: 'promotions', label: 'Promoções', icon: Percent },
@@ -2090,6 +2424,7 @@ export function Dashboard() {
         >
           {activeTab === 'analytics' && <AnalyticsTab />}
           {activeTab === 'products' && <ProductsTab />}
+          {activeTab === 'notifications' && <NotificationsTab />}
           {activeTab === 'categories' && <CategoriesTab />}
           {activeTab === 'coupons' && <CouponsTab />}
           {activeTab === 'promotions' && <PromotionsTab />}

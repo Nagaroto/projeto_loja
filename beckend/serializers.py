@@ -16,6 +16,8 @@ from .models import (
     Address,
     Cart,
     CartItem,
+    Notification,
+    NotificationRead,
 )
 from .product_image_serializer import ProductImageSerializer
 
@@ -321,3 +323,47 @@ class OrderSerializer(serializers.ModelSerializer):
         if obj.user:
             return f"{obj.user.first_name} {obj.user.last_name}".strip() or obj.user.username
         return None
+
+
+class NotificationAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            'id',
+            'title',
+            'message',
+            'type',
+            'category',
+            'product',
+            'is_active',
+            'expires_at',
+            'created_at',
+            'created_by',
+        ]
+        read_only_fields = ['id', 'created_at', 'created_by']
+
+
+class NotificationMeSerializer(serializers.ModelSerializer):
+    is_read = serializers.BooleanField(read_only=True)
+    read_at = serializers.DateTimeField(read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = [
+            'id',
+            'title',
+            'message',
+            'type',
+            'created_at',
+            'expires_at',
+            'category',
+            'category_name',
+            'product',
+            'product_name',
+            'is_active',
+            'is_read',
+            'read_at',
+        ]
+        read_only_fields = fields

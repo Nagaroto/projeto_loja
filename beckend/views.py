@@ -3,26 +3,37 @@
 import logging
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, Exists, OuterRef
 from django.db.models.deletion import ProtectedError
 from django.utils import timezone
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import Throttled
 
 from .autenticacao import EmailTokenObtainPairSerializer
-from .models import Product, Coupon, Promotion, Order, Category, UserProfile
+from .models import (
+    Product,
+    Coupon,
+    Promotion,
+    Order,
+    Category,
+    UserProfile,
+    Notification,
+    NotificationRead,
+)
 from .serializers import (
     ProductSerializer,
     CouponSerializer,
     PromotionSerializer,
     OrderSerializer,
     CategorySerializer,
+    NotificationAdminSerializer,
+    NotificationMeSerializer,
 )
 from pagamentos.models import Pagamento
 from .rate_limiter import rate_limiter, get_client_ip
@@ -350,6 +361,129 @@ class CategoryViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    """CRUD de notificações (admin only)."""
+
+    serializer_class = NotificationAdminSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        purge_expired_notifications()
+        return (
+            Notification.objects
+            .all()
+            .select_related('category', 'product', 'created_by')
+            .order_by('-created_at')
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+def purge_expired_notifications():
+    """Remove do banco notificações expiradas (independe de visualização)."""
+
+    now = timezone.now()
+    Notification.objects.filter(expires_at__isnull=False, expires_at__lte=now).delete()
+
+
+class MyNotificationsView(APIView):
+    """Lista notificações do usuário autenticado com flag de lida."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        purge_expired_notifications()
+        unread_only = (request.query_params.get('unread') or '').strip() in {'1', 'true', 'yes'}
+
+        read_exists = NotificationRead.objects.filter(
+            user=request.user,
+            notification=OuterRef('pk'),
+        )
+
+        now = timezone.now()
+        base_qs = Notification.objects.filter(is_active=True).filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
+        qs = (
+            base_qs
+            .select_related('category', 'product')
+            .annotate(is_read=Exists(read_exists))
+            .order_by('-created_at')
+        )
+
+        unread_count = qs.filter(is_read=False).count()
+        if unread_only:
+            qs = qs.filter(is_read=False)
+
+        # read_at (se lida): pega o primeiro registro (único) via query adicional por id
+        # para evitar N+1, buscamos todos reads do usuário para os ids retornados.
+        ids = list(qs.values_list('id', flat=True)[:50])
+        qs = qs.filter(id__in=ids).order_by('-created_at')
+        reads = {
+            r.notification_id: r.read_at
+            for r in NotificationRead.objects.filter(user=request.user, notification_id__in=ids)
+        }
+
+        results = []
+        for n in qs:
+            ser = NotificationMeSerializer(n).data
+            ser['read_at'] = reads.get(n.id)
+            results.append(ser)
+
+        return Response({'unread_count': unread_count, 'results': results})
+
+
+class MarkNotificationReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk: int):
+        purge_expired_notifications()
+        notif = Notification.objects.filter(pk=pk, is_active=True).first()
+        if not notif:
+            return Response({'detail': 'Notificação não encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+        obj, created = NotificationRead.objects.get_or_create(
+            notification=notif,
+            user=request.user,
+        )
+        return Response(
+            {
+                'notification_id': notif.id,
+                'read_at': obj.read_at,
+                'created': created,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class MarkAllNotificationsReadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        purge_expired_notifications()
+        read_exists = NotificationRead.objects.filter(
+            user=request.user,
+            notification=OuterRef('pk'),
+        )
+        unread_ids = list(
+            Notification.objects
+            .filter(is_active=True)
+            .annotate(is_read=Exists(read_exists))
+            .filter(is_read=False)
+            .values_list('id', flat=True)[:500]
+        )
+
+        created = 0
+        for nid in unread_ids:
+            _, was_created = NotificationRead.objects.get_or_create(
+                notification_id=nid,
+                user=request.user,
+            )
+            if was_created:
+                created += 1
+
+        return Response({'marked_read': created})
 
 
 def _mask_email(email):

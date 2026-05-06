@@ -15,6 +15,10 @@ from .views import (
     analytics_view,
     PublishedProductsView,
     admin_customer_orders_view,
+    NotificationViewSet,
+    MyNotificationsView,
+    MarkNotificationReadView,
+    MarkAllNotificationsReadView,
 )
 from .upload_views import upload_product_image, delete_product_image, list_product_images
 from .checkout_views import CheckoutView, ShippingQuoteView
@@ -40,10 +44,14 @@ router.register(r'products', ProductViewSet)
 router.register(r'coupons', CouponViewSet)
 router.register(r'promotions', PromotionViewSet)
 router.register(r'orders', OrderViewSet)
+router.register(r'admin/notifications', NotificationViewSet, basename='admin-notifications')
 
 urlpatterns = [
     path('admin/customers/', AdminCustomersView.as_view(), name='admin-customers'),
     path('admin/customers/<int:user_id>/orders/', admin_customer_orders_view, name='admin-customer-orders'),
+    path('me/notifications/', MyNotificationsView.as_view(), name='me-notifications'),
+    path('me/notifications/read-all/', MarkAllNotificationsReadView.as_view(), name='me-notifications-read-all'),
+    path('me/notifications/<int:pk>/read/', MarkNotificationReadView.as_view(), name='me-notification-read'),
     path('upload/product-image/', upload_product_image, name='upload-product-image'),
     path('upload/product-image/<str:filename>/', delete_product_image, name='delete-product-image'),
     path('upload/product-images/', list_product_images, name='list-product-images'),

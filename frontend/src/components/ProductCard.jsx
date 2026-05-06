@@ -47,6 +47,7 @@ export function ProductCard({ product, categories = [] }) {
   };
 
   const categoryLabel = getCategoryName();
+  const coverImageUrl = product.image_url || product.image || product.images?.find?.((img) => img?.is_cover)?.url || product.images?.[0]?.url;
 
   return (
     <motion.div
@@ -60,7 +61,7 @@ export function ProductCard({ product, categories = [] }) {
       <Link to={`/produto/${product.id}`} className="block">
         <div className="relative h-64 overflow-hidden bg-gray-200 cursor-pointer">
           <img
-            src={product.image_url || product.image}
+            src={coverImageUrl}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
           />

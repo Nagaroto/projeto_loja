@@ -8,7 +8,7 @@ const api = axios.create({
 
 // INTERCEPTOR → adiciona token automaticamente
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access");
+  const token = localStorage.getItem("token") || localStorage.getItem("access");
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -27,7 +27,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const refresh = localStorage.getItem("refresh");
+      const refresh = localStorage.getItem("refresh_token") || localStorage.getItem("refresh");
 
       if (!refresh) {
         window.location.href = "/login";
@@ -35,12 +35,13 @@ api.interceptors.response.use(
       }
 
       try {
-        const res = await axios.post(`${API_URL}/login/refresh/`, {
+        const res = await axios.post(`${API_URL}/token/refresh/`, {
           refresh,
         });
 
         const newAccess = res.data.access;
 
+        localStorage.setItem("token", newAccess);
         localStorage.setItem("access", newAccess);
 
         originalRequest.headers.Authorization = `Bearer ${newAccess}`;
