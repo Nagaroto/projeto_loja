@@ -12,7 +12,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-54+)v1ruxn%%u0_!j%p3!i#fjyk5%18lh&cphvrgw-1sh_lh*s')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        'ALLOWED_HOSTS',
+        'localhost,127.0.0.1,projeto-loja-uqac.onrender.com',
+    ).split(',')
+    if host.strip()
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -28,8 +35,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,11 +85,26 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+_default_cors_origins = (
+    'http://localhost:5173,https://projeto-loja.vercel.app'
+)
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
+    origin.strip()
+    for origin in os.getenv('CORS_ALLOWED_ORIGINS', _default_cors_origins).split(',')
+    if origin.strip()
+]
+
+# Use apenas para testes rápidos. Em produção, mantenha False.
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'False').lower() == 'true'
+
+# Importante para requests HTTPS vindas do frontend hospedado.
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        'CSRF_TRUSTED_ORIGINS',
+        'https://projeto-loja.vercel.app,https://projeto-loja-uqac.onrender.com,http://localhost:5173',
+    ).split(',')
+    if origin.strip()
 ]
 
 REST_FRAMEWORK = {
