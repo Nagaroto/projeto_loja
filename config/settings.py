@@ -86,7 +86,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 _default_cors_origins = (
-    'http://localhost:5173,https://projeto-loja.vercel.app'
+    'http://localhost:5173,https://projeto-loja-uol4.vercel.app'
 )
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
@@ -102,7 +102,7 @@ CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
         'CSRF_TRUSTED_ORIGINS',
-        'https://projeto-loja.vercel.app,https://projeto-loja-uqac.onrender.com,http://localhost:5173',
+        'https://projeto-loja-uol4.vercel.app,https://projeto-loja-uqac.onrender.com,http://localhost:5173',
     ).split(',')
     if origin.strip()
 ]
@@ -126,7 +126,10 @@ MERCADO_PAGO_PUBLIC_KEY = os.getenv('MERCADO_PAGO_PUBLIC_KEY', '')
 
 # Configurações de PIX
 PIX_EXPIRACAO_MINUTOS = int(os.getenv('PIX_EXPIRACAO_MINUTOS', 15))
-WEBHOOK_URL = os.getenv('WEBHOOK_URL', 'http://localhost:8000/api/pagamentos/webhook/')
+WEBHOOK_URL = os.getenv(
+    'WEBHOOK_URL',
+    'https://projeto-loja-uqac.onrender.com/api/pagamentos/webhook/',
+)
 
 # =========================================================
 # LOGGING
