@@ -18,6 +18,7 @@ Monorepo com API Django REST e vitrine React (Vite + Tailwind).
 Na raiz do repositório:
 
 ```bash
+(python manage.py makemigrations)
 python manage.py migrate
 python manage.py runserver
 ```

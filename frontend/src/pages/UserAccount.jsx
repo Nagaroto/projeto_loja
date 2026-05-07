@@ -126,11 +126,9 @@ export function UserAccount() {
 
   const [profile, setProfile] = useState({
     full_name: '',
-    cpf: '',
     phone: '',
     email: '',
   });
-  const [initialCpf, setInitialCpf] = useState('');
   const [profileErr, setProfileErr] = useState('');
   const [addresses, setAddresses] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -170,19 +168,21 @@ export function UserAccount() {
   }, [getValidToken]);
 
   const loadProfile = useCallback(async () => {
-    const h = await authHeader();
-    if (!h) return;
-    const res = await axios.get(`${API_URL}/me/profile/`, { headers: h });
-    const next = {
-      full_name: res.data.full_name || '',
-      cpf: res.data.cpf || '',
-      phone: res.data.phone || '',
-      email: res.data.email || user?.email || '',
-    };
-    setProfile(next);
-    setInitialCpf(next.cpf || '');
-  }, [authHeader, user?.email]);
+  const h = await authHeader();
+  if (!h) return;
 
+  const res = await axios.get(`${API_URL}/me/profile/`, {
+    headers: h,
+  });
+
+  const next = {
+    full_name: res.data.full_name || '',
+    phone: res.data.phone || '',
+    email: res.data.email || user?.email || '',
+  };
+
+  setProfile(next);
+}, [authHeader, user?.email]);
   const loadAddresses = useCallback(async () => {
     const h = await authHeader();
     if (!h) return;
@@ -349,47 +349,41 @@ export function UserAccount() {
   };
 
   const saveProfile = async (e) => {
-    e.preventDefault();
-    setProfileErr('');
-    try {
-      const fullName = (profile.full_name || '').trim();
-      if (fullName && fullName.split(' ').filter(Boolean).length < 2) {
-        setProfileErr('Informe nome e sobrenome.');
-        return;
-      }
+  e.preventDefault();
+  setProfileErr('');
 
-      const cpfDigits = String(profile.cpf || '').replace(/\D/g, '');
-      const cpfLocked = Boolean(initialCpf);
-      if (cpfLocked && profile.cpf !== initialCpf) {
-        setProfileErr('CPF não pode ser alterado após definido.');
-        return;
-      }
-      if (!cpfDigits) {
-        setProfileErr('CPF é obrigatório.');
-        return;
-      }
-      if (cpfDigits.length !== 11) {
-        setProfileErr('CPF deve conter 11 dígitos.');
-        return;
-      }
+  try {
+    const fullName = (profile.full_name || '').trim();
 
-      const h = await authHeader();
-      if (!h) return;
-      await axios.patch(
-        `${API_URL}/me/profile/`,
-        {
-          full_name: profile.full_name,
-          cpf: profile.cpf,
-          phone: profile.phone,
-        },
-        { headers: { ...h, 'Content-Type': 'application/json' } }
-      );
-      await loadProfile();
-      alert('Dados salvos.');
-    } catch (err) {
-      alert('Erro ao salvar: ' + (err.response?.data?.detail || err.message));
+    if (fullName && fullName.split(' ').filter(Boolean).length < 2) {
+      setProfileErr('Informe nome e sobrenome.');
+      return;
     }
-  };
+
+    const h = await authHeader();
+    if (!h) return;
+
+    await axios.patch(
+      `${API_URL}/me/profile/`,
+      {
+        full_name: profile.full_name,
+        phone: profile.phone,
+      },
+      {
+        headers: {
+          ...h,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    await loadProfile();
+
+    alert('Dados salvos.');
+  } catch (err) {
+    alert('Erro ao salvar: ' + (err.response?.data?.detail || err.message));
+  }
+};
 
   const addAddress = async (e) => {
     e.preventDefault();
@@ -637,23 +631,7 @@ export function UserAccount() {
                       onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">CPF</label>
-                    <input
-                      className={`w-full px-4 py-2 border-2 rounded-lg outline-none ${
-                        initialCpf
-                          ? 'border-gray-100 bg-gray-50 text-gray-500'
-                          : 'border-gray-200 focus:border-cereon-green'
-                      }`}
-                      value={profile.cpf}
-                      onChange={(e) => setProfile({ ...profile, cpf: e.target.value })}
-                      placeholder="000.000.000-00"
-                      disabled={Boolean(initialCpf)}
-                    />
-                    {initialCpf && (
-                      <p className="text-xs text-gray-500 mt-1">CPF não pode ser alterado após definido.</p>
-                    )}
-                  </div>
+                  
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Telefone</label>
                     <input
@@ -990,7 +968,7 @@ export function UserAccount() {
                           </button>
                         </div>
 
-                        {/* Pedidos Filtrados */}}
+                        {/* Pedidos Filtrados */}
                         <div className="space-y-4">
                           {getFilteredOrders().length === 0 ? (
                             <p className="text-gray-500 py-8 text-center">

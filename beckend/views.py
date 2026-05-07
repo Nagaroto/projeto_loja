@@ -567,7 +567,7 @@ class AdminCustomersView(APIView):
             results.append({
                 'id': u.id,
                 'name_masked': _mask_name(getattr(profile, 'full_name', '') or ''),
-                'email_masked': _mask_email(u.email),
+                'email': (u.email),
                 'cpf_masked': _mask_cpf(getattr(profile, 'cpf', '') or ''),
                 'date_joined': u.date_joined,
             })

@@ -89,11 +89,14 @@ const getCoverImageUrl = (images = []) => {
 function ProductsTab() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [promotions, setPromotions] = useState([]);
+
   const [showForm, setShowForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -105,6 +108,7 @@ function ProductsTab() {
     sizes: [],
     is_active: true
   });
+
   const [editFormData, setEditFormData] = useState({
     name: '',
     description: '',
@@ -116,14 +120,38 @@ function ProductsTab() {
     sizes: [],
     is_active: true
   });
+
   const { token, getValidToken } = useAuth();
   const { showAlert, showConfirm } = useAlert();
 
   useEffect(() => {
     loadProducts();
     loadCategories();
+    loadPromotions();
   }, []);
 
+  const loadPromotions = async () => {
+    try {
+      const allPromotions = await loadAllPages(`${API_URL}/promotions/`);
+      setPromotions(allPromotions);
+    } catch (error) {
+      console.error('Erro ao carregar promoções:', error);
+    }
+  };
+
+  const getProductPromotion = (productId) => {
+    return promotions.find((promo) => {
+      if (!promo.is_active) return false;
+
+      const expired = new Date(promo.expiry_date) < new Date();
+      if (expired) return false;
+
+      return (
+        Array.isArray(promo.products) &&
+        promo.products.includes(productId)
+      );
+    });
+  };
   const loadProducts = async () => {
     try {
       const allProducts = await loadAllPages(`${API_URL}/products/`);
@@ -244,21 +272,27 @@ function ProductsTab() {
   };
 
   const handleOpenEdit = (product) => {
-    setEditingProduct(product);
-    setEditFormData({
-      name: product.name,
-      description: product.description,
-      price: product.price.toString(),
-      stock: product.stock.toString(),
-      category: product.category.toString(),
-      images: product.images || [],
-      colors: Array.isArray(product.colors) ? product.colors.join(', ') : '',
-      sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : '',
-      is_active: product.is_active !== false
-    });
-    setShowEditForm(true);
-  };
+  setEditingProduct(product);
 
+  setEditFormData({
+    name: product.name,
+    description: product.description,
+    price: product.price.toString(),
+    stock: product.stock.toString(),
+    category: product.category.toString(),
+    images: product.images || [],
+    colors: Array.isArray(product.colors) ? product.colors.join(', ') : '',
+    sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : '',
+    is_active: product.is_active !== false,
+  });
+
+  setShowEditForm(true);
+
+  window.scrollTo({
+    top: 60,
+    behavior: 'smooth',
+  });
+};
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
     try {
@@ -614,15 +648,54 @@ function ProductsTab() {
               )}
             </div>
             <p className="text-sm text-cereon-dark mb-2">
-              {categories.find((c) => c.id === product.category)?.name || 'Sem categoria'}
-            </p>
-            <p className="text-sm text-cereon-dark mb-3 line-clamp-2">{product.description}</p>
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-cereon-green font-bold">R$ {parseFloat(product.price).toFixed(2)}</span>
-              <span className="text-sm bg-cereon-light text-cereon-dark px-2 py-1 rounded">
-                {product.stock} em estoque
-              </span>
-            </div>
+  {categories.find((c) => c.id === product.category)?.name || 'Sem categoria'}
+</p>
+
+<p className="text-sm text-cereon-dark mb-3 line-clamp-2">
+  {product.description}
+</p>
+
+<div className="flex justify-between items-center mb-3">
+  <div className="flex flex-col">
+    {(() => {
+      const promo = getProductPromotion(product.id);
+
+      if (promo) {
+        const originalPrice = parseFloat(product.price);
+
+        const discountedPrice =
+          originalPrice -
+          (originalPrice * promo.discount_percent) / 100;
+
+        return (
+          <>
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-bold w-fit mb-1">
+              EM PROMOÇÃO
+            </span>
+
+            <span className="text-xs text-gray-400 line-through">
+              R$ {originalPrice.toFixed(2)}
+            </span>
+
+            <span className="text-cereon-green font-bold text-lg">
+              R$ {discountedPrice.toFixed(2)}
+            </span>
+          </>
+        );
+      }
+
+      return (
+        <span className="text-cereon-green font-bold">
+          R$ {parseFloat(product.price).toFixed(2)}
+        </span>
+      );
+    })()}
+  </div>
+
+  <span className="text-sm bg-cereon-light text-cereon-dark px-2 py-1 rounded">
+    {product.stock} em estoque
+  </span>
+</div>
             <div className="flex gap-2">
               <button
                 onClick={() => handleOpenEdit(product)}
@@ -1766,7 +1839,7 @@ function CustomersTab() {
                 <tr key={r.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-3 text-cereon-dark">{r.id}</td>
                   <td className="px-6 py-3 text-cereon-dark">{r.name_masked}</td>
-                  <td className="px-6 py-3 text-cereon-dark">{r.email_masked}</td>
+                  <td className="px-6 py-3 text-cereon-dark">{r.email}</td>
                   <td className="px-6 py-3 text-cereon-dark">{r.cpf_masked}</td>
                   <td className="px-6 py-3 text-cereon-dark">
                     {r.date_joined ? new Date(r.date_joined).toLocaleDateString('pt-BR') : '—'}

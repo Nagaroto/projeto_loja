@@ -52,6 +52,10 @@ export function Checkout() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
+  const [cpf, setCpf] = useState('');
+  const [appliedCpf, setAppliedCpf] = useState('');
+  const [cpfFeedback, setCpfFeedback] = useState('');
+
   // Estados para pagamento
   const [paymentData, setPaymentData] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
@@ -356,10 +360,11 @@ export function Checkout() {
 
       const notes = customerNotes.slice(0, 500);
       const orderBody = {
-        items: orderItems,
-        payment_method: paymentMethod,
-        customer_notes: notes,
-      };
+  items: orderItems,
+  payment_method: paymentMethod,
+  customer_notes: notes,
+  cpf: appliedCpf,
+};
       if (appliedCoupon?.code) {
         orderBody.coupon_code = appliedCoupon.code.toUpperCase();
       }
@@ -404,14 +409,15 @@ export function Checkout() {
       console.log(`💰 Valor final: ${valorFormatado} (${valorFormatado.length} caracteres)`);
 
       const paymentPayload = {
-        valor: valorFormatado,
-        metodo_pagamento: paymentMethod,
-        items: items,
-        descricao: `Pedido ${createdOrder.public_code || createdOrder.id} (${cartItems.length} item(ns))`,
-        pedido_id: String(createdOrder.id),
-      };
+  valor: valorFormatado,
+  metodo_pagamento: paymentMethod,
+  items: items,
+  descricao: `Pedido ${createdOrder.public_code || createdOrder.id} (${cartItems.length} item(ns))`,
+  pedido_id: String(createdOrder.id),
+  cpf: cpf,
+};
 
-      console.log('📤 Enviando pagamento:', paymentPayload);
+      console.log(' Enviando pagamento:', paymentPayload);
 
       // Chama a API de pagamento
       const res = await axios.post(`${API_URL}/pagamentos/`, paymentPayload, {
@@ -421,7 +427,7 @@ export function Checkout() {
         },
       });
 
-      console.log('✅ Resposta do backend:', res.data);
+      console.log(' Resposta do backend:', res.data);
 
       const pagamento = res.data;
       setPaymentData(pagamento);
@@ -776,6 +782,62 @@ export function Checkout() {
               <MapPin className="text-cereon-green" size={22} />
               Entrega
             </h2>
+
+
+              {/* CPF do Cliente */}
+<div className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
+  <h3 className="text-lg font-bold text-cereon-dark mb-3">
+    CPF do Comprador
+  </h3>
+
+  <div className="flex flex-col sm:flex-row gap-3">
+    <input
+      type="text"
+      value={cpf}
+      onChange={(e) => {
+        setCpf(e.target.value);
+        setCpfFeedback('');
+      }}
+      placeholder="000.000.000-00"
+      className="flex-1 border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-cereon-green outline-none"
+    />
+
+    <button
+      type="button"
+      onClick={() => {
+        const cpfDigits = cpf.replace(/\D/g, '');
+
+        if (cpfDigits.length !== 11) {
+          setCpfFeedback('CPF inválido.');
+          setAppliedCpf('');
+          return;
+        }
+
+        setAppliedCpf(cpf);
+        setCpfFeedback('CPF aplicado com sucesso.');
+      }}
+      className="px-5 py-3 bg-cereon-green text-white rounded-lg font-semibold hover:opacity-90 transition"
+    >
+      Aplicar
+    </button>
+  </div>
+
+  {cpfFeedback && (
+    <p
+      className={`text-sm mt-2 ${
+        cpfFeedback.includes('sucesso')
+          ? 'text-green-600'
+          : 'text-red-600'
+      }`}
+    >
+      {cpfFeedback}
+    </p>
+  )}
+
+  <p className="text-xs text-gray-500 mt-2">
+    O CPF será utilizado para faturamento e pagamento do pedido.
+  </p>
+</div>
 
             <label className="flex items-center gap-2 mb-4 text-sm">
               <input
