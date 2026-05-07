@@ -5,8 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Package, MapPin, Truck, CreditCard, MessageSquare, Copy, CheckCircle, Clock, X } from 'lucide-react';
-
-const API_URL = 'http://127.0.0.1:8000/api';
+import { API_URL } from '../services/api';
 
 const PAYMENT_LABELS = {
   pix: 'PIX (simulação — use o app do banco após confirmar)',

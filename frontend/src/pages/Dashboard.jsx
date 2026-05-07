@@ -8,8 +8,7 @@ import { Package, Ticket, ShoppingBag, BarChart3, Plus, Trash2, Edit2, LogOut, M
 import axios from 'axios';
 import { CategoriesTab } from '../components/CategoriesTab';
 import { ProductImageUploader } from '../components/ProductImageUploader';
-
-const API_URL = 'http://127.0.0.1:8000/api';
+import { API_URL } from '../services/api';
 
 // Mapa de cores e labels curtos para badges de status
 const STATUS_BADGE_CONFIG = {

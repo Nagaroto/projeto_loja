@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://127.0.0.1:8000/api";
+const RAW_API_URL = (import.meta.env.VITE_API_URL || "https://projeto-loja-uqac.onrender.com").replace(/\/+$/, "");
+export const API_URL = RAW_API_URL.endsWith("/api") ? RAW_API_URL : `${RAW_API_URL}/api`;
 
 const api = axios.create({
   baseURL: API_URL,

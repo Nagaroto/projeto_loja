@@ -1,12 +1,12 @@
 // Importações necessárias do React para Context API e gerenciamento de estado
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../services/api';
 
 // Cria um Context para armazenar dados de autenticação
 // Context é como uma "variável global" acessível em toda a aplicação
 // sem precisar passar props por vários componentes intermediários
 const AuthContext = createContext();
-const API_URL = 'http://127.0.0.1:8000/api';
 
 /**
  * AuthProvider - Componente que fornece autenticação a toda aplicação

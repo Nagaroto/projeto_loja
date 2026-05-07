@@ -18,8 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
-
-const API_URL = 'http://127.0.0.1:8000/api';
+import { API_URL } from '../services/api';
 
 const NAV = [
   { id: 'dados', label: 'Dados pessoais', icon: User },

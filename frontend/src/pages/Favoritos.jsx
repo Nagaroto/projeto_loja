@@ -4,8 +4,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { getFavoriteProductIds } from '../utils/favorites';
-
-const API_URL = 'http://127.0.0.1:8000/api';
+import { API_URL } from '../services/api';
 
 export function Favoritos() {
   const [products, setProducts] = useState([]);

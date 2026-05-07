@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
+import { API_URL } from '../services/api';
 
 // Criar o contexto
 const CartContext = createContext();
-const API_URL = 'http://127.0.0.1:8000/api';
 
 function toPositiveInt(value, fallback = 1) {
   const n = Number.parseInt(value, 10);

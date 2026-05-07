@@ -6,8 +6,7 @@ import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useAlert } from '../context/AlertContext';
 import { isFavoriteProduct, toggleFavoriteProduct } from '../utils/favorites';
-
-const API_URL = 'http://127.0.0.1:8000/api';
+import { API_URL } from '../services/api';
 const FALLBACK_IMG = '/imgs/cereon.webp';
 
 function normalizeProduct(apiData) {

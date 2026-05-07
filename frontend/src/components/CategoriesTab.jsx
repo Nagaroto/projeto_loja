@@ -3,8 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import axios from 'axios';
-
-const API_URL = 'http://127.0.0.1:8000/api';
+import { API_URL } from '../services/api';
 
 // Lista completa de um endpoint paginado; token opcional para rotas autenticadas.
 const loadAllPages = async (url, token = null) => {

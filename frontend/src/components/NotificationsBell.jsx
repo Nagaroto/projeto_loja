@@ -3,8 +3,7 @@ import { Bell, Check, CheckCheck, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-
-const API_URL = 'http://127.0.0.1:8000/api';
+import { API_URL } from '../services/api';
 
 const typeLabel = (t) => {
   if (t === 'promocao') return 'Promoção';

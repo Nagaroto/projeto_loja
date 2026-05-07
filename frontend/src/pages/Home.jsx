@@ -4,8 +4,7 @@ import { WhyChoose } from '../components/WhyChoose';
 import { ProductCard } from '../components/ProductCard';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-
-const API_URL = 'http://127.0.0.1:8000/api';
+import { API_URL } from '../services/api';
 
 export function Home() {
   const [products, setProducts] = useState([]);

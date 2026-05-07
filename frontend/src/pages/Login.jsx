@@ -5,8 +5,7 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useAlert } from '../context/AlertContext';
-
-const API_URL = 'http://127.0.0.1:8000/api';
+import { API_URL } from '../services/api';
 
 function messageFromApiError(data) {
   if (!data) return 'Não foi possível entrar. Tente novamente.';

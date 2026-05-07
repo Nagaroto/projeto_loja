@@ -3,8 +3,7 @@ import { ProductCard } from '../components/ProductCard';
 import { mockProducts, categories } from '../data/mockProducts';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-
-const API_URL = 'http://127.0.0.1:8000/api';
+import { API_URL } from '../services/api';
 
 // Detecta categoria sistema "Sem categoria" para ocultar no filtro público.
 const isFallbackCategory = (cat) =>
