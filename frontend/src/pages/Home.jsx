@@ -5,6 +5,7 @@ import { ProductCard } from '../components/ProductCard';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { API_URL } from '../services/api';
+import { Link } from 'react-router-dom';
 
 export function Home() {
   const [products, setProducts] = useState([]);
@@ -109,12 +110,12 @@ export function Home() {
             transition={{ duration: 0.6 }}
             className="text-center mt-12"
           >
-            <a
-              href="/catalogo"
+            <Link
+              to="/catalogo"
               className="inline-block px-8 py-4 bg-cereon-green text-white font-bold rounded-lg hover:bg-green-600 transition-colors shadow-lg hover:shadow-xl"
             >
               Ver Catálogo Completo
-            </a>
+            </Link>
           </motion.div>
         </div>
       </section>

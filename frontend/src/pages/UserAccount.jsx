@@ -272,17 +272,17 @@ export function UserAccount() {
   }, [section, loadOrders, loadPayments]);
 
   useEffect(() => {
-    if (section !== 'compras' || comprasTab !== 'pedidos') return;
     if (!unseenOrderIds.length) return;
     const visibleOrderIds = new Set(orders.map((o) => String(o.id)));
     const remaining = unseenOrderIds.filter((id) => !visibleOrderIds.has(id));
+    if (remaining.length === unseenOrderIds.length) return;
     try {
       localStorage.setItem('unseen_order_ids', JSON.stringify(remaining));
     } catch {
       /* ignore */
     }
     setUnseenOrderIds(remaining);
-  }, [section, comprasTab, orders, unseenOrderIds]);
+  }, [orders, unseenOrderIds]);
 
   // Remove notificação quando o cliente acessa detalhes via URL ou volta à página
   useEffect(() => {

@@ -155,7 +155,18 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer.save()
 
     def perform_update(self, serializer):
-        serializer.save()
+        previous_is_active = serializer.instance.is_active
+        product_name = serializer.instance.name
+        product_obj = serializer.save()
+        if previous_is_active and product_obj.is_active is False:
+            Notification.objects.create(
+                title='Produto indisponível',
+                message=f'O produto "{product_name}" está fora do estoque ou foi desativado.',
+                type=Notification.TYPE_NOTICE,
+                product=product_obj,
+                is_active=True,
+                created_by=getattr(self.request, 'user', None),
+            )
 
     def perform_destroy(self, instance):
         instance.delete()
@@ -473,9 +484,11 @@ class MarkAllNotificationsReadView(APIView):
             user=request.user,
             notification=OuterRef('pk'),
         )
+        now = timezone.now()
         unread_ids = list(
             Notification.objects
             .filter(is_active=True)
+            .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
             .annotate(is_read=Exists(read_exists))
             .filter(is_read=False)
             .values_list('id', flat=True)[:500]

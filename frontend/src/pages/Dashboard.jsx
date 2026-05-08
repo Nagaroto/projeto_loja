@@ -82,9 +82,19 @@ const normalizeImageUrl = (value) => {
 
 const getCoverImageUrl = (images = []) => {
   if (!Array.isArray(images) || images.length === 0) return null;
-  const cover = images.find((img) => img?.isCover);
+  const cover = images.find((img) => img?.isCover || img?.is_cover);
   return cover?.url || images[0]?.url || null;
 };
+
+const mapImageForEditor = (img) => ({
+  id: img?.id,
+  url: img?.url,
+  filename: img?.filename,
+  isCover: Boolean(img?.isCover || img?.is_cover),
+});
+
+const hasCoverImage = (images = []) =>
+  Array.isArray(images) && images.length > 0 && images.some((img) => img?.isCover || img?.is_cover);
 
 function ProductsTab() {
   const [products, setProducts] = useState([]);
@@ -202,6 +212,10 @@ function ProductsTab() {
         showAlert('Informe um estoque válido.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
+      if (!hasCoverImage(formData.images)) {
+        showAlert('Defina uma foto de capa antes de salvar o produto.', { toast: true, type: 'error', duration: 4500 });
+        return;
+      }
 
       const colors = formData.colors ? formData.colors.split(',').map(c => c.trim()).filter(c => c) : [];
       const sizes = formData.sizes ? formData.sizes.split(',').map(s => s.trim()).filter(s => s) : [];
@@ -271,6 +285,35 @@ function ProductsTab() {
     }
   };
 
+  const handleDeactivateProduct = async (id) => {
+    const confirmed = await showConfirm(
+      'O produto será desativado e ficará oculto para clientes.',
+      {
+        title: 'Desativar este produto?',
+        confirmLabel: 'Desativar',
+        cancelLabel: 'Cancelar',
+        danger: true,
+        type: 'warning',
+      }
+    );
+    if (!confirmed) return;
+
+    try {
+      const validToken = await getValidToken();
+      if (!validToken) {
+        showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
+        return;
+      }
+      await axios.patch(`${API_URL}/products/${id}/`, { is_active: false }, {
+        headers: { Authorization: `Bearer ${validToken}` }
+      });
+      loadProducts();
+      showAlert('Produto desativado com sucesso.', { toast: true, type: 'success', duration: 3000 });
+    } catch (error) {
+      showAlert('Erro ao desativar produto.', { toast: true, type: 'error', duration: 4000 });
+    }
+  };
+
   const handleOpenEdit = (product) => {
   setEditingProduct(product);
 
@@ -280,7 +323,7 @@ function ProductsTab() {
     price: product.price.toString(),
     stock: product.stock.toString(),
     category: product.category.toString(),
-    images: product.images || [],
+    images: Array.isArray(product.images) ? product.images.map(mapImageForEditor) : [],
     colors: Array.isArray(product.colors) ? product.colors.join(', ') : '',
     sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : '',
     is_active: product.is_active !== false,
@@ -316,6 +359,10 @@ function ProductsTab() {
       }
       if (!Number.isInteger(stockValue) || stockValue < 0) {
         showAlert('Informe um estoque válido.', { toast: true, type: 'error', duration: 4000 });
+        return;
+      }
+      if (!hasCoverImage(editFormData.images)) {
+        showAlert('Mantenha ao menos uma foto de capa para salvar.', { toast: true, type: 'error', duration: 4500 });
         return;
       }
 
@@ -567,15 +614,6 @@ function ProductsTab() {
               onChange={(e) => setEditFormData({ ...editFormData, sizes: e.target.value })}
               className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-cereon-green focus:ring-2 focus:ring-cereon-green/30 outline-none"
             />
-            <label className="flex items-center gap-2 cursor-pointer text-cereon-dark font-medium">
-              <input
-                type="checkbox"
-                checked={editFormData.is_active}
-                onChange={(e) => setEditFormData({ ...editFormData, is_active: e.target.checked })}
-                className="rounded border-gray-300 text-cereon-green focus:ring-cereon-green"
-              />
-              Publicar no catálogo (visível no site)
-            </label>
             <p className="text-sm text-gray-600">
               Produtos marcados como Não publicado&quot; após exclusão de categoria continuam inativos até marcar esta opção e salvar.
             </p>
@@ -585,6 +623,13 @@ function ProductsTab() {
                 className="bg-cereon-green text-white px-6 py-2 rounded-lg font-semibold hover:bg-cereon-green/90 transition-colors"
               >
                 Salvar Alterações
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteProduct(editingProduct.id)}
+                className="bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+              >
+                Excluir
               </button>
               <button
                 type="button"
@@ -643,7 +688,7 @@ function ProductsTab() {
               <h3 className="font-bold text-cereon-dark flex-1">{product.name}</h3>
               {!product.is_active && (
                 <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-semibold whitespace-nowrap ml-2">
-                  Não publicado
+                  Desativado
                 </span>
               )}
             </div>
@@ -705,11 +750,11 @@ function ProductsTab() {
                 Editar
               </button>
               <button
-                onClick={() => handleDeleteProduct(product.id)}
+                onClick={() => handleDeactivateProduct(product.id)}
                 className="flex-1 bg-red-500 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Trash2 className="w-4 h-4" />
-                Deletar
+                Desativar
               </button>
             </div>
           </motion.div>

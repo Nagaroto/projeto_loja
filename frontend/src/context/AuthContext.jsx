@@ -158,6 +158,7 @@ export function AuthProvider({ children }) {
     // Remove dados do usuário do localStorage
     localStorage.removeItem('user');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('unseen_order_ids');
     // Limpa estado no React
     setToken(null);
     setRefreshToken(null);

@@ -24,6 +24,7 @@ export function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
   const [countdownMessage, setCountdownMessage] = useState('');
   const [isBlocked, setIsBlocked] = useState(false);
   const [formData, setFormData] = useState({
@@ -81,6 +82,8 @@ export function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isLoading || isBlocked) return;
+    setAuthError('');
     setIsLoading(true);
     
     try {
@@ -101,7 +104,7 @@ export function Login() {
       login(access, userData, refresh);
       
       // Mensagem diferente para admin e usuário comum
-      const mensagem = userData.is_staff ? 'Login admin realizado' : 'Login realizado';
+      const mensagem = 'Login realizado com sucesso';
       showAlert(mensagem, { toast: true, type: 'success', duration: 4000 });
       
       // Redirecionar para admin se for admin, senão para home
@@ -122,36 +125,11 @@ export function Login() {
         setCountdownMessage(`Muitas tentativas. Tente novamente em ${wait} segundos.`);
       } else if (status === 400 || status === 401) {
         const msg = messageFromApiError(data);
-        const notFound =
-          /não encontramos|não encontrado|não foi encontrado/i.test(msg);
-
-        if (notFound) {
-          const querCadastrar = window.confirm(
-            `${msg}\n\nDeseja criar uma nova conta com este e-mail e senha?`
-          );
-          if (querCadastrar) {
-            try {
-              setIsLoading(true);
-              await axios.post(`${API_URL}/register/`, {
-                email: formData.email.trim(),
-                password: formData.password,
-                username: formData.email.trim(),
-              });
-              alert('Cadastro realizado com sucesso. Você já pode entrar.');
-            } catch (regError) {
-              const d = regError.response?.data;
-              alert(`Erro no cadastro: ${messageFromApiError(d)}`);
-            }
-          }
-        } else {
-          alert(msg);
-        }
+        setAuthError(msg);
       } else if (error.response) {
-        alert(messageFromApiError(error.response.data));
+        setAuthError(messageFromApiError(error.response.data));
       } else {
-        alert(
-          'Não foi possível conectar ao servidor. Confira se o backend está rodando.'
-        );
+        setAuthError('Não foi possível conectar ao servidor. Confira se o backend está rodando.');
       }
     } finally {
       setIsLoading(false);
@@ -213,6 +191,11 @@ export function Login() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
+            {authError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {authError}
+              </div>
+            )}
             {/* Campo Email */}
             <motion.div variants={itemVariants} className="space-y-2">
               <label className="text-sm font-semibold text-cereon-dark ml-1">E-mail ou usuário</label>

@@ -13,6 +13,8 @@ export function CartDrawer() {
     const parsed = Number.parseInt(qty, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
   };
+  const isUnavailable = (item) => item?.is_active === false || Number(item?.stock) <= 0;
+  const hasUnavailableItems = cartItems.some(isUnavailable);
 
   const goCheckout = () => {
     setIsCartOpen(false);
@@ -74,7 +76,9 @@ export function CartDrawer() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    className="flex gap-4 border border-gray-200 rounded-lg p-4"
+                    className={`flex gap-4 border border-gray-200 rounded-lg p-4 ${
+                      isUnavailable(item) ? 'opacity-60 bg-gray-50' : ''
+                    }`}
                   >
                     {/* Imagem */}
                     <img
@@ -93,6 +97,11 @@ export function CartDrawer() {
                           {item.selectedSize ? `Tamanho: ${item.selectedSize}` : ''}
                           {item.selectedSize && item.selectedColor ? ' | ' : ''}
                           {item.selectedColor ? `Cor: ${item.selectedColor}` : ''}
+                        </p>
+                      )}
+                      {isUnavailable(item) && (
+                        <p className="mt-1 text-xs font-semibold text-red-600">
+                          Produto fora de estoque ou desativado.
                         </p>
                       )}
                       {/* Preço com/sem promoção */}
@@ -176,9 +185,10 @@ export function CartDrawer() {
                 <button
                   type="button"
                   onClick={goCheckout}
-                  className="w-full py-3 bg-cereon-green text-white font-bold rounded-lg hover:bg-green-600 transition-colors"
+                  disabled={hasUnavailableItems}
+                  className="w-full py-3 bg-cereon-green text-white font-bold rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Finalizar compra
+                  {hasUnavailableItems ? 'Remova itens indisponíveis para finalizar' : 'Finalizar compra'}
                 </button>
                 <button
                   onClick={() => setIsCartOpen(false)}
