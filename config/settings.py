@@ -86,7 +86,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 _default_cors_origins = (
-    'http://localhost:3000,http://localhost:5173,https://projeto-loja-uol4.vercel.app'
+    'http://localhost:3000,http://localhost:5173,https://projeto-loja-phi.vercel.app'
 )
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
@@ -101,8 +101,8 @@ CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'False').lower() ==
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
-        'CSRF_TRUSTED_ORIGINS',
-        'https://projeto-loja-uol4.vercel.app,https://projeto-loja-uqac.onrender.com,http://localhost:3000,http://localhost:5173',
+     'CSRF_TRUSTED_ORIGINS',
+        'https://projeto-loja-phi.vercel.app,https://projeto-loja-uqac.onrender.com,http://localhost:3000,http://localhost:5173',
     ).split(',')
     if origin.strip()
 ]
