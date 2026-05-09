@@ -24,7 +24,8 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Product.objects.all()
-        if not self.request.user.is_staff:
+        # Apenas filtros de leitura devem esconder produtos inativos de usuários normais.
+        if not self.request.user.is_staff and self.action in ['list', 'retrieve']:
             queryset = queryset.filter(is_active=True)
         return queryset
 
