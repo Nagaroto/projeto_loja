@@ -158,6 +158,7 @@ class ProductSerializer(serializers.ModelSerializer):
         source='category.name',
         read_only=True,
     )
+    image_url = serializers.SerializerMethodField()
     images = ProductImageSerializer(
         many=True,
         read_only=True,
@@ -171,6 +172,13 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_image_url(self, obj):
+        url = obj.image_url or ''
+        request = self.context.get('request')
+        if request and url.startswith('/'):
+            return request.build_absolute_uri(url)
+        return url
 
     def get_promotion_info(self, obj):
         from datetime import date

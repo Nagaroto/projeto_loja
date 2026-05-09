@@ -98,7 +98,7 @@ def _make_safe_filename():
     return f"img_{random_suffix}"
 
 
-def _save_processed_webp(image_file, original_name=None):
+def _save_processed_webp(image_file, original_name=None, request=None):
     img = _normalize_image(image_file)
 
     webp_buffer = io.BytesIO()
@@ -126,7 +126,9 @@ def _save_processed_webp(image_file, original_name=None):
         raise IOError(f'Arquivo salvo mas não encontrado no disco: {physical_path}')
 
     image_url = default_storage.url(saved_webp_path)
-    if settings.DEBUG and image_url.startswith('/'):
+    if image_url.startswith('/') and request is not None:
+        image_url = request.build_absolute_uri(image_url)
+    elif settings.DEBUG and image_url.startswith('/'):
         image_url = f"http://127.0.0.1:8000{image_url}"
 
     logger.info('Imagem salva em %s %s', saved_webp_path, physical_path or '')
@@ -196,7 +198,7 @@ def upload_product_image(request):
 
         buf = io.BytesIO(raw)
         try:
-            data = _save_processed_webp(buf, image_file.name)
+            data = _save_processed_webp(buf, image_file.name, request=request)
         except UnidentifiedImageError:
             logger.exception('Falha ao identificar a imagem no upload')
             return Response(
@@ -305,7 +307,9 @@ def list_product_images(request):
                 file_path = f"{products_dir}{filename}"
                 image_url = default_storage.url(file_path)
 
-                if settings.DEBUG:
+                if image_url.startswith('/'):
+                    image_url = request.build_absolute_uri(image_url)
+                elif settings.DEBUG and image_url.startswith('/'):
                     image_url = f"http://127.0.0.1:8000{image_url}"
 
                 images.append({

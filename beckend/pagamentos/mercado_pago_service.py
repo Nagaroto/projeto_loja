@@ -5,6 +5,7 @@ import base64
 from io import BytesIO
 from typing import Dict, Optional, Tuple
 from decimal import Decimal
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,7 @@ class MercadoPagoService:
             Tupla (sucesso, dados) onde dados contém QR Code e Cópia e Cola
         """
         try:
+            webhook_url = os.getenv('WEBHOOK_URL', getattr(settings, 'WEBHOOK_URL', 'https://projeto-loja-uqac.onrender.com/api/pagamentos/webhook/'))
             payload = {
                 "transaction_amount": float(valor),
                 "description": f"Pagamento PIX - Pedido #{usuario_id}",
@@ -56,7 +58,7 @@ class MercadoPagoService:
                 "payer": {
                     "email": email,
                 },
-                "notification_url": os.getenv('WEBHOOK_URL', 'http://localhost:8000/api/pagamento/webhook/'),
+                "notification_url": webhook_url,
             }
             
             if metadata:
@@ -114,6 +116,7 @@ class MercadoPagoService:
             Tupla (sucesso, dados)
         """
         try:
+            webhook_url = os.getenv('WEBHOOK_URL', getattr(settings, 'WEBHOOK_URL', 'https://projeto-loja-uqac.onrender.com/api/pagamentos/webhook/'))
             payload = {
                 "transaction_amount": float(valor),
                 "token": token_cartao,
@@ -123,7 +126,7 @@ class MercadoPagoService:
                 "payer": {
                     "email": email,
                 },
-                "notification_url": os.getenv('WEBHOOK_URL', 'http://localhost:8000/api/pagamento/webhook/'),
+                "notification_url": webhook_url,
             }
             
             if metadata:
@@ -172,6 +175,7 @@ class MercadoPagoService:
             Tupla (sucesso, dados)
         """
         try:
+            webhook_url = os.getenv('WEBHOOK_URL', getattr(settings, 'WEBHOOK_URL', 'https://projeto-loja-uqac.onrender.com/api/pagamentos/webhook/'))
             payload = {
                 "transaction_amount": float(valor),
                 "description": f"Pagamento Boleto - Pedido #{usuario_id}",
@@ -179,7 +183,7 @@ class MercadoPagoService:
                 "payer": {
                     "email": email,
                 },
-                "notification_url": os.getenv('WEBHOOK_URL', 'http://localhost:8000/api/pagamento/webhook/'),
+                "notification_url": webhook_url,
             }
             
             if metadata:

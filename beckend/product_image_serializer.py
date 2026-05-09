@@ -4,6 +4,8 @@ from .models import ProductImage
 
 class ProductImageSerializer(serializers.ModelSerializer):
     """Serializer para o modelo ProductImage."""
+
+    url = serializers.SerializerMethodField()
     
     class Meta:
         model = ProductImage
@@ -16,6 +18,13 @@ class ProductImageSerializer(serializers.ModelSerializer):
             'created_at'
         ]
         read_only_fields = ['id', 'created_at']
+
+    def get_url(self, obj):
+        url = obj.url or ''
+        request = self.context.get('request')
+        if request and url.startswith('/'):
+            return request.build_absolute_uri(url)
+        return url
 
     def validate(self, attrs):
         """Validação customizada para garantir consistência."""
