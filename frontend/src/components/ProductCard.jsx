@@ -3,24 +3,46 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAlert } from '../context/AlertContext';
+import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 
 export function ProductCard({ product, categories = [] }) {
   const { addToCart } = useCart();
   const { showAlert } = useAlert();
+  const { isFirstLogin } = useAuth();
   const navigate = useNavigate();
   const [isAdded, setIsAdded] = React.useState(false);
 
   const handleAddToCart = async () => {
-    const added = addToCart(product);
-    if (!added) {
-      await showAlert('É necessário estar logado para colocar itens no carrinho.', {
-        title: 'Acesso necessário',
-        type: 'warning',
-      });
-      navigate('/login');
+    if (product.is_active === false) {
+      if (!isFirstLogin) {
+        await showAlert('Este produto não está disponível no momento.', {
+          title: 'Produto indisponível',
+          type: 'warning',
+          toast: true,
+          duration: 10000,
+        });
+      }
       return;
     }
+
+    const result = addToCart(product);
+    if (!result.success) {
+      if (result.alreadyInCart) {
+        await showAlert(result.message, {
+          type: 'info',
+          toast: true,
+          duration: 4000,
+        });
+      } else {
+        await showAlert(result.message, {
+          title: 'Erro',
+          type: 'warning',
+        });
+      }
+      return;
+    }
+
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
@@ -63,7 +85,7 @@ export function ProductCard({ product, categories = [] }) {
           <img
             src={coverImageUrl}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
         </div>
@@ -114,17 +136,24 @@ export function ProductCard({ product, categories = [] }) {
         {/* Botão */}
         <motion.button
           onClick={handleAddToCart}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: product.is_active === false ? 1 : 1.05 }}
+          whileTap={{ scale: product.is_active === false ? 1 : 0.95 }}
+          disabled={product.is_active === false}
           className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2 ${
-            isAdded
-              ? 'bg-green-500 text-white'
-              : 'bg-cereon-green text-white hover:bg-green-600'
+            product.is_active === false
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : isAdded
+                ? 'bg-green-500 text-white'
+                : 'bg-cereon-green text-white hover:bg-green-600'
           }`}
         >
           <ShoppingCart size={18} />
           <span>
-            {isAdded ? 'Adicionado!' : 'Adicionar'}
+            {product.is_active === false
+              ? 'Indisponível'
+              : isAdded
+                ? 'Adicionado!'
+                : 'Adicionar'}
           </span>
         </motion.button>
       </div>

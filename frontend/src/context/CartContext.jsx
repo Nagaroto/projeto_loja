@@ -110,7 +110,11 @@ export function CartProvider({ children }) {
 
   const addToCart = (product) => {
     if (!token) {
-      return false;
+      return { success: false, message: 'É necessário estar logado para adicionar itens ao carrinho.' };
+    }
+
+    if (product?.is_active === false) {
+      return { success: false, message: 'Este produto não está disponível no momento.' };
     }
 
     const priceNum = parseFloat(product.price);
@@ -129,34 +133,31 @@ export function CartProvider({ children }) {
       image: product.image_url || product.image || '/imgs/cereon.webp',
     };
 
-    setCartItems((prevItems) => {
-      const itemId = normalized.cartId || `${normalized.id}`;
-      const existingItem = prevItems.find((item) => item.itemId === itemId);
-      const addQty = toPositiveInt(normalized.quantity, 1);
+    const itemId = normalized.cartId || `${normalized.id}`;
+    const existingItem = cartItems.find((item) => item.itemId === itemId);
 
-      if (existingItem) {
-        return prevItems.map((item) =>
-          item.itemId === itemId
-            ? { ...item, quantity: toPositiveInt(item.quantity, 1) + addQty }
-            : item
-        );
-      }
+    if (existingItem) {
+      return { success: false, message: 'Esse item já está no carrinho.', alreadyInCart: true };
+    }
 
-      return [...prevItems, { ...normalized, itemId, quantity: addQty }];
-    });
+    const addQty = toPositiveInt(normalized.quantity, 1);
+
+    setCartItems((prevItems) => [
+      ...prevItems,
+      { ...normalized, itemId, quantity: addQty }
+    ]);
 
     // melhor esforço: persistir no backend quando autenticado
     (async () => {
       try {
         const t = await getValidToken();
         if (!t) return;
-        const itemId = normalized.cartId || `${normalized.id}`;
         const parsed = parseCartId(itemId);
         await axios.post(
           `${API_URL}/me/cart/add/`,
           {
             product_id: normalized.id,
-            quantity: toPositiveInt(normalized.quantity, 1),
+            quantity: addQty,
             cart_item_key: itemId,
             size: normalized.selectedSize || parsed.size || '',
             color: normalized.selectedColor || parsed.color || '',
@@ -168,7 +169,7 @@ export function CartProvider({ children }) {
       }
     })();
 
-    return true;
+    return { success: true };
   };
 
   // Remover item do carrinho
@@ -197,6 +198,12 @@ export function CartProvider({ children }) {
     if (!Number.isFinite(nextQuantity) || nextQuantity <= 0) {
       removeFromCart(itemId);
       return;
+    }
+
+    // Verificar limite de estoque
+    const item = cartItems.find((i) => i.itemId === itemId);
+    if (item && Number.isFinite(item.stock) && nextQuantity > item.stock) {
+      return { success: false, message: 'Quantidade máxima em estoque atingida.' };
     }
 
     let nextSnapshot = null;
@@ -228,6 +235,8 @@ export function CartProvider({ children }) {
         }
       })();
     }
+
+    return { success: true };
   };
 
   // Calcular total (já usa preço promocional quando disponível)

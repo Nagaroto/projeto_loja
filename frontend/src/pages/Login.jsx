@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -18,9 +18,17 @@ function messageFromApiError(data) {
   return 'Verifique e-mail e senha.';
 }
 
+function isNonexistentAccountMessage(message) {
+  return typeof message === 'string' && message.includes('Não encontramos usuário');
+}
+
+function isInvalidPasswordMessage(message) {
+  return typeof message === 'string' && message.includes('Senha incorreta');
+}
+
 export function Login() {
   const { login } = useAuth();
-  const { showAlert } = useAlert();
+  const { showAlert, showConfirm } = useAlert();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -107,11 +115,11 @@ export function Login() {
       const mensagem = 'Login realizado com sucesso';
       showAlert(mensagem, { toast: true, type: 'success', duration: 4000 });
       
-      // Redirecionar para admin se for admin, senão para home
+      // Redirecionar para admin se for admin, senão para a página inicial
       if (userData.is_staff) {
         navigate('/admin/dashboard');
       } else {
-        navigate('/minha-conta');
+        navigate('/');
       }
     } catch (error) {
       const status = error.response?.status;
@@ -125,7 +133,25 @@ export function Login() {
         setCountdownMessage(`Muitas tentativas. Tente novamente em ${wait} segundos.`);
       } else if (status === 400 || status === 401) {
         const msg = messageFromApiError(data);
-        setAuthError(msg);
+
+        if (isNonexistentAccountMessage(msg)) {
+          const confirmed = await showConfirm(
+            'Ainda não existe uma conta com este e-mail. Deseja criar uma conta agora?',
+            {
+              title: 'Conta não encontrada',
+              confirmLabel: 'Criar conta',
+              cancelLabel: 'Cancelar',
+              type: 'info',
+            }
+          );
+          if (confirmed) {
+            navigate(`/cadastro?email=${encodeURIComponent(formData.email.trim())}`);
+          }
+        } else if (isInvalidPasswordMessage(msg)) {
+          setAuthError('Senha incorreta. Verifique e tente novamente.');
+        } else {
+          setAuthError(msg);
+        }
       } else if (error.response) {
         setAuthError(messageFromApiError(error.response.data));
       } else {
@@ -280,18 +306,7 @@ export function Login() {
             </motion.div>
           )}
 
-          {/* Google acima do divisor; depois Cadastrar */}
           <motion.div variants={itemVariants} className="mt-4 space-y-3">
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full flex items-center justify-center gap-2 bg-white border-2 border-gray-300 text-cereon-dark py-3 rounded-lg hover:border-cereon-green hover:bg-cereon-light transition-all duration-300 font-semibold shadow-sm"
-            >
-              <Chrome className="w-5 h-5" />
-              <span>Google</span>
-            </motion.button>
-
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200" />

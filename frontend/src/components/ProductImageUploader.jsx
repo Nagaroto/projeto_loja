@@ -20,6 +20,7 @@ export function ProductImageUploader({
   images = [],
   onChange,
   maxImages = 5,
+  productId = null,
   className = '',
 }) {
   const [uploadingImages, setUploadingImages] = useState(new Set());
@@ -37,13 +38,22 @@ export function ProductImageUploader({
         throw new Error(`Máximo de ${maxImages} imagens.`);
       }
 
+      console.log('[UPLOAD] selected file', file, {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        isFile: file instanceof File,
+      });
+
       setUploadingImages((prev) => new Set(prev).add(tempId));
 
       const formData = new FormData();
       formData.append('image', file);
+      console.log('[UPLOAD] FormData entries before send:', Array.from(formData.entries()));
 
       // ✅ USO CORRETO DO API (COM TOKEN AUTOMÁTICO)
       const response = await api.post('/upload/product-image/', formData);
+      console.log('[UPLOAD] response data:', response.data);
 
       const newImage = {
         id: response.data.id,
@@ -70,6 +80,7 @@ export function ProductImageUploader({
 
   const handleFileSelect = useCallback(async (files) => {
     const fileArray = Array.from(files);
+    console.log('[UPLOAD] handleFileSelect fileArray:', fileArray);
 
     try {
       if (images.length + fileArray.length > maxImages) {
@@ -83,6 +94,7 @@ export function ProductImageUploader({
   }, [images, maxImages, processImageUpload]);
 
   const handleInputChange = (e) => {
+    console.log('[UPLOAD] handleInputChange files:', e.target.files);
     if (e.target.files?.length) {
       handleFileSelect(e.target.files);
     }
@@ -110,14 +122,31 @@ export function ProductImageUploader({
     }
   };
 
-  const removeImage = (index) => {
-    const newImages = images.filter((_, i) => i !== index);
+  const removeImage = async (index) => {
+    const imageToRemove = images[index];
 
-    if (images[index].isCover && newImages.length > 0) {
-      newImages[0].isCover = true;
+    try {
+      const imageId = Number(imageToRemove.id);
+      const isPersistedImage = productId && Number.isInteger(imageId) && imageId > 0;
+
+      if (isPersistedImage) {
+        await api.delete(`/product-images/${imageId}/`);
+      } else if (imageToRemove.filename) {
+        await api.delete(`/upload/product-image/${imageToRemove.filename}/`);
+      }
+
+      const newImages = images.filter((_, i) => i !== index);
+
+      if (imageToRemove.isCover && newImages.length > 0) {
+        newImages[0].isCover = true;
+      }
+
+      onChange(newImages);
+      setError('');
+    } catch (err) {
+      console.error('Erro ao remover imagem:', err);
+      setError(err.response?.data?.error || 'Erro ao remover imagem');
     }
-
-    onChange(newImages);
   };
 
   const setAsCover = (index) => {
@@ -150,7 +179,7 @@ export function ProductImageUploader({
             className="hidden"
           />
 
-          <button onClick={() => fileInputRef.current?.click()}>
+          <button type="button" onClick={() => fileInputRef.current?.click()}>
             <Upload className="mx-auto mb-2" />
             Enviar imagens
           </button>
@@ -182,11 +211,11 @@ export function ProductImageUploader({
             )}
 
             <div className="flex gap-2 mt-2">
-              <button onClick={() => setAsCover(index)}>
+              <button type="button" onClick={() => setAsCover(index)}>
                 <Star size={16} />
               </button>
 
-              <button onClick={() => removeImage(index)}>
+              <button type="button" onClick={() => removeImage(index)}>
                 <X size={16} />
               </button>
             </div>

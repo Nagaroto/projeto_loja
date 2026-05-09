@@ -5,14 +5,19 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useAlert } from '../context/AlertContext';
+import { useAuth } from '../context/AuthContext';
 import { isFavoriteProduct, toggleFavoriteProduct } from '../utils/favorites';
 import { API_URL } from '../services/api';
 const FALLBACK_IMG = '/imgs/cereon.webp';
 
 function normalizeProduct(apiData) {
   const price = parseFloat(apiData.price);
-  const img = apiData.image_url || FALLBACK_IMG;
-  const images = apiData.image_url ? [apiData.image_url] : [FALLBACK_IMG];
+  const images = Array.isArray(apiData.images) && apiData.images.length > 0
+    ? apiData.images.map((img) => img?.url).filter(Boolean)
+    : apiData.image_url
+      ? [apiData.image_url]
+      : [FALLBACK_IMG];
+  const img = images[0] || FALLBACK_IMG;
   const colors = Array.isArray(apiData.colors) ? apiData.colors : [];
   const sizes = Array.isArray(apiData.sizes) ? apiData.sizes : [];
   const catId = apiData.category;
@@ -35,6 +40,7 @@ export function ProductDetail() {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { showAlert } = useAlert();
+  const { isFirstLogin } = useAuth();
 
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -45,7 +51,9 @@ export function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
-  const [mainImage, setMainImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
@@ -59,7 +67,8 @@ export function ProductDetail() {
       setSelectedSize('');
       setSelectedColor('');
       setQuantity(1);
-      setMainImage(null);
+      setSelectedImageIndex(0);
+      setLightboxOpen(false);
       setIsFavorite(false);
 
       try {
@@ -68,7 +77,8 @@ export function ProductDetail() {
 
         const normalized = normalizeProduct(prodRes.data);
         setProduct(normalized);
-        setMainImage(normalized.images[0]);
+        setSelectedImageIndex(0);
+        setLightboxOpen(false);
         setIsFavorite(isFavoriteProduct(normalized.id));
 
         if (normalized.categoryId) {
@@ -105,6 +115,61 @@ export function ProductDetail() {
     return Math.max(1, parseInt(product.stock, 10) || 1);
   }, [product]);
 
+  const mainImage = useMemo(() => {
+    if (!product || !Array.isArray(product.images) || product.images.length === 0) {
+      return FALLBACK_IMG;
+    }
+    return product.images[selectedImageIndex] || product.images[0] || FALLBACK_IMG;
+  }, [product, selectedImageIndex]);
+
+  const activeImageCount = product?.images?.length || 0;
+  const currentImageIndex = Math.min(selectedImageIndex, activeImageCount - 1);
+
+  useEffect(() => {
+    if (!lightboxOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setLightboxOpen(false);
+      }
+      if (event.key === 'ArrowRight') {
+        setSelectedImageIndex((prev) => Math.min(prev + 1, activeImageCount - 1));
+      }
+      if (event.key === 'ArrowLeft') {
+        setSelectedImageIndex((prev) => Math.max(prev - 1, 0));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxOpen, activeImageCount]);
+
+  const handleNextImage = () => {
+    if (!product) return;
+    setSelectedImageIndex((prev) => Math.min(prev + 1, product.images.length - 1));
+  };
+
+  const handlePrevImage = () => {
+    setSelectedImageIndex((prev) => Math.max(prev - 1, 0));
+  };
+
+  const handleTouchStart = (event) => {
+    setTouchStartX(event.touches?.[0]?.clientX ?? null);
+  };
+
+  const handleTouchEnd = (event) => {
+    if (touchStartX == null) return;
+    const touchEndX = event.changedTouches?.[0]?.clientX ?? null;
+    if (touchEndX == null) return;
+    const delta = touchStartX - touchEndX;
+    if (Math.abs(delta) < 50) return;
+
+    if (delta > 0) {
+      handleNextImage();
+    } else {
+      handlePrevImage();
+    }
+    setTouchStartX(null);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -129,6 +194,18 @@ export function ProductDetail() {
   }
 
   const handleAddToCart = async () => {
+    if (product.is_active === false) {
+      if (!isFirstLogin) {
+        await showAlert('Este produto não está disponível no momento.', {
+          title: 'Produto indisponível',
+          type: 'warning',
+          toast: true,
+          duration: 10000,
+        });
+      }
+      return;
+    }
+
     if (product.colors.length && !selectedColor) {
       await showAlert('Por favor, selecione uma cor', {
         title: 'Seleção obrigatória',
@@ -151,7 +228,7 @@ export function ProductDetail() {
         ? `${product.id}-${size || '—'}-${color || '—'}`
         : `${product.id}`;
 
-    const added = addToCart({
+    const result = addToCart({
       ...product,
       image: product.image_url || product.image,
       price: product.price,
@@ -160,12 +237,19 @@ export function ProductDetail() {
       quantity,
       cartId,
     });
-    if (!added) {
-      await showAlert('É necessário estar logado para colocar itens no carrinho.', {
-        title: 'Acesso necessário',
-        type: 'warning',
-      });
-      navigate('/login');
+    if (!result.success) {
+      if (result.alreadyInCart) {
+        await showAlert(result.message, {
+          type: 'info',
+          toast: true,
+          duration: 4000,
+        });
+      } else {
+        await showAlert(result.message, {
+          title: 'Erro',
+          type: 'warning',
+        });
+      }
       return;
     }
 
@@ -211,11 +295,18 @@ export function ProductDetail() {
           >
             <div className="sticky top-20">
               <div className="relative h-96 md:h-[32rem] rounded-lg overflow-hidden bg-gray-100 mb-4">
-                <img
-                  src={mainImage || product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
+                <button
+                  type="button"
+                  onClick={() => setLightboxOpen(true)}
+                  className="w-full h-full"
+                  aria-label="Abrir galeria em tela cheia"
+                >
+                  <img
+                    src={mainImage}
+                    alt={product.name}
+                    className="w-full h-full object-cover object-center"
+                  />
+                </button>
               </div>
 
               {product.images.length > 1 ? (
@@ -224,18 +315,19 @@ export function ProductDetail() {
                     <motion.button
                       key={index}
                       type="button"
-                      onClick={() => setMainImage(img)}
-                      whileHover={{ scale: 1.05 }}
+                      onClick={() => setSelectedImageIndex(index)}
+                      whileHover={{ scale: 1.03 }}
                       className={`relative h-24 rounded-lg overflow-hidden border-2 transition-all ${
-                        mainImage === img
+                        selectedImageIndex === index
                           ? 'border-cereon-green'
                           : 'border-gray-200'
                       }`}
+                      aria-label={`Selecionar imagem ${index + 1}`}
                     >
                       <img
                         src={img}
                         alt={`Foto ${index + 1}`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover object-center bg-gray-100"
                       />
                     </motion.button>
                   ))}
@@ -374,11 +466,11 @@ export function ProductDetail() {
               <motion.button
                 type="button"
                 onClick={handleAddToCart}
-                disabled={product.stock === 0}
-                whileHover={{ scale: product.stock === 0 ? 1 : 1.05 }}
-                whileTap={{ scale: product.stock === 0 ? 1 : 0.95 }}
+                disabled={product.stock === 0 || product.is_active === false}
+                whileHover={{ scale: product.stock === 0 || product.is_active === false ? 1 : 1.05 }}
+                whileTap={{ scale: product.stock === 0 || product.is_active === false ? 1 : 0.95 }}
                 className={`flex-1 py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center space-x-2 ${
-                  product.stock === 0
+                  product.stock === 0 || product.is_active === false
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : isAdded
                       ? 'bg-green-500 text-white'
@@ -387,7 +479,7 @@ export function ProductDetail() {
               >
                 <ShoppingCart size={24} />
                 <span>
-                  {product.stock === 0
+                  {product.stock === 0 || product.is_active === false
                     ? 'Indisponível'
                     : isAdded
                       ? 'Adicionado ao carrinho!'
@@ -438,6 +530,77 @@ export function ProductDetail() {
             </div>
           </motion.div>
         </div>
+
+        {lightboxOpen && product ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+            <div className="absolute inset-0" onClick={() => setLightboxOpen(false)} />
+            <div className="relative z-10 max-w-6xl w-full mx-auto">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm text-white">
+                  {currentImageIndex + 1}/{product.images.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setLightboxOpen(false)}
+                  className="text-white text-lg font-semibold px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition"
+                  aria-label="Fechar galeria"
+                >
+                  Fechar
+                </button>
+              </div>
+              <div className="relative bg-black rounded-3xl overflow-hidden flex items-center justify-center min-h-[50vh] max-h-[80vh]">
+                <img
+                  src={product.images[currentImageIndex] || FALLBACK_IMG}
+                  alt={`${product.name} - imagem ${currentImageIndex + 1}`}
+                  className="max-w-full max-h-full object-contain bg-black"
+                  onTouchStart={handleTouchStart}
+                  onTouchEnd={handleTouchEnd}
+                />
+                <button
+                  type="button"
+                  onClick={handlePrevImage}
+                  disabled={currentImageIndex === 0}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white hover:bg-white/30 transition disabled:opacity-40"
+                  aria-label="Imagem anterior"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextImage}
+                  disabled={currentImageIndex === product.images.length - 1}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white hover:bg-white/30 transition disabled:opacity-40"
+                  aria-label="Próxima imagem"
+                >
+                  ›
+                </button>
+              </div>
+              {product.images.length > 1 ? (
+                <div className="mt-4 grid grid-cols-5 gap-3 sm:grid-cols-8">
+                  {product.images.map((img, index) => (
+                    <button
+                      key={`thumb-${index}`}
+                      type="button"
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`rounded-lg overflow-hidden border-2 transition ${
+                        currentImageIndex === index
+                          ? 'border-cereon-green'
+                          : 'border-white/20'
+                      }`}
+                      aria-label={`Selecionar imagem ${index + 1}`}
+                    >
+                      <img
+                        src={img}
+                        alt={`Miniatura ${index + 1}`}
+                        className="w-full h-20 object-contain bg-gray-800"
+                      />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         {relatedProducts.length > 0 ? (
           <motion.div

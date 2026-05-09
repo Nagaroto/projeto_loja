@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Loader2, UserPlus, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -9,10 +9,11 @@ import { API_URL } from '../services/api';
 export function Register() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
+    email: searchParams.get('email') || '',
     password: '',
     confirmPassword: '',
   });
@@ -56,7 +57,7 @@ export function Register() {
         },
         refresh
       );
-      navigate('/minha-conta');
+      navigate('/');
     } catch (error) {
       const detail =
         error.response?.data?.detail ||

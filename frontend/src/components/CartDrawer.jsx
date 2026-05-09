@@ -9,6 +9,7 @@ export function CartDrawer() {
   const navigate = useNavigate();
   const { token } = useAuth();
   const { cartItems, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, getTotal } = useCart();
+  const [confirmRemoveItem, setConfirmRemoveItem] = React.useState(null);
   const getSafeQty = (qty) => {
     const parsed = Number.parseInt(qty, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
@@ -23,6 +24,26 @@ export function CartDrawer() {
       return;
     }
     navigate('/checkout');
+  };
+
+  const handleDecreaseQuantity = (item) => {
+    const currentQty = getSafeQty(item.quantity);
+    if (currentQty > 1) {
+      updateQuantity(item.itemId, currentQty - 1);
+    } else {
+      setConfirmRemoveItem(item);
+    }
+  };
+
+  const confirmRemove = () => {
+    if (confirmRemoveItem) {
+      removeFromCart(confirmRemoveItem.itemId);
+      setConfirmRemoveItem(null);
+    }
+  };
+
+  const cancelRemove = () => {
+    setConfirmRemoveItem(null);
   };
 
   return (
@@ -141,7 +162,7 @@ export function CartDrawer() {
                       {/* Quantidade */}
                       <div className="flex items-center space-x-2 mt-3">
                         <button
-                          onClick={() => updateQuantity(item.itemId, getSafeQty(item.quantity) - 1)}
+                          onClick={() => handleDecreaseQuantity(item)}
                           className="p-1 hover:bg-gray-100 rounded transition-colors"
                         >
                           <Minus size={16} />
@@ -150,8 +171,15 @@ export function CartDrawer() {
                           {getSafeQty(item.quantity)}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.itemId, getSafeQty(item.quantity) + 1)}
-                          className="p-1 hover:bg-gray-100 rounded transition-colors"
+                          onClick={() => {
+                            const result = updateQuantity(item.itemId, getSafeQty(item.quantity) + 1);
+                            if (result && !result.success) {
+                              // Mostrar mensagem de erro (pode usar um toast ou alert)
+                              console.warn(result.message);
+                            }
+                          }}
+                          disabled={Number.isFinite(item.stock) && getSafeQty(item.quantity) >= item.stock}
+                          className="p-1 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Plus size={16} />
                         </button>
@@ -196,6 +224,34 @@ export function CartDrawer() {
                 >
                   Continuar Comprando
                 </button>
+              </div>
+            )}
+
+            {/* Modal de confirmação de remoção */}
+            {confirmRemoveItem && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 z-60 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+                  <h3 className="text-lg font-semibold text-cereon-dark mb-4">
+                    Remover item do carrinho?
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Deseja remover "{confirmRemoveItem.name}" do carrinho?
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={cancelRemove}
+                      className="flex-1 py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={confirmRemove}
+                      className="flex-1 py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>

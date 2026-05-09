@@ -29,6 +29,7 @@ export function AuthProvider({ children }) {
   // Estado para controlar se está carregando dados da sessão
   // Útil para não mostrar interface enquanto carrega autenticação
   const [isLoading, setIsLoading] = useState(true);
+  const [isFirstLogin, setIsFirstLogin] = useState(false);
   
   // Estado para armazenar o token JWT de autenticação
   // Este token é enviado no header Authorization de todas requisições à API
@@ -99,8 +100,13 @@ export function AuthProvider({ children }) {
           console.error('Erro ao parsear user:', e);
         }
       }
+
+      const firstLoginFlag = localStorage.getItem('isFirstTimeLogin') === 'true';
+      if (storedUser && firstLoginFlag) {
+        setIsFirstLogin(true);
+      }
     }
-    
+
     // Marca que terminou o carregamento
     // Agora a interface pode ser renderizada
     setIsLoading(false);
@@ -108,10 +114,9 @@ export function AuthProvider({ children }) {
 
   /**
    * login - Realiza login do usuário
-   * 
-   * Chamada após autenticação bem-sucedida. Armazena token e dados do usuário
-   * tanto no estado React quanto no localStorage (para persistência)
-   * 
+   *
+   * Armazena token e dados do usuário tanto no estado React quanto no localStorage.
+   *
    * Parâmetros:
    *   access (string): Token JWT retornado pelo backend
    *   userData (object): Dados do usuário, ex: { email, is_staff, user_id }
@@ -119,12 +124,18 @@ export function AuthProvider({ children }) {
   const login = (access, userData, refresh = null) => {
     // Armazena token no localStorage
     // localStorage persiste dados mesmo após fechar navegador
+    const hadStoredUser = Boolean(localStorage.getItem('user'));
     localStorage.setItem('token', access);
     if (refresh) {
       localStorage.setItem('refresh_token', refresh);
       setRefreshToken(refresh);
     }
     
+    if (!hadStoredUser) {
+      localStorage.setItem('isFirstTimeLogin', 'true');
+      setIsFirstLogin(true);
+    }
+
     // Se dados do usuário foram fornecidos
     if (userData) {
       // Converte objeto para string JSON e armazena
@@ -159,10 +170,17 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('unseen_order_ids');
+    localStorage.removeItem('isFirstTimeLogin');
     // Limpa estado no React
     setToken(null);
     setRefreshToken(null);
     setUser(null);
+    setIsFirstLogin(false);
+  };
+
+  const clearFirstLogin = () => {
+    localStorage.removeItem('isFirstTimeLogin');
+    setIsFirstLogin(false);
   };
 
   /**
@@ -179,7 +197,7 @@ export function AuthProvider({ children }) {
   // value = dados/funções disponíveis para componentes filhos
   // children = componentes dentro de </AuthProvider>
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout, isAdmin, getValidToken, updateUser }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, logout, isAdmin, getValidToken, updateUser, isFirstLogin, clearFirstLogin }}>
       {children}
     </AuthContext.Provider>
   );

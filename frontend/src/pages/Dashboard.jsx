@@ -220,7 +220,7 @@ function ProductsTab() {
       const colors = formData.colors ? formData.colors.split(',').map(c => c.trim()).filter(c => c) : [];
       const sizes = formData.sizes ? formData.sizes.split(',').map(s => s.trim()).filter(s => s) : [];
 
-      await axios.post(`${API_URL}/products/`, {
+      const createPayload = {
         ...formData,
         colors,
         sizes,
@@ -230,7 +230,9 @@ function ProductsTab() {
         images: formData.images,
         image_url: getCoverImageUrl(formData.images),
         is_active: Boolean(formData.is_active),
-      }, {
+      };
+      console.log('[PRODUCT CREATE] payload', createPayload);
+      await axios.post(`${API_URL}/products/`, createPayload, {
         headers: { Authorization: `Bearer ${validToken}` }
       });
       setFormData({
@@ -278,10 +280,16 @@ function ProductsTab() {
       await axios.delete(`${API_URL}/products/${id}/`, {
         headers: { Authorization: `Bearer ${validToken}` }
       });
+      setShowEditForm(false);
+      setEditingProduct(null);
       loadProducts();
       showAlert('Produto excluído com sucesso.', { toast: true, type: 'success', duration: 3000 });
     } catch (error) {
-      showAlert('Erro ao excluir produto.', { toast: true, type: 'error', duration: 4000 });
+      console.error('Erro ao excluir produto:', error);
+      const apiError = error.response?.data;
+      const errorMessage =
+        apiError?.detail || apiError?.error || error.message || 'Erro desconhecido.';
+      showAlert(`Erro ao excluir produto: ${errorMessage}`, { toast: true, type: 'error', duration: 4000 });
     }
   };
 
@@ -308,7 +316,7 @@ function ProductsTab() {
         headers: { Authorization: `Bearer ${validToken}` }
       });
       loadProducts();
-      showAlert('Produto desativado com sucesso.', { toast: true, type: 'success', duration: 3000 });
+      showAlert('Produto desativado com sucesso.', { toast: true, type: 'success', duration: 10000 });
     } catch (error) {
       showAlert('Erro ao desativar produto.', { toast: true, type: 'error', duration: 4000 });
     }
@@ -317,13 +325,25 @@ function ProductsTab() {
   const handleOpenEdit = (product) => {
   setEditingProduct(product);
 
+  const normalizedImages = Array.isArray(product.images) && product.images.length > 0
+    ? product.images.map(mapImageForEditor)
+    : product.image_url
+      ? [{
+          id: `legacy-${product.id}`,
+          url: normalizeImageUrl(product.image_url),
+          filename: product.image_url.split('/').pop() || 'image.webp',
+          isCover: true,
+        }]
+      : [];
+
+  console.log('[EDIT OPEN] product.image_url', product.image_url, 'normalizedImages', normalizedImages);
   setEditFormData({
     name: product.name,
     description: product.description,
     price: product.price.toString(),
     stock: product.stock.toString(),
     category: product.category.toString(),
-    images: Array.isArray(product.images) ? product.images.map(mapImageForEditor) : [],
+    images: normalizedImages,
     colors: Array.isArray(product.colors) ? product.colors.join(', ') : '',
     sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : '',
     is_active: product.is_active !== false,
@@ -369,7 +389,7 @@ function ProductsTab() {
       const colors = editFormData.colors ? editFormData.colors.split(',').map(c => c.trim()).filter(c => c) : [];
       const sizes = editFormData.sizes ? editFormData.sizes.split(',').map(s => s.trim()).filter(s => s) : [];
 
-      await axios.patch(`${API_URL}/products/${editingProduct.id}/`, {
+      const updatePayload = {
         ...editFormData,
         colors,
         sizes,
@@ -379,7 +399,9 @@ function ProductsTab() {
         images: editFormData.images,
         image_url: getCoverImageUrl(editFormData.images),
         is_active: Boolean(editFormData.is_active),
-      }, {
+      };
+      console.log('[PRODUCT UPDATE] payload', updatePayload);
+      await axios.patch(`${API_URL}/products/${editingProduct.id}/`, updatePayload, {
         headers: { Authorization: `Bearer ${validToken}` }
       });
       setShowEditForm(false);
@@ -598,6 +620,7 @@ function ProductsTab() {
                 images={editFormData.images}
                 onChange={(images) => setEditFormData({ ...editFormData, images })}
                 maxImages={5}
+                productId={editingProduct?.id}
               />
             </div>
             <input
@@ -2218,14 +2241,13 @@ function NotificationsTab() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Tem certeza que deseja deletar esta notificação?')) return;
     try {
       const validToken = await getValidToken();
       if (!validToken) return;
       await axios.delete(`${API_URL}/admin/notifications/${id}/`, {
         headers: { Authorization: `Bearer ${validToken}` },
       });
-      showAlert('Notificação removida.', { toast: true, type: 'success', duration: 2500 });
+      showAlert('✓ Deletada', { toast: true, type: 'success', duration: 3000 });
       loadNotifications();
     } catch (e) {
       showAlert('Erro ao deletar notificação.', { toast: true, type: 'error', duration: 4000 });
@@ -2370,49 +2392,49 @@ function NotificationsTab() {
 
         <div className="overflow-x-auto">
           <table className="min-w-full">
-            <thead className="bg-gray-50">
+            <thead className={`${isDark ? 'bg-gray-800' : 'bg-gradient-to-r from-gray-50 to-gray-100'}`}>
               <tr>
-                <th className="px-6 py-3 text-left font-bold text-cereon-dark">Tipo</th>
-                <th className="px-6 py-3 text-left font-bold text-cereon-dark">Título</th>
-                <th className="px-6 py-3 text-left font-bold text-cereon-dark">Ativa</th>
-                <th className="px-6 py-3 text-left font-bold text-cereon-dark">Expira</th>
-                <th className="px-6 py-3 text-right font-bold text-cereon-dark">Ações</th>
+                <th className={`px-6 py-4 text-left font-bold ${isDark ? 'text-gray-100' : 'text-cereon-dark'}`}>Tipo</th>
+                <th className={`px-6 py-4 text-left font-bold ${isDark ? 'text-gray-100' : 'text-cereon-dark'}`}>Título</th>
+                <th className={`px-6 py-4 text-left font-bold ${isDark ? 'text-gray-100' : 'text-cereon-dark'}`}>Ativa</th>
+                <th className={`px-6 py-4 text-left font-bold ${isDark ? 'text-gray-100' : 'text-cereon-dark'}`}>Expira</th>
+                <th className={`px-6 py-4 text-right font-bold ${isDark ? 'text-gray-100' : 'text-cereon-dark'}`}>Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-100'}`}>
               {notifications.map((n) => (
-                <tr key={n.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3">
+                <tr key={n.id} className={`hover:bg-opacity-50 transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                  <td className={`px-6 py-4 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                     <span className={badge(n.type)}>{n.type}</span>
                   </td>
-                  <td className="px-6 py-3">
+                  <td className={`px-6 py-4 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                     <div className="font-semibold text-cereon-dark">{n.title}</div>
-                    <div className="text-xs text-gray-500 truncate max-w-[36rem]">{n.message}</div>
+                    <div className={`text-xs truncate max-w-[36rem] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{n.message}</div>
                   </td>
-                  <td className="px-6 py-3">
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${n.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+                  <td className={`px-6 py-4 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                    <span className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${n.is_active ? 'bg-green-100 text-green-800' : isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
                       {n.is_active ? 'Sim' : 'Não'}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-sm text-gray-600">
+                  <td className={`px-6 py-4 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     {n.expires_at ? new Date(n.expires_at).toLocaleString() : '—'}
                   </td>
-                  <td className="px-6 py-3 text-right">
+                  <td className="px-6 py-4 text-right">
                     <button
                       type="button"
                       onClick={() => handleDelete(n.id)}
-                      className="text-red-600 hover:text-red-800 font-semibold inline-flex items-center gap-1"
-                      title="Deletar"
+                      className="text-red-600 hover:text-white hover:bg-red-600 font-semibold inline-flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200 hover:shadow-md"
+                      title="Deletar notificação"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Deletar
+                      <span>Deletar</span>
                     </button>
                   </td>
                 </tr>
               ))}
               {notifications.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-6 text-sm text-gray-600">
+                  <td colSpan={5} className={`px-6 py-8 text-sm text-center font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     Nenhuma notificação cadastrada.
                   </td>
                 </tr>

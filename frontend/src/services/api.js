@@ -1,7 +1,12 @@
 import axios from "axios";
 
-const RAW_API_URL = (import.meta.env.VITE_API_URL || "https://projeto-loja-uqac.onrender.com").replace(/\/+$/, "");
+const defaultApiHost = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+  ? 'http://127.0.0.1:8000'
+  : 'https://projeto-loja-uqac.onrender.com';
+const RAW_API_URL = (import.meta.env.VITE_API_URL || defaultApiHost).replace(/\/+$/, "");
 export const API_URL = RAW_API_URL.endsWith("/api") ? RAW_API_URL : `${RAW_API_URL}/api`;
+
+console.log('[API SERVICE] VITE_API_URL:', import.meta.env.VITE_API_URL, 'defaultApiHost:', defaultApiHost, 'API_URL:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
@@ -13,6 +18,15 @@ api.interceptors.request.use((config) => {
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  if (config.url?.includes('/upload/product-image/') || config.url?.includes('/products/')) {
+    console.log('[API REQUEST]', config.method, config.baseURL + config.url, config.headers);
+    if (config.data instanceof FormData) {
+      console.log('[API REQUEST] FormData entries:', Array.from(config.data.entries()));
+    } else {
+      console.log('[API REQUEST] JSON payload:', config.data);
+    }
   }
 
   return config;
