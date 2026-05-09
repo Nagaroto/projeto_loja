@@ -4,13 +4,16 @@ from django.db.models.signals import pre_delete, post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 
-from .models import Category, Product, UserProfile
+from .models import Category, Product, UserProfile, Notification
 
 
 @receiver(pre_delete, sender=Category)
 def deactivate_products_on_category_delete(sender, instance, **kwargs):
     """Evita vitrine com produtos órfãos: inativa itens da categoria removida."""
-    Product.objects.filter(category=instance).update(is_active=False)
+    products_to_disable = Product.objects.filter(category=instance)
+    products_to_disable.update(is_active=False)
+    # Também oculta notificações associadas a produtos desativados.
+    Notification.objects.filter(product__in=products_to_disable).update(is_active=False)
 
 
 @receiver(post_save, sender=User)

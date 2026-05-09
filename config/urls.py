@@ -14,5 +14,6 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    # Serve imagens salvas em "products/" durante desenvolvimento local.
+    # Serve imagens antigas ou diretas em products/ e arquivos de mídia atuais em /media/.
     urlpatterns += static('/products/', document_root=settings.BASE_DIR / 'products')
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

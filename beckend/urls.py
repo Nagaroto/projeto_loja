@@ -6,7 +6,6 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     EmailTokenObtainView,
     RegisterView,
-    ProductViewSet,
     CouponViewSet,
     PromotionViewSet,
     OrderViewSet,
@@ -20,7 +19,8 @@ from .views import (
     MarkNotificationReadView,
     MarkAllNotificationsReadView,
 )
-from .upload_views import upload_product_image, delete_product_image, list_product_images
+from .product_views import ProductViewSetWithImages
+from .upload_views import upload_product_image, delete_product_image, delete_product_image_by_id, list_product_images
 from .checkout_views import CheckoutView, ShippingQuoteView
 from .user_account_views import (
     AddressDetailView,
@@ -40,7 +40,7 @@ from .user_account_views import (
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet)
-router.register(r'products', ProductViewSet)
+router.register(r'products', ProductViewSetWithImages)
 router.register(r'coupons', CouponViewSet)
 router.register(r'promotions', PromotionViewSet)
 router.register(r'orders', OrderViewSet)
@@ -54,6 +54,7 @@ urlpatterns = [
     path('me/notifications/<int:pk>/read/', MarkNotificationReadView.as_view(), name='me-notification-read'),
     path('upload/product-image/', upload_product_image, name='upload-product-image'),
     path('upload/product-image/<str:filename>/', delete_product_image, name='delete-product-image'),
+    path('product-images/<int:pk>/', delete_product_image_by_id, name='delete-product-image-by-id'),
     path('upload/product-images/', list_product_images, name='list-product-images'),
     path('checkout/shipping/', ShippingQuoteView.as_view(), name='checkout-shipping'),
     path('checkout/place/', CheckoutView.as_view(), name='checkout-place'),

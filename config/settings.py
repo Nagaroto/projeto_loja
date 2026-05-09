@@ -84,6 +84,8 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 _default_cors_origins = (
     'http://localhost:3000,http://localhost:5173,https://projeto-loja-phi.vercel.app'

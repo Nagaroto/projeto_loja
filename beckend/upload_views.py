@@ -1,15 +1,21 @@
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from django.conf import settings
+import logging
 import os
+import re
 import uuid
-from PIL import Image, ImageOps, UnidentifiedImageError
 import io
+from datetime import datetime
+
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
+
+from .models import ProductImage
 
 # Codecs extras (AVIF, HEIC/HEIF do iPhone). Falha silenciosa se não instalados.
 try:
@@ -22,6 +28,8 @@ try:
     register_heif_opener()
 except ImportError:
     pass
+
+logger = logging.getLogger(__name__)
 
 IMAGE_SIZE = (600, 600)
 IMAGE_QUALITY = 80
@@ -52,42 +60,76 @@ ALLOWED_CONTENT_TYPES = frozenset({
 
 
 def _normalize_image(image_file):
-    """Converte para RGB e aplica crop central quadrado 600x600."""
+    """Converte qualquer imagem para RGB e aplica crop central quadrado 600x600."""
+    image_file.seek(0)
     img = Image.open(image_file)
     img = ImageOps.exif_transpose(img)
+    logger.info(
+        'Processando imagem: format=%s mode=%s size=%s filename=%s',
+        img.format,
+        img.mode,
+        img.size,
+        getattr(image_file, 'name', None),
+    )
 
-    if img.mode in ('RGBA', 'LA', 'P'):
-        background = Image.new('RGB', img.size, (255, 255, 255))
-        if img.mode == 'P':
-            img = img.convert('RGBA')
-        background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
-        img = background
-    elif img.mode != 'RGB':
-        img = img.convert('RGB')
+    img = img.convert('RGBA')
 
-    return ImageOps.fit(
+    background = Image.new('RGBA', img.size, (255, 255, 255, 255))
+    img = Image.alpha_composite(background, img)
+    img = img.convert('RGB')
+
+    normalized = ImageOps.fit(
         img,
         IMAGE_SIZE,
         method=Image.Resampling.LANCZOS,
         centering=(0.5, 0.5),
     )
 
+    logger.info(
+        'Imagem normalizada: mode=%s size=%s',
+        normalized.mode,
+        normalized.size,
+    )
+    return normalized
 
-def _save_processed_webp(image_file, original_name='image'):
+
+def _make_safe_filename():
+    random_suffix = uuid.uuid4().hex[:12]
+    return f"img_{random_suffix}"
+
+
+def _save_processed_webp(image_file, original_name=None):
     img = _normalize_image(image_file)
 
     webp_buffer = io.BytesIO()
     img.save(webp_buffer, format='WEBP', quality=IMAGE_QUALITY, optimize=True)
     webp_buffer.seek(0)
 
-    safe_name = os.path.splitext(original_name)[0] or 'image'
-    unique_base = f"{uuid.uuid4()}_{safe_name}"
-    webp_filename = f"products/{unique_base}.webp"
-    saved_webp_path = default_storage.save(webp_filename, ContentFile(webp_buffer.getvalue()))
+    safe_name = _make_safe_filename()
+    final_filename = f"products/{safe_name}.webp"
+    print("UPLOAD ORIGINAL:", original_name)
+    print("SAFE NAME:", safe_name)
+    print("FINAL SAVE NAME:", final_filename)
+    saved_webp_path = default_storage.save(final_filename, ContentFile(webp_buffer.getvalue()))
+    print("STORAGE PATH:", saved_webp_path)
+
+    if not default_storage.exists(saved_webp_path):
+        raise IOError(f'Arquivo salvo mas não encontrado em storage: {saved_webp_path}')
+
+    physical_path = None
+    try:
+        physical_path = default_storage.path(saved_webp_path)
+    except (AttributeError, NotImplementedError):
+        pass
+
+    if physical_path and not os.path.exists(physical_path):
+        raise IOError(f'Arquivo salvo mas não encontrado no disco: {physical_path}')
 
     image_url = default_storage.url(saved_webp_path)
-    if settings.DEBUG:
+    if settings.DEBUG and image_url.startswith('/'):
         image_url = f"http://127.0.0.1:8000{image_url}"
+
+    logger.info('Imagem salva em %s %s', saved_webp_path, physical_path or '')
 
     return {
         'id': str(uuid.uuid4()),
@@ -156,6 +198,7 @@ def upload_product_image(request):
         try:
             data = _save_processed_webp(buf, image_file.name)
         except UnidentifiedImageError:
+            logger.exception('Falha ao identificar a imagem no upload')
             return Response(
                 {
                     'error': (
@@ -166,9 +209,13 @@ def upload_product_image(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        logger.info('Upload de imagem processado com sucesso: %s', image_file.name)
+        print("UPLOAD ENDPOINT:", request.method, request.path)
+        print("API IMAGE URL:", data)
         return Response(data, status=status.HTTP_201_CREATED)
 
     except Exception as e:
+        logger.exception('Erro inesperado ao processar upload de imagem')
         return Response(
             {'error': f'Erro ao processar imagem: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -182,6 +229,15 @@ def delete_product_image(request, filename):
     Endpoint para deletar uma imagem de produto.
     """
     try:
+        # Primeiro, tenta deletar a entrada do banco de dados
+        try:
+            image_obj = ProductImage.objects.get(filename=filename)
+            image_obj.delete()
+        except ProductImage.DoesNotExist:
+            # Se não existe no banco, continua para tentar deletar o arquivo
+            pass
+
+        # Depois, deleta o arquivo do storage
         file_path = f"products/{filename}"
 
         if default_storage.exists(file_path):
@@ -193,6 +249,35 @@ def delete_product_image(request, filename):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+    except Exception as e:
+        return Response(
+            {'error': f'Erro ao deletar imagem: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser])
+def delete_product_image_by_id(request, pk):
+    """
+    Endpoint para deletar uma imagem de produto pelo ID do ProductImage.
+    """
+    try:
+        image = ProductImage.objects.get(pk=pk)
+        filename = image.filename
+        image.delete()
+
+        file_path = f"products/{filename}"
+        if default_storage.exists(file_path):
+            default_storage.delete(file_path)
+
+        return Response({'message': 'Imagem deletada com sucesso.'})
+
+    except ProductImage.DoesNotExist:
+        return Response(
+            {'error': 'Imagem não encontrada.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
     except Exception as e:
         return Response(
             {'error': f'Erro ao deletar imagem: {str(e)}'},

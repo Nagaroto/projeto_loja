@@ -1,12 +1,17 @@
+import logging
+
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly
 from django.db import transaction
-from .models import Product, ProductImage
+from django.core.files.storage import default_storage
+from .models import Product, ProductImage, Notification
 from .serializers import ProductSerializer
 from .product_image_serializer import ProductImageSerializer
 
+
+logger = logging.getLogger(__name__)
 
 class ProductViewSetWithImages(viewsets.ModelViewSet):
     """
@@ -15,10 +20,36 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
     """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = Product.objects.all()
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(is_active=True)
+        return queryset
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdminUser()]
+        return super().get_permissions()
+
+    def perform_update(self, serializer):
+        previous_is_active = serializer.instance.is_active
+        product_obj = serializer.save()
+        if previous_is_active and product_obj.is_active is False:
+            Notification.objects.filter(product=product_obj).update(is_active=False)
+        return product_obj
+
+    def destroy(self, request, *args, **kwargs):
+        logger.info('Solicitação de exclusão de produto: id=%s user=%s', kwargs.get('pk'), request.user)
+        response = super().destroy(request, *args, **kwargs)
+        logger.info('Resposta de exclusão de produto: %s', response.status_code)
+        return response
 
     def create(self, request, *args, **kwargs):
         """Cria produto com imagens."""
+        print("PRODUCT CREATE ENDPOINT:", request.method, request.path)
+        print("PRODUCT CREATE IMAGES_PAYLOAD:", request.data.get('images'))
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
@@ -32,9 +63,11 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
                 self._save_product_images(product, images_data)
             
         headers = self.get_success_headers(serializer.data)
+        response_data = self.get_serializer(product).data
+        print("PRODUCT CREATE RESPONSE:", response_data)
         return Response(
-            self.get_serializer(product).data, 
-            status=status.HTTP_201_CREATED, 
+            response_data,
+            status=status.HTTP_201_CREATED,
             headers=headers
         )
 
@@ -42,49 +75,103 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
         """Atualiza produto e suas imagens."""
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        print("PRODUCT UPDATE ENDPOINT:", request.method, request.path)
+        print("PRODUCT UPDATE IMAGES_PAYLOAD:", request.data.get('images'))
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         
         with transaction.atomic():
-            # Atualiza o produto
-            product = serializer.save()
-            
-            # Processa imagens se enviadas
-            images_data = request.data.get('images', [])
-            if images_data is not None:  # Pode ser array vazio para remover todas
+            # Atualiza o produto usando perform_update para preservar hooks
+            product = self.perform_update(serializer)
+
+            # Processa imagens mesmo que seja lista vazia
+            images_data = request.data.get('images', None)
+            if images_data is not None:
                 self._update_product_images(product, images_data)
         
-        return Response(self.get_serializer(product).data)
+        response_data = self.get_serializer(product).data
+        print("PRODUCT UPDATE RESPONSE:", response_data)
+        return Response(response_data)
+
+    def _delete_product_image_file(self, filename):
+        """Remove arquivo de imagem no storage se existir."""
+        if not filename:
+            return
+        file_path = f"products/{filename}"
+        if default_storage.exists(file_path):
+            try:
+                default_storage.delete(file_path)
+            except Exception:
+                logger.exception('Falha ao apagar arquivo de imagem %s', file_path)
 
     def _save_product_images(self, product, images_data):
         """Salva as imagens do produto."""
-        # Remove imagens existentes
+        print("_save_product_images called with images_data:", images_data)
+        # Remove imagens existentes e todos os arquivos antigos
+        for existing in product.images.all():
+            self._delete_product_image_file(existing.filename)
         ProductImage.objects.filter(product=product).delete()
         
         # Cria novas imagens
         for index, image_data in enumerate(images_data):
+            filename = image_data.get('filename', f'image_{index}.webp')
+            print("SAVE PRODUCT IMAGE DATA:", image_data)
+            print("SAVE PRODUCT IMAGE FILENAME:", filename)
             ProductImage.objects.create(
                 product=product,
                 url=image_data['url'],
-                filename=image_data.get('filename', f'image_{index}.webp'),
+                filename=filename,
                 is_cover=image_data.get('is_cover', index == 0),
                 order=index
             )
 
     def _update_product_images(self, product, images_data):
         """Atualiza as imagens do produto."""
-        # Remove imagens existentes
-        ProductImage.objects.filter(product=product).delete()
-        
-        # Cria novas imagens
+        print("_update_product_images called with images_data:", images_data)
+
+        existing_images = {str(img.id): img for img in product.images.all()}
+        existing_by_filename = {img.filename: img for img in product.images.all()}
+        kept_image_ids = []
+
         for index, image_data in enumerate(images_data):
-            ProductImage.objects.create(
-                product=product,
-                url=image_data['url'],
-                filename=image_data.get('filename', f'image_{index}.webp'),
-                is_cover=image_data.get('is_cover', index == 0),
-                order=index
-            )
+            filename = image_data.get('filename', f'image_{index}.webp')
+            image_id = image_data.get('id')
+            if image_id is not None:
+                image_id = str(image_id)
+
+            image_obj = None
+            if image_id and image_id in existing_images:
+                image_obj = existing_images[image_id]
+            elif filename in existing_by_filename:
+                image_obj = existing_by_filename[filename]
+
+            if image_obj:
+                image_obj.url = image_data.get('url', image_obj.url)
+                image_obj.filename = filename
+                image_obj.is_cover = bool(image_data.get('is_cover', image_obj.is_cover))
+                image_obj.order = index
+                image_obj.save()
+            else:
+                image_obj = ProductImage.objects.create(
+                    product=product,
+                    url=image_data['url'],
+                    filename=filename,
+                    is_cover=bool(image_data.get('is_cover', index == 0)),
+                    order=index
+                )
+            kept_image_ids.append(image_obj.id)
+
+        # Remove imagens que não foram mantidas no payload
+        for image in product.images.exclude(id__in=kept_image_ids):
+            self._delete_product_image_file(image.filename)
+            image.delete()
+
+        # Garante que existe uma imagem de capa se houver imagens restantes
+        if product.images.exists() and not product.images.filter(is_cover=True).exists():
+            first_image = product.images.order_by('order', 'created_at').first()
+            if first_image:
+                first_image.is_cover = True
+                first_image.save()
 
     @action(detail=True, methods=['post'])
     def add_image(self, request, pk=None):
@@ -99,6 +186,8 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
             )
         
         image_data = request.data.get('image')
+        print("ADD IMAGE ENDPOINT:", request.method, request.path)
+        print("ADD IMAGE DATA:", image_data)
         if not image_data or not image_data.get('url'):
             return Response(
                 {'error': 'Dados da imagem inválidos.'},
@@ -141,8 +230,14 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
                 if remaining_images.exists():
                     remaining_images.first().is_cover = True
                     remaining_images.first().save()
-            
+
+            filename = image.filename
             image.delete()
+            if filename:
+                file_path = f"products/{filename}"
+                if default_storage.exists(file_path):
+                    default_storage.delete(file_path)
+
             return Response({'message': 'Imagem removida com sucesso.'})
             
         except ProductImage.DoesNotExist:

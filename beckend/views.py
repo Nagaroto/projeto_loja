@@ -159,14 +159,9 @@ class ProductViewSet(viewsets.ModelViewSet):
         product_name = serializer.instance.name
         product_obj = serializer.save()
         if previous_is_active and product_obj.is_active is False:
-            Notification.objects.create(
-                title='Produto indisponível',
-                message=f'O produto "{product_name}" está fora do estoque ou foi desativado.',
-                type=Notification.TYPE_NOTICE,
-                product=product_obj,
-                is_active=True,
-                created_by=getattr(self.request, 'user', None),
-            )
+            # Desativar notificações de produto que agora está inativo.
+            Notification.objects.filter(product=product_obj).update(is_active=False)
+            # Não criar notificações públicas adicionais para produtos desativados.
 
     def perform_destroy(self, instance):
         instance.delete()
@@ -225,7 +220,7 @@ def analytics_view(request):
         total_sales = approved_payments.aggregate(Sum('valor'))['valor__sum'] or 0
         total_orders = approved_payments.count()
 
-        top_products = Product.objects.annotate(
+        top_products = Product.objects.filter(is_active=True).annotate(
             quantity_sold=Count('orderitem'),
         ).order_by('-quantity_sold')[:3]
 
@@ -422,7 +417,12 @@ class MyNotificationsView(APIView):
         )
 
         now = timezone.now()
-        base_qs = Notification.objects.filter(is_active=True).filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
+        base_qs = (
+            Notification.objects
+            .filter(is_active=True)
+            .filter(Q(product__isnull=True) | Q(product__is_active=True))
+            .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
+        )
         qs = (
             base_qs
             .select_related('category', 'product')
@@ -457,7 +457,10 @@ class MarkNotificationReadView(APIView):
 
     def post(self, request, pk: int):
         purge_expired_notifications()
-        notif = Notification.objects.filter(pk=pk, is_active=True).first()
+        notif = Notification.objects.filter(
+            pk=pk,
+            is_active=True,
+        ).filter(Q(product__isnull=True) | Q(product__is_active=True)).first()
         if not notif:
             return Response({'detail': 'Notificação não encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -488,6 +491,7 @@ class MarkAllNotificationsReadView(APIView):
         unread_ids = list(
             Notification.objects
             .filter(is_active=True)
+            .filter(Q(product__isnull=True) | Q(product__is_active=True))
             .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
             .annotate(is_read=Exists(read_exists))
             .filter(is_read=False)

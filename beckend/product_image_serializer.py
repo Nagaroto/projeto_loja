@@ -41,6 +41,7 @@ class ProductImageCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Cria imagem garantindo que apenas uma seja capa."""
+        print("SERIALIZER CREATE IMAGE VALIDATED_DATA:", validated_data)
         product = validated_data['product']
         
         # Se esta imagem deve ser capa, remover capa das outras

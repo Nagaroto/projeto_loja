@@ -91,6 +91,9 @@ class ProductImage(models.Model):
         # Garantir que apenas uma imagem seja capa por produto
         if self.is_cover:
             ProductImage.objects.filter(product=self.product, is_cover=True).update(is_cover=False)
+        print("DB IMAGE FIELD:", getattr(self, 'image', None))
+        print("DB IMAGE FILENAME:", self.filename)
+        print("DB IMAGE URL:", self.url)
         super().save(*args, **kwargs)
 
 
