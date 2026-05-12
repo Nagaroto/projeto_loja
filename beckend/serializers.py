@@ -265,7 +265,7 @@ class CartSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
-    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_name = serializers.CharField(read_only=True)
     subtotal = serializers.SerializerMethodField()
 
     class Meta:

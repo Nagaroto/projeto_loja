@@ -97,8 +97,18 @@ class ProductImage(models.Model):
         super().save(*args, **kwargs)
 
 
+class ProductManager(models.Manager):
+    """Manager que filtra produtos excluídos por padrão."""
+    
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+
 class Product(models.Model):
     """Item vendável: preço, estoque, mídia, variantes JSON e flag de publicação."""
+
+    objects = ProductManager()
+    all_objects = models.Manager()  # Manager sem filtro para acessar excluídos
 
     name = models.CharField(
         max_length=255,
@@ -158,6 +168,11 @@ class Product(models.Model):
         verbose_name='Ativo',
         help_text='Se marcado, o produto aparece no catálogo. Se desmarcado, fica oculto (disponível apenas no admin)',
     )
+    is_deleted = models.BooleanField(
+        default=False,
+        verbose_name='Excluído',
+        help_text='Soft delete - produto marcado como excluído mas mantido no banco',
+    )
 
     class Meta:
         verbose_name = 'Produto'
@@ -198,11 +213,16 @@ class Product(models.Model):
         ).exists()
 
     def delete(self, *args, **kwargs):
-        """Bloqueia exclusão de produtos vinculados a pedidos."""
-        if self.orderitem_set.exists():
+        """Apaga produtos do banco: bloqueia ativos com pedidos e remove inativos completamente."""
+        if self.is_active and self.orderitem_set.exists():
             raise ValidationError(
-                "Este produto já está vinculado a pedidos e não pode ser excluído."
+                "Este produto ativo já está vinculado a pedidos e não pode ser excluído."
             )
+
+        if not self.is_active:
+            from .models import CartItem
+            CartItem.objects.filter(product=self).delete()
+
         super().delete(*args, **kwargs)
 
 
@@ -493,9 +513,17 @@ class OrderItem(models.Model):
     )
     product = models.ForeignKey(
         Product,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         verbose_name='Produto',
         help_text='Produto vendido neste item',
+    )
+    product_name = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='Nome do produto',
+        help_text='Nome do produto no momento da compra',
     )
     quantity = models.IntegerField(
         default=1,
@@ -514,7 +542,13 @@ class OrderItem(models.Model):
         verbose_name_plural = 'Itens do Pedido'
 
     def __str__(self):
-        return f"{self.product.name} x{self.quantity} (Pedido #{self.order.id})"
+        product_label = self.product.name if self.product else self.product_name or 'Produto removido'
+        return f"{product_label} x{self.quantity} (Pedido #{self.order.id})"
+
+    def save(self, *args, **kwargs):
+        if self.product:
+            self.product_name = self.product.name
+        super().save(*args, **kwargs)
 
     def subtotal(self):
         return self.quantity * self.price

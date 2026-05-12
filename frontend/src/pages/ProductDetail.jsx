@@ -81,6 +81,13 @@ export function ProductDetail() {
         setLightboxOpen(false);
         setIsFavorite(isFavoriteProduct(normalized.id));
 
+        if (normalized.colors.length === 1) {
+          setSelectedColor(normalized.colors[0]);
+        }
+        if (normalized.sizes.length === 1) {
+          setSelectedSize(normalized.sizes[0]);
+        }
+
         if (normalized.categoryId) {
           try {
             const pubRes = await axios.get(
@@ -144,11 +151,12 @@ export function ProductDetail() {
 
   const handleNextImage = () => {
     if (!product) return;
-    setSelectedImageIndex((prev) => Math.min(prev + 1, product.images.length - 1));
+    setSelectedImageIndex((prev) => (prev + 1) % product.images.length);
   };
 
   const handlePrevImage = () => {
-    setSelectedImageIndex((prev) => Math.max(prev - 1, 0));
+    if (!product) return;
+    setSelectedImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
   };
 
   const handleTouchStart = (event) => {
@@ -532,9 +540,9 @@ export function ProductDetail() {
         </div>
 
         {lightboxOpen && product ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
             <div className="absolute inset-0" onClick={() => setLightboxOpen(false)} />
-            <div className="relative z-10 max-w-6xl w-full mx-auto">
+            <div className="relative z-10 max-w-6xl w-full mx-auto px-2">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm text-white">
                   {currentImageIndex + 1}/{product.images.length}
@@ -548,19 +556,18 @@ export function ProductDetail() {
                   Fechar
                 </button>
               </div>
-              <div className="relative bg-black rounded-3xl overflow-hidden flex items-center justify-center min-h-[50vh] max-h-[80vh]">
+              <div className="relative overflow-hidden flex items-center justify-center min-h-[50vh] max-h-[80vh]">
                 <img
                   src={product.images[currentImageIndex] || FALLBACK_IMG}
                   alt={`${product.name} - imagem ${currentImageIndex + 1}`}
-                  className="max-w-full max-h-full object-contain bg-black"
+                  className="max-w-full max-h-full object-contain"
                   onTouchStart={handleTouchStart}
                   onTouchEnd={handleTouchEnd}
                 />
                 <button
                   type="button"
                   onClick={handlePrevImage}
-                  disabled={currentImageIndex === 0}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white hover:bg-white/30 transition disabled:opacity-40"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white hover:bg-white/30 transition"
                   aria-label="Imagem anterior"
                 >
                   ‹
@@ -568,8 +575,7 @@ export function ProductDetail() {
                 <button
                   type="button"
                   onClick={handleNextImage}
-                  disabled={currentImageIndex === product.images.length - 1}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white hover:bg-white/30 transition disabled:opacity-40"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white hover:bg-white/30 transition"
                   aria-label="Próxima imagem"
                 >
                   ›

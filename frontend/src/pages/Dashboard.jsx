@@ -106,6 +106,13 @@ function ProductsTab() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
+
+  // Função auxiliar para verificar se produto está inativo (lida com diferentes tipos de dados)
+  const isProductInactive = (product) => {
+    if (!product) return false;
+    return product.is_active === false || product.is_active === 'false' || product.is_active === 0 || product.is_active === '0';
+  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -164,7 +171,9 @@ function ProductsTab() {
   };
   const loadProducts = async () => {
     try {
-      const allProducts = await loadAllPages(`${API_URL}/products/`);
+      const validToken = await getValidToken();
+      const allProducts = await loadAllPages(`${API_URL}/products/`, validToken);
+      console.log('[DEBUG] Produtos carregados:', allProducts.map(p => ({ id: p.id, name: p.name, is_active: p.is_active })));
       setProducts(allProducts);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
@@ -184,8 +193,19 @@ function ProductsTab() {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || product.category === parseInt(selectedCategory);
-    return matchesSearch && matchesCategory;
+    // Verifica se produto está inativo usando a função auxiliar
+    const inactive = isProductInactive(product);
+    // Se showInactive = true, mostra apenas inativos. Se false, mostra apenas ativos
+    const matchesActiveStatus = showInactive ? inactive : !inactive;
+    const result = matchesSearch && matchesCategory && matchesActiveStatus;
+    // Debug: mostrar produtos inativos quando showInactive = true
+    if (showInactive && inactive) {
+      console.log('[DEBUG] Produto inativo encontrado:', product.id, product.name, 'is_active:', product.is_active, 'matches:', result);
+    }
+    return result;
   });
+
+  const inactiveCount = products.filter((p) => isProductInactive(p)).length;
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
@@ -294,8 +314,9 @@ function ProductsTab() {
   };
 
   const handleDeactivateProduct = async (id) => {
+    console.log('[DEBUG] handleDeactivateProduct chamado para id:', id);
     const confirmed = await showConfirm(
-      'O produto será desativado e ficará oculto para clientes.',
+      'O produto será desativado e ficará oculto para clientes. Você poderá reativá-lo ou excluí-lo permanentemente depois.',
       {
         title: 'Desativar este produto?',
         confirmLabel: 'Desativar',
@@ -304,7 +325,10 @@ function ProductsTab() {
         type: 'warning',
       }
     );
-    if (!confirmed) return;
+    if (!confirmed) {
+      console.log('[DEBUG] Usuário cancelou a desativação');
+      return;
+    }
 
     try {
       const validToken = await getValidToken();
@@ -312,13 +336,32 @@ function ProductsTab() {
         showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
         return;
       }
-      await axios.patch(`${API_URL}/products/${id}/`, { is_active: false }, {
+      console.log('[DEBUG] Enviando requisição para desativar produto', id);
+      const response = await axios.patch(`${API_URL}/products/${id}/`, { is_active: false }, {
+        headers: { Authorization: `Bearer ${validToken}` }
+      });
+      console.log('[DEBUG] Resposta da API:', response.data);
+      await loadProducts();
+      showAlert('Produto desativado com sucesso.', { toast: true, type: 'success', duration: 3000 });
+    } catch (error) {
+      showAlert('Erro ao desativar produto.', { toast: true, type: 'error', duration: 4000 });
+    }
+  };
+
+  const handleActivateProduct = async (id) => {
+    try {
+      const validToken = await getValidToken();
+      if (!validToken) {
+        showAlert('Sessão expirada. Faça login novamente.', { toast: true, type: 'error', duration: 4000 });
+        return;
+      }
+      await axios.patch(`${API_URL}/products/${id}/`, { is_active: true }, {
         headers: { Authorization: `Bearer ${validToken}` }
       });
       loadProducts();
-      showAlert('Produto desativado com sucesso.', { toast: true, type: 'success', duration: 10000 });
+      showAlert('Produto ativado com sucesso.', { toast: true, type: 'success', duration: 3000 });
     } catch (error) {
-      showAlert('Erro ao desativar produto.', { toast: true, type: 'error', duration: 4000 });
+      showAlert('Erro ao ativar produto.', { toast: true, type: 'error', duration: 4000 });
     }
   };
 
@@ -346,7 +389,7 @@ function ProductsTab() {
     images: normalizedImages,
     colors: Array.isArray(product.colors) ? product.colors.join(', ') : '',
     sizes: Array.isArray(product.sizes) ? product.sizes.join(', ') : '',
-    is_active: product.is_active !== false,
+    is_active: !isProductInactive(product),
   });
 
   setShowEditForm(true);
@@ -669,7 +712,7 @@ function ProductsTab() {
         </motion.div>
       )}
 
-      <div className="flex gap-4 mb-4 flex-wrap">
+      <div className="flex gap-4 mb-4 flex-wrap items-center">
         <input
           type="text"
           placeholder="Buscar produtos..."
@@ -689,13 +732,44 @@ function ProductsTab() {
             </option>
           ))}
         </select>
+        <button
+          onClick={() => {
+            const newValue = !showInactive;
+            console.log('[DEBUG] Botão clicado. Novo valor:', newValue);
+            console.log('[DEBUG] inactiveCount:', inactiveCount);
+            console.log('[DEBUG] Todos os produtos DETALHADOS:', products.map(p => ({ 
+              id: p.id, 
+              name: p.name, 
+              is_active: p.is_active, 
+              is_active_type: typeof p.is_active,
+              isInactive_check: isProductInactive(p)
+            })));
+            setShowInactive(newValue);
+            // Limpar busca e categoria ao ativar modo inativos para mostrar todos
+            if (newValue) {
+              setSearchTerm('');
+              setSelectedCategory('');
+            }
+          }}
+          className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${
+            showInactive
+              ? 'bg-red-100 text-red-700 border-2 border-red-300 hover:bg-red-200'
+              : 'bg-gray-100 text-gray-700 border-2 border-gray-300 hover:bg-gray-200'
+          }`}
+        >
+          {showInactive ? 'Ocultar Inativos' : `Ver Inativos ${inactiveCount > 0 ? `(${inactiveCount})` : ''}`}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredProducts.map((product) => (
           <motion.div
             key={product.id}
-            className="bg-white border border-gray-200 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow"
+            className={`rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow ${
+              isProductInactive(product)
+                ? 'bg-gray-50 border-2 border-red-200 opacity-75'
+                : 'bg-white border border-gray-200'
+            }`}
             whileHover={{ y: -5 }}
           >
             {(product.image_url || getCoverImageUrl(product.images)) && (
@@ -709,7 +783,7 @@ function ProductsTab() {
             )}
             <div className="flex justify-between items-start mb-2">
               <h3 className="font-bold text-cereon-dark flex-1">{product.name}</h3>
-              {!product.is_active && (
+              {isProductInactive(product) && (
                 <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-semibold whitespace-nowrap ml-2">
                   Desativado
                 </span>
@@ -765,20 +839,41 @@ function ProductsTab() {
   </span>
 </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => handleOpenEdit(product)}
-                className="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <Edit2 className="w-4 h-4" />
-                Editar
-              </button>
-              <button
-                onClick={() => handleDeactivateProduct(product.id)}
-                className="flex-1 bg-red-500 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Desativar
-              </button>
+              {!isProductInactive(product) ? (
+                <>
+                  <button
+                    onClick={() => handleOpenEdit(product)}
+                    className="flex-1 bg-blue-500 text-white px-3 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => handleDeactivateProduct(product.id)}
+                    className="flex-1 bg-red-500 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Desativar
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => handleActivateProduct(product.id)}
+                    className="flex-1 bg-green-500 text-white px-3 py-2 rounded-lg font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    Ativar
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProduct(product.id)}
+                    className="flex-1 bg-red-600 text-white px-3 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Excluir
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         ))}
@@ -788,7 +883,7 @@ function ProductsTab() {
 }
 
 // Componente de Cupons
-function EligibleProductsSelector({ products, selectedIds, onChange, label, emptyText }) {
+function EligibleProductsSelector({ products, selectedIds, onChange, label, emptyText, discountPercent = 0 }) {
   const [search, setSearch] = useState('');
   const selectedSet = new Set((selectedIds || []).map((x) => String(x)));
   const filteredAvailable = products.filter((p) => {
@@ -804,6 +899,21 @@ function EligibleProductsSelector({ products, selectedIds, onChange, label, empt
   const selectedProducts = (selectedIds || [])
     .map((id) => products.find((p) => String(p.id) === String(id)))
     .filter(Boolean);
+
+  // Função para calcular o preço com desconto
+  const calculateDiscountedPrice = (price) => {
+    const discount = Number(discountPercent) || 0;
+    if (discount <= 0 || discount > 100) return price;
+    const originalPrice = parseFloat(price) || 0;
+    const discountedPrice = originalPrice * (1 - discount / 100);
+    return discountedPrice.toFixed(2);
+  };
+
+  // Função para formatar preço em reais
+  const formatPrice = (price) => {
+    const num = parseFloat(price) || 0;
+    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
 
   const addProduct = (id) => {
     const next = Array.from(new Set([...(selectedIds || []), String(id)]));
@@ -846,23 +956,38 @@ function EligibleProductsSelector({ products, selectedIds, onChange, label, empt
             {filteredAvailable.length === 0 ? (
               <p className="text-sm text-gray-500">Nenhum produto disponível para adicionar.</p>
             ) : (
-              filteredAvailable.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between gap-3 p-2 border border-gray-100 rounded-lg"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-cereon-dark truncate">#{p.id} - {p.name}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => addProduct(p.id)}
-                    className="text-xs bg-cereon-green text-white px-3 py-1 rounded-md hover:bg-green-600 transition-colors"
+              filteredAvailable.map((p) => {
+                const discountedPrice = calculateDiscountedPrice(p.price);
+                const hasDiscount = Number(discountPercent) > 0 && Number(discountPercent) <= 100;
+                return (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between gap-3 p-2 border border-gray-100 rounded-lg"
                   >
-                    Adicionar
-                  </button>
-                </div>
-              ))
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-cereon-dark truncate">#{p.id} - {p.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {hasDiscount ? (
+                          <span>
+                            <span className="line-through text-gray-400">{formatPrice(p.price)}</span>
+                            <span className="ml-1 text-green-600 font-semibold">{formatPrice(discountedPrice)}</span>
+                            <span className="ml-1 text-xs bg-green-100 text-green-700 px-1 rounded">-{discountPercent}%</span>
+                          </span>
+                        ) : (
+                          <span>{formatPrice(p.price)}</span>
+                        )}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => addProduct(p.id)}
+                      className="text-xs bg-cereon-green text-white px-3 py-1 rounded-md hover:bg-green-600 transition-colors shrink-0"
+                    >
+                      Adicionar
+                    </button>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
@@ -886,21 +1011,38 @@ function EligibleProductsSelector({ products, selectedIds, onChange, label, empt
             {selectedProducts.length === 0 ? (
               <p className="text-sm text-gray-500">Nenhum produto selecionado. O cupom será global.</p>
             ) : (
-              selectedProducts.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between gap-3 p-2 bg-white border border-cereon-green/20 rounded-lg"
-                >
-                  <p className="text-sm font-medium text-cereon-dark truncate">#{p.id} - {p.name}</p>
-                  <button
-                    type="button"
-                    onClick={() => removeProduct(p.id)}
-                    className="text-xs bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-colors"
+              selectedProducts.map((p) => {
+                const discountedPrice = calculateDiscountedPrice(p.price);
+                const hasDiscount = Number(discountPercent) > 0 && Number(discountPercent) <= 100;
+                return (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between gap-3 p-2 bg-white border border-cereon-green/20 rounded-lg"
                   >
-                    Remover
-                  </button>
-                </div>
-              ))
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-cereon-dark truncate">#{p.id} - {p.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {hasDiscount ? (
+                          <span>
+                            <span className="line-through text-gray-400">{formatPrice(p.price)}</span>
+                            <span className="ml-1 text-green-600 font-semibold">{formatPrice(discountedPrice)}</span>
+                            <span className="ml-1 text-xs bg-green-100 text-green-700 px-1 rounded">-{discountPercent}%</span>
+                          </span>
+                        ) : (
+                          <span>{formatPrice(p.price)}</span>
+                        )}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeProduct(p.id)}
+                      className="text-xs bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition-colors shrink-0"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
@@ -1130,6 +1272,7 @@ function CouponsTab() {
               products={products}
               selectedIds={formData.eligible_products}
               onChange={(eligible_products) => setFormData({ ...formData, eligible_products })}
+              discountPercent={formData.discount_percent}
             />
             <div className="flex gap-3">
               <button
@@ -1200,6 +1343,7 @@ function CouponsTab() {
               products={products}
               selectedIds={formData.eligible_products}
               onChange={(eligible_products) => setFormData({ ...formData, eligible_products })}
+              discountPercent={formData.discount_percent}
             />
             <div className="flex gap-3">
               <button
@@ -1502,6 +1646,7 @@ function PromotionsTab() {
               onChange={(products) => setFormData({ ...formData, products })}
               label="Produtos em Promoção"
               emptyText="Nenhum produto selecionado. Selecione os produtos que terão desconto aplicado automaticamente."
+              discountPercent={formData.discount_percent}
             />
             <div className="flex gap-3">
               <button
@@ -1567,6 +1712,7 @@ function PromotionsTab() {
               onChange={(products) => setFormData({ ...formData, products })}
               label="Produtos em Promoção"
               emptyText="Nenhum produto selecionado. Selecione os produtos que terão desconto aplicado automaticamente."
+              discountPercent={formData.discount_percent}
             />
             <div className="flex gap-3">
               <button

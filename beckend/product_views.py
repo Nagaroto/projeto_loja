@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly
 from django.db import transaction
 from django.core.files.storage import default_storage
+from django.core.exceptions import ValidationError
 from .models import Product, ProductImage, Notification
 from .serializers import ProductSerializer
 from .product_image_serializer import ProductImageSerializer
@@ -43,9 +44,32 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         logger.info('Solicitação de exclusão de produto: id=%s user=%s', kwargs.get('pk'), request.user)
-        response = super().destroy(request, *args, **kwargs)
-        logger.info('Resposta de exclusão de produto: %s', response.status_code)
-        return response
+        try:
+            product_id = kwargs.get('pk')
+            try:
+                product = Product.objects.get(pk=product_id)
+            except Product.DoesNotExist:
+                return Response(
+                    {'detail': 'Produto não encontrado.'},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            product.delete()
+            logger.info('Produto excluído com sucesso: id=%s', product_id)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        except ValidationError as exc:
+            logger.warning('Falha ao excluir produto: %s', exc)
+            return Response(
+                {'detail': str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as exc:
+            logger.error('Erro inesperado ao excluir produto: %s', exc, exc_info=True)
+            return Response(
+                {'detail': f'Erro interno: {str(exc)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     def create(self, request, *args, **kwargs):
         """Cria produto com imagens."""

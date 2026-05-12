@@ -26,6 +26,11 @@ export function ProductCard({ product, categories = [] }) {
       return;
     }
 
+    if ((product.colors?.length || product.sizes?.length) && !product.selectedSize && !product.selectedColor) {
+      navigate(`/produto/${product.id}`);
+      return;
+    }
+
     const result = addToCart(product);
     if (!result.success) {
       if (result.alreadyInCart) {
@@ -153,7 +158,9 @@ export function ProductCard({ product, categories = [] }) {
               ? 'Indisponível'
               : isAdded
                 ? 'Adicionado!'
-                : 'Adicionar'}
+                : (product.colors?.length || product.sizes?.length)
+                  ? 'Selecionar'
+                  : 'Adicionar'}
           </span>
         </motion.button>
       </div>

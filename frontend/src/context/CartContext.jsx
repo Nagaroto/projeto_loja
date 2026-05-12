@@ -133,6 +133,10 @@ export function CartProvider({ children }) {
       image: product.image_url || product.image || '/imgs/cereon.webp',
     };
 
+    if ((product.colors?.length || product.sizes?.length) && !product.selectedSize && !product.selectedColor) {
+      return { success: false, message: 'Selecione tamanho e cor na página do produto antes de adicionar ao carrinho.' };
+    }
+
     const itemId = normalized.cartId || `${normalized.id}`;
     const existingItem = cartItems.find((item) => item.itemId === itemId);
 

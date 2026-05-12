@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ProductCard } from '../components/ProductCard';
-import { mockProducts, categories } from '../data/mockProducts';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { API_URL } from '../services/api';
@@ -31,7 +30,7 @@ export function Catalogo() {
       setProducts(productsList);
     } catch (error) {
       console.error('Erro ao carregar produtos publicados:', error);
-      setProducts(mockProducts);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
