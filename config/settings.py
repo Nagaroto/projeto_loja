@@ -11,7 +11,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-54+)v1ruxn%%u0_!j%p3!i#fjyk5%18lh&cphvrgw-1sh_lh*s')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv(
@@ -63,11 +63,14 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres.bwmtxqdkevbpfoqsypag',
+        'PASSWORD': 'Cereon@1010ds',
+        'HOST': 'aws-1-us-west-1.pooler.supabase.com',
+        'PORT': '5432',
     }
 }
 
