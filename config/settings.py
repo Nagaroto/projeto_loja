@@ -10,7 +10,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEBUG = False
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
@@ -138,21 +138,22 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Production media/static configuration
 if not DEBUG:
-    # Configuração do Cloudinary para Mídia
+    # Configuração do Cloudinary para Mídia em Produção
     CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': os.getenv('CLOUDINARY_STORAGE_CLOUD_NAME', 'hercolys'),
+        'CLOUD_NAME': os.getenv('CLOUDINARY_STORAGE_CLOUD_NAME', 'desqxyngm'),
         'API_KEY': os.getenv('CLOUDINARY_STORAGE_API_KEY', '815981943999871'),
-        'API_SECRET': os.getenv('CLOUDINARY_STORAGE_API_SECRET', '7ZzcQ7Q8FEI0UHJkb1GuuEfAVM'),
+        'API_SECRET': os.getenv('CLOUDINARY_STORAGE_API_SECRET', 'm7ZzcQ7Q8FEI0UHJkb1GuuEfAVM'),
         'SECURE': True,
     }
     
-    # Se pelo menos o CLOUD_NAME estiver presente, tentamos usar o Cloudinary
-    if CLOUDINARY_STORAGE['CLOUD_NAME'] and CLOUDINARY_STORAGE['API_KEY'] and CLOUDINARY_STORAGE['API_SECRET']:
+    # Se o Cloudinary estiver configurado, ele assume o DEFAULT_FILE_STORAGE
+    if CLOUDINARY_STORAGE['CLOUD_NAME'] and CLOUDINARY_STORAGE['API_KEY']:
         DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+        # Em produção, a MEDIA_URL deve ser o domínio do Cloudinary
         MEDIA_URL = f"https://res.cloudinary.com/{CLOUDINARY_STORAGE['CLOUD_NAME']}/"
-        print(f"✅ CLOUDINARY ATIVADO: {CLOUDINARY_STORAGE['CLOUD_NAME']}")
+        print(f"✅ STORAGE: Cloudinary Ativado ({CLOUDINARY_STORAGE['CLOUD_NAME']})")
     else:
-        print("❌ CLOUDINARY NÃO ATIVADO: Variáveis de ambiente ausentes!")
+        print("⚠️ STORAGE: Cloudinary não configurado, usando local (não recomendado para Render)")
     
     # Static files (podemos manter local no Render ou usar Cloudinary/S3 se necessário)
     # Por enquanto, focamos em Mídia que é o que some no Render

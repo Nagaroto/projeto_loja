@@ -177,21 +177,26 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         url = obj.image_url or ''
-        # Se a URL já for absoluta (Cloudinary), retorna ela diretamente
+        # Se a URL já for absoluta (Cloudinary), retorna ela diretamente sem processamento extra
         if url.startswith('http://') or url.startswith('https://'):
             return url
             
+        # Se for um caminho relativo (/media/...), tentamos tornar absoluto
         if url.startswith('/'):
-            # Prioriza BACKEND_URL (produção), depois request.build_absolute_uri
+            # 1. Tenta usar BACKEND_URL
             backend_url = os.getenv('BACKEND_URL', '')
             if backend_url:
                 return f"{backend_url.rstrip('/')}{url}"
             
+            # 2. Tenta usar o contexto da request
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(url)
-            elif settings.DEBUG:
+            
+            # 3. Fallback para localhost em DEBUG
+            if settings.DEBUG:
                 return f"http://127.0.0.1:8000{url}"
+        
         return url
 
     def get_promotion_info(self, obj):

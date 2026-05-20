@@ -111,19 +111,25 @@ def upload_product_image(request):
         safe_name = _make_safe_filename()
         final_filename = f"products/{safe_name}{ext}"
 
-        # Salva diretamente no storage (Cloudinary em produção)
+        # Salva diretamente no storage (Cloudinary em produção, FileSystem em local)
+        # O Django gerencia automaticamente o upload para o Cloudinary via default_storage
         saved_path = default_storage.save(final_filename, image_file)
+        
+        # Obtém a URL gerada pelo Storage
+        # Se for Cloudinary, retornará a URL absoluta da nuvem
+        # Se for local, retornará /media/products/img_xxx.ext
         image_url = default_storage.url(saved_path)
 
-        # Garante URL absoluta para o frontend
-        if image_url.startswith('/') and not image_url.startswith('http'):
+        # Se a URL for relativa (local), garante que seja absoluta para o frontend
+        if image_url.startswith('/') and not (image_url.startswith('http://') or image_url.startswith('https://')):
+            # Tenta usar o BACKEND_URL definido ou o host da request
             backend_url = os.getenv('BACKEND_URL', '')
             if backend_url:
                 image_url = f"{backend_url.rstrip('/')}{image_url}"
             elif request:
                 image_url = request.build_absolute_uri(image_url)
 
-        logger.info('Upload direto concluído: %s -> %s', image_file.name, image_url)
+        logger.info('Upload processado via Storage: %s -> %s', image_file.name, image_url)
 
         return Response({
             'id': str(uuid.uuid4()),
