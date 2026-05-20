@@ -23,6 +23,7 @@ export function ProductImageUploader({
   productId = null,
   className = '',
 }) {
+  const [previews, setPreviews] = useState({});
   const [uploadingImages, setUploadingImages] = useState(new Set());
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState('');
@@ -30,6 +31,7 @@ export function ProductImageUploader({
 
   const processImageUpload = useCallback(async (file) => {
     const tempId = `temp-${Date.now()}-${Math.random()}`;
+    const objectUrl = URL.createObjectURL(file);
 
     try {
       validateImageFile(file);
@@ -38,23 +40,15 @@ export function ProductImageUploader({
         throw new Error(`Máximo de ${maxImages} imagens.`);
       }
 
-      console.log('[UPLOAD] selected file', file, {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        isFile: file instanceof File,
-      });
-
       setUploadingImages((prev) => new Set(prev).add(tempId));
+      setPreviews((prev) => ({ ...prev, [tempId]: objectUrl }));
 
       const formData = new FormData();
       formData.append('image', file);
-      console.log('[UPLOAD] FormData entries before send:', Array.from(formData.entries()));
 
       // ✅ USO CORRETO DO API (COM TOKEN AUTOMÁTICO)
       const response = await api.post('/upload/product-image/', formData);
-      console.log('[UPLOAD] response data:', response.data);
-
+      
       const newImage = {
         id: response.data.id,
         url: response.data.url,
@@ -68,6 +62,13 @@ export function ProductImageUploader({
     } catch (err) {
       console.error('Erro no upload:', err);
       setError(err.response?.data?.error || err.message);
+      // Limpa o preview em caso de erro
+      setPreviews((prev) => {
+        const newState = { ...prev };
+        delete newState[tempId];
+        return newState;
+      });
+      URL.revokeObjectURL(objectUrl);
       throw err;
     } finally {
       setUploadingImages((prev) => {
@@ -75,8 +76,17 @@ export function ProductImageUploader({
         newSet.delete(tempId);
         return newSet;
       });
+      // Não revogamos aqui imediatamente para não quebrar o preview se o upload for muito rápido
+      // A limpeza será feita quando o componente for desmontado ou após um tempo
     }
   }, [images, maxImages, onChange]);
+
+  // Limpeza de URLs de objetos para evitar vazamento de memória
+  React.useEffect(() => {
+    return () => {
+      Object.values(previews).forEach(URL.revokeObjectURL);
+    };
+  }, [previews]);
 
   const handleFileSelect = useCallback(async (files) => {
     const fileArray = Array.from(files);
@@ -198,10 +208,34 @@ export function ProductImageUploader({
       )}
 
       <div className="grid grid-cols-2 gap-4">
+        {/* Renderiza previews de uploads em andamento */}
+        {Array.from(uploadingImages).map((tempId) => (
+          <div key={tempId} className="relative opacity-60">
+            <div className="aspect-square w-full overflow-hidden rounded bg-gray-100 flex items-center justify-center">
+              {previews[tempId] ? (
+                <img src={previews[tempId]} className="w-full h-full object-cover" alt="Preview" />
+              ) : (
+                <Loader2 className="animate-spin text-gray-400" />
+              )}
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="animate-spin text-white drop-shadow-md" />
+            </div>
+          </div>
+        ))}
+
         {images.map((img, index) => (
           <div key={img.id} className="relative">
-            <div className="aspect-square w-full overflow-hidden rounded">
-              <img src={img.url} className="w-full h-full object-cover" />
+            <div className="aspect-square w-full overflow-hidden rounded border border-gray-200">
+              <img 
+                src={img.url} 
+                className="w-full h-full object-cover" 
+                alt={`Produto ${index + 1}`}
+                onError={(e) => {
+                  console.error('Erro ao carregar imagem:', img.url);
+                  e.target.src = '/imgs/cereon.webp'; // Fallback se a imagem quebrar
+                }}
+              />
             </div>
 
             {img.isCover && (
