@@ -177,6 +177,10 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         url = obj.image_url or ''
+        # Se a URL já for absoluta (Cloudinary), retorna ela diretamente
+        if url.startswith('http://') or url.startswith('https://'):
+            return url
+            
         if url.startswith('/'):
             # Prioriza BACKEND_URL (produção), depois request.build_absolute_uri
             backend_url = os.getenv('BACKEND_URL', '')

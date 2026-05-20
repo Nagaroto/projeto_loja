@@ -134,7 +134,10 @@ def _save_processed_webp(image_file, original_name=None, request=None):
         raise IOError(f'Arquivo salvo mas não encontrado no disco: {physical_path}')
 
     image_url = default_storage.url(saved_webp_path)
-    if image_url.startswith('/'):
+    
+    # Se a URL retornada pelo storage já for absoluta (como no Cloudinary), não precisamos concatenar nada.
+    # O default_storage.url() do Cloudinary retorna a URL completa com https://.
+    if image_url.startswith('/') and not (image_url.startswith('http://') or image_url.startswith('https://')):
         backend_url = os.getenv('BACKEND_URL', '')
         if backend_url:
             image_url = f"{backend_url.rstrip('/')}{image_url}"
@@ -352,25 +355,26 @@ def list_product_images(request):
         directories, files = default_storage.listdir(products_dir)
 
         for filename in files:
-            if filename.endswith('.webp'):
-                file_path = f"{products_dir}{filename}"
-                image_url = default_storage.url(file_path)
+            # No Cloudinary, os arquivos podem não ter a extensão .webp no nome retornado pelo listdir
+            # dependendo da configuração, mas geralmente o default_storage.url() resolve isso.
+            file_path = f"{products_dir}{filename}"
+            image_url = default_storage.url(file_path)
 
-                if image_url.startswith('/'):
-                    # Prioriza BACKEND_URL se estiver definido (comum em produção), caso contrário usa o host da request
-                    backend_url = os.getenv('BACKEND_URL', '')
-                    if backend_url:
-                        image_url = f"{backend_url.rstrip('/')}{image_url}"
-                    elif request:
-                        image_url = request.build_absolute_uri(image_url)
-                    elif settings.DEBUG:
-                        image_url = f"http://127.0.0.1:8000{image_url}"
+            if image_url.startswith('/') and not (image_url.startswith('http://') or image_url.startswith('https://')):
+                # Prioriza BACKEND_URL se estiver definido (comum em produção), caso contrário usa o host da request
+                backend_url = os.getenv('BACKEND_URL', '')
+                if backend_url:
+                    image_url = f"{backend_url.rstrip('/')}{image_url}"
+                elif request:
+                    image_url = request.build_absolute_uri(image_url)
+                elif settings.DEBUG:
+                    image_url = f"http://127.0.0.1:8000{image_url}"
 
-                images.append({
-                    'filename': filename,
-                    'url': image_url,
-                    'path': file_path
-                })
+            images.append({
+                'filename': filename,
+                'url': image_url,
+                'path': file_path
+            })
 
         return Response({'images': images})
 
