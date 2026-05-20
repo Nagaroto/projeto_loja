@@ -10,7 +10,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = False
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
@@ -140,17 +140,19 @@ MEDIA_ROOT = BASE_DIR / 'media'
 if not DEBUG:
     # Configuração do Cloudinary para Mídia
     CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': os.getenv('CLOUDINARY_STORAGE_CLOUD_NAME', ''),
-        'API_KEY': os.getenv('CLOUDINARY_STORAGE_API_KEY', ''),
-        'API_SECRET': os.getenv('CLOUDINARY_STORAGE_API_SECRET', ''),
+        'CLOUD_NAME': os.getenv('CLOUDINARY_STORAGE_CLOUD_NAME'),
+        'API_KEY': os.getenv('CLOUDINARY_STORAGE_API_KEY'),
+        'API_SECRET': os.getenv('CLOUDINARY_STORAGE_API_SECRET'),
+        'SECURE': True,
     }
     
+    # Se pelo menos o CLOUD_NAME estiver presente, tentamos usar o Cloudinary
     if CLOUDINARY_STORAGE['CLOUD_NAME']:
         DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-        # Em produção, a MEDIA_URL deve ser o domínio do Cloudinary
         MEDIA_URL = f"https://res.cloudinary.com/{CLOUDINARY_STORAGE['CLOUD_NAME']}/"
-        # Garante que o Django use a URL absoluta do Cloudinary
-        CLOUDINARY_STORAGE['SECURE'] = True
+        print(f"✅ CLOUDINARY ATIVADO: {CLOUDINARY_STORAGE['CLOUD_NAME']}")
+    else:
+        print("❌ CLOUDINARY NÃO ATIVADO: Variáveis de ambiente ausentes!")
     
     # Static files (podemos manter local no Render ou usar Cloudinary/S3 se necessário)
     # Por enquanto, focamos em Mídia que é o que some no Render
