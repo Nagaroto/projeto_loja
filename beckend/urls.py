@@ -20,7 +20,7 @@ from .views import (
     MarkAllNotificationsReadView,
 )
 from .product_views import ProductViewSetWithImages
-from .upload_views import upload_product_image, delete_product_image, delete_product_image_by_id, list_product_images
+from .upload_views import upload_product_image, delete_product_image
 from .checkout_views import CheckoutView, ShippingQuoteView
 from .user_account_views import (
     AddressDetailView,
@@ -53,9 +53,7 @@ urlpatterns = [
     path('me/notifications/read-all/', MarkAllNotificationsReadView.as_view(), name='me-notifications-read-all'),
     path('me/notifications/<int:pk>/read/', MarkNotificationReadView.as_view(), name='me-notification-read'),
     path('upload/product-image/', upload_product_image, name='upload-product-image'),
-    path('upload/product-image/<str:filename>/', delete_product_image, name='delete-product-image'),
-    path('product-images/<int:pk>/', delete_product_image_by_id, name='delete-product-image-by-id'),
-    path('upload/product-images/', list_product_images, name='list-product-images'),
+    path('upload/product-image/<int:pk>/', delete_product_image, name='delete-product-image'),
     path('checkout/shipping/', ShippingQuoteView.as_view(), name='checkout-shipping'),
     path('checkout/place/', CheckoutView.as_view(), name='checkout-place'),
     path('products/published/', PublishedProductsView.as_view(), name='published-products'),

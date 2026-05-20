@@ -5,7 +5,6 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly
 from django.db import transaction
-from django.core.files.storage import default_storage
 from django.core.exceptions import ValidationError
 from .models import Product, ProductImage, Notification
 from .serializers import ProductSerializer
@@ -118,48 +117,36 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
         print("PRODUCT UPDATE RESPONSE:", response_data)
         return Response(response_data)
 
-    def _delete_product_image_file(self, filename):
-        """Remove arquivo de imagem no storage se existir."""
-        if not filename:
-            return
-        file_path = f"products/{filename}"
-        if default_storage.exists(file_path):
-            try:
-                default_storage.delete(file_path)
-            except Exception:
-                logger.exception('Falha ao apagar arquivo de imagem %s', file_path)
 
     def _save_product_images(self, product, images_data):
-        """Salva as imagens do produto."""
+        """Salva as imagens do produto usando ImageField do Cloudinary."""
         print("_save_product_images called with images_data:", images_data)
-        # Remove imagens existentes e todos os arquivos antigos
-        for existing in product.images.all():
-            self._delete_product_image_file(existing.filename)
+        # Remove imagens existentes (Cloudinary deleta automaticamente)
         ProductImage.objects.filter(product=product).delete()
-        
+
         # Cria novas imagens
         for index, image_data in enumerate(images_data):
-            filename = image_data.get('filename', f'image_{index}.webp')
             print("SAVE PRODUCT IMAGE DATA:", image_data)
-            print("SAVE PRODUCT IMAGE FILENAME:", filename)
+            # image_data agora deve conter o arquivo de imagem convertido para WebP
+            image_file = image_data.get('image')
+            if not image_file:
+                continue
+
             ProductImage.objects.create(
                 product=product,
-                url=image_data['url'],
-                filename=filename,
+                image=image_file,
                 is_cover=image_data.get('is_cover', index == 0),
                 order=index
             )
 
     def _update_product_images(self, product, images_data):
-        """Atualiza as imagens do produto."""
+        """Atualiza as imagens do produto usando ImageField do Cloudinary."""
         print("_update_product_images called with images_data:", images_data)
 
         existing_images = {str(img.id): img for img in product.images.all()}
-        existing_by_filename = {img.filename: img for img in product.images.all()}
         kept_image_ids = []
 
         for index, image_data in enumerate(images_data):
-            filename = image_data.get('filename', f'image_{index}.webp')
             image_id = image_data.get('id')
             if image_id is not None:
                 image_id = str(image_id)
@@ -167,28 +154,29 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
             image_obj = None
             if image_id and image_id in existing_images:
                 image_obj = existing_images[image_id]
-            elif filename in existing_by_filename:
-                image_obj = existing_by_filename[filename]
 
             if image_obj:
-                image_obj.url = image_data.get('url', image_obj.url)
-                image_obj.filename = filename
+                # Atualiza campos se necessário
+                if 'image' in image_data:
+                    image_obj.image = image_data['image']
                 image_obj.is_cover = bool(image_data.get('is_cover', image_obj.is_cover))
                 image_obj.order = index
                 image_obj.save()
             else:
-                image_obj = ProductImage.objects.create(
-                    product=product,
-                    url=image_data['url'],
-                    filename=filename,
-                    is_cover=bool(image_data.get('is_cover', index == 0)),
-                    order=index
-                )
-            kept_image_ids.append(image_obj.id)
+                # Cria nova imagem
+                image_file = image_data.get('image')
+                if image_file:
+                    image_obj = ProductImage.objects.create(
+                        product=product,
+                        image=image_file,
+                        is_cover=bool(image_data.get('is_cover', index == 0)),
+                        order=index
+                    )
+            if image_obj:
+                kept_image_ids.append(image_obj.id)
 
-        # Remove imagens que não foram mantidas no payload
+        # Remove imagens que não foram mantidas no payload (Cloudinary deleta automaticamente)
         for image in product.images.exclude(id__in=kept_image_ids):
-            self._delete_product_image_file(image.filename)
             image.delete()
 
         # Garante que existe uma imagem de capa se houver imagens restantes
@@ -200,71 +188,66 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def add_image(self, request, pk=None):
-        """Adiciona uma única imagem ao produto."""
+        """Adiciona uma única imagem ao produto usando ImageField do Cloudinary."""
         product = self.get_object()
-        
+
         # Verifica limite de imagens
         if product.images.count() >= 5:
             return Response(
                 {'error': 'Máximo de 5 imagens permitidas.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        image_data = request.data.get('image')
+
+        image_file = request.FILES.get('image')
         print("ADD IMAGE ENDPOINT:", request.method, request.path)
-        print("ADD IMAGE DATA:", image_data)
-        if not image_data or not image_data.get('url'):
+        print("ADD IMAGE FILE:", image_file)
+
+        if not image_file:
             return Response(
-                {'error': 'Dados da imagem inválidos.'},
+                {'error': 'Arquivo de imagem não enviado.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Se não há capa, define esta como capa
-        is_cover = image_data.get('is_cover', not product.images.filter(is_cover=True).exists())
-        
+        is_cover = request.data.get('is_cover', not product.images.filter(is_cover=True).exists())
+
         ProductImage.objects.create(
             product=product,
-            url=image_data['url'],
-            filename=image_data.get('filename', 'image.webp'),
+            image=image_file,
             is_cover=is_cover,
             order=product.images.count()
         )
-        
+
         return Response(
             ProductImageSerializer(product.images.all(), many=True).data
         )
 
     @action(detail=True, methods=['delete'])
     def remove_image(self, request, pk=None):
-        """Remove uma imagem do produto."""
+        """Remove uma imagem do produto (Cloudinary deleta automaticamente)."""
         product = self.get_object()
         image_id = request.data.get('image_id')
-        
+
         if not image_id:
             return Response(
                 {'error': 'ID da imagem não fornecido.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             image = product.images.get(id=image_id)
-            
-            # Se removing a capa, define a primeira imagem restante como capa
+
+            # Se removendo a capa, define a primeira imagem restante como capa
             if image.is_cover:
                 remaining_images = product.images.exclude(id=image_id)
                 if remaining_images.exists():
                     remaining_images.first().is_cover = True
                     remaining_images.first().save()
 
-            filename = image.filename
-            image.delete()
-            if filename:
-                file_path = f"products/{filename}"
-                if default_storage.exists(file_path):
-                    default_storage.delete(file_path)
+            image.delete()  # Cloudinary deleta automaticamente
 
             return Response({'message': 'Imagem removida com sucesso.'})
-            
+
         except ProductImage.DoesNotExist:
             return Response(
                 {'error': 'Imagem não encontrada.'},

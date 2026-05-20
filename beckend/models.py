@@ -46,7 +46,7 @@ class Category(models.Model):
 
 
 class ProductImage(models.Model):
-    """Modelo para armazenar múltiplas imagens de um produto."""
+    """Modelo para armazenar múltiplas imagens de um produto usando Cloudinary."""
     product = models.ForeignKey(
         'Product',
         on_delete=models.CASCADE,
@@ -54,14 +54,10 @@ class ProductImage(models.Model):
         verbose_name='Produto',
         help_text='Produto ao qual esta imagem pertence',
     )
-    url = models.URLField(
-        verbose_name='URL da Imagem',
-        help_text='URL da imagem do produto',
-    )
-    filename = models.CharField(
-        max_length=255,
-        verbose_name='Nome do Arquivo',
-        help_text='Nome do arquivo da imagem',
+    image = models.ImageField(
+        verbose_name='Imagem',
+        help_text='Arquivo de imagem do produto (salvo no Cloudinary)',
+        upload_to='products/',
     )
     is_cover = models.BooleanField(
         default=False,
@@ -82,10 +78,23 @@ class ProductImage(models.Model):
         verbose_name = 'Imagem do Produto'
         verbose_name_plural = 'Imagens dos Produtos'
         ordering = ['order', 'created_at']
-        unique_together = ['product', 'filename']
 
     def __str__(self):
-        return f"{self.product.name} - {self.filename}"
+        return f"{self.product.name} - {self.image.name if self.image else 'Sem imagem'}"
+
+    @property
+    def url(self):
+        """Retorna a URL da imagem do Cloudinary."""
+        if self.image:
+            return self.image.url
+        return None
+
+    @property
+    def filename(self):
+        """Retorna o nome do arquivo para compatibilidade com código legado."""
+        if self.image:
+            return self.image.name.split('/')[-1]
+        return None
 
     def save(self, *args, **kwargs):
         # Garantir que apenas uma imagem seja capa por produto

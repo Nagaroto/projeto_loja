@@ -176,28 +176,9 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_image_url(self, obj):
-        url = obj.image_url or ''
-        # Se a URL já for absoluta (Cloudinary), retorna ela diretamente sem processamento extra
-        if url.startswith('http://') or url.startswith('https://'):
-            return url
-            
-        # Se for um caminho relativo (/media/...), tentamos tornar absoluto
-        if url.startswith('/'):
-            # 1. Tenta usar BACKEND_URL
-            backend_url = os.getenv('BACKEND_URL', '')
-            if backend_url:
-                return f"{backend_url.rstrip('/')}{url}"
-            
-            # 2. Tenta usar o contexto da request
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(url)
-            
-            # 3. Fallback para localhost em DEBUG
-            if settings.DEBUG:
-                return f"http://127.0.0.1:8000{url}"
-        
-        return url
+        # Cloudinary retorna URLs absolutas automaticamente via ImageField.url
+        # Não precisa de lógica manual de URL building
+        return obj.image_url
 
     def get_promotion_info(self, obj):
         from datetime import date

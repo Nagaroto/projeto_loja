@@ -133,30 +133,22 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
 
-# Production media/static configuration
-if not DEBUG:
-    # Configuração do Cloudinary para Mídia em Produção
-    CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': os.getenv('CLOUDINARY_STORAGE_CLOUD_NAME', 'desqxyngm'),
-        'API_KEY': os.getenv('CLOUDINARY_STORAGE_API_KEY', '815981943999871'),
-        'API_SECRET': os.getenv('CLOUDINARY_STORAGE_API_SECRET', 'm7ZzcQ7Q8FEI0UHJkb1GuuEfAVM'),
-        'SECURE': True,
-    }
-    
-    # Se o Cloudinary estiver configurado, ele assume o DEFAULT_FILE_STORAGE
-    if CLOUDINARY_STORAGE['CLOUD_NAME'] and CLOUDINARY_STORAGE['API_KEY']:
-        DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-        # Em produção, a MEDIA_URL deve ser o domínio do Cloudinary
-        MEDIA_URL = f"https://res.cloudinary.com/{CLOUDINARY_STORAGE['CLOUD_NAME']}/"
-        print(f"✅ STORAGE: Cloudinary Ativado ({CLOUDINARY_STORAGE['CLOUD_NAME']})")
-    else:
-        print("⚠️ STORAGE: Cloudinary não configurado, usando local (não recomendado para Render)")
-    
-    # Static files (podemos manter local no Render ou usar Cloudinary/S3 se necessário)
-    # Por enquanto, focamos em Mídia que é o que some no Render
+# =========================================================
+# CLOUDINARY CONFIGURAÇÃO - SEMPRE ATIVO
+# =========================================================
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME', 'desqxyngm'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY', '815981943999871'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET', 'm7ZzcQ7Q8FEI0UHJkb1GuuEfAVM'),
+    'SECURE': True,
+}
+
+# Cloudinary como storage padrão para todos os arquivos (dev e produção)
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+MEDIA_URL = f"https://res.cloudinary.com/{CLOUDINARY_STORAGE['CLOUD_NAME']}/"
+
+print(f"✅ STORAGE: Cloudinary Ativado ({CLOUDINARY_STORAGE['CLOUD_NAME']})")
 
 _default_cors_origins = (
     'https://projeto-loja-phi.vercel.app,https://projeto-loja-uqac.onrender.com'
