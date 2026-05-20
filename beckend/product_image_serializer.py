@@ -1,3 +1,5 @@
+import os
+from django.conf import settings
 from rest_framework import serializers
 from .models import ProductImage
 
@@ -21,9 +23,17 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
     def get_url(self, obj):
         url = obj.url or ''
-        request = self.context.get('request')
-        if request and url.startswith('/'):
-            return request.build_absolute_uri(url)
+        if url.startswith('/'):
+            # Prioriza BACKEND_URL (produção), depois request.build_absolute_uri
+            backend_url = os.getenv('BACKEND_URL', '')
+            if backend_url:
+                return f"{backend_url.rstrip('/')}{url}"
+            
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(url)
+            elif settings.DEBUG:
+                return f"http://127.0.0.1:8000{url}"
         return url
 
     def validate(self, attrs):
@@ -50,7 +60,6 @@ class ProductImageCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Cria imagem garantindo que apenas uma seja capa."""
-        print("SERIALIZER CREATE IMAGE VALIDATED_DATA:", validated_data)
         product = validated_data['product']
         
         # Se esta imagem deve ser capa, remover capa das outras

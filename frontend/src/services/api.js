@@ -6,8 +6,6 @@ const defaultApiHost = (typeof window !== 'undefined' && (window.location.hostna
 const RAW_API_URL = (import.meta.env.VITE_API_URL || defaultApiHost).replace(/\/+$/, "");
 export const API_URL = RAW_API_URL.endsWith("/api") ? RAW_API_URL : `${RAW_API_URL}/api`;
 
-console.log('[API SERVICE] VITE_API_URL:', import.meta.env.VITE_API_URL, 'defaultApiHost:', defaultApiHost, 'API_URL:', API_URL);
-
 const api = axios.create({
   baseURL: API_URL,
 });
@@ -20,14 +18,6 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  if (config.url?.includes('/upload/product-image/') || config.url?.includes('/products/')) {
-    console.log('[API REQUEST]', config.method, config.baseURL + config.url, config.headers);
-    if (config.data instanceof FormData) {
-      console.log('[API REQUEST] FormData entries:', Array.from(config.data.entries()));
-    } else {
-      console.log('[API REQUEST] JSON payload:', config.data);
-    }
-  }
 
   return config;
 });

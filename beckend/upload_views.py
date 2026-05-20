@@ -60,10 +60,13 @@ ALLOWED_CONTENT_TYPES = frozenset({
 
 
 def _normalize_image(image_file):
-    """Converte qualquer imagem para RGB e aplica crop central quadrado 600x600."""
+    """Converte qualquer imagem para RGB, remove metadados EXIF e aplica crop central quadrado 600x600."""
     image_file.seek(0)
     img = Image.open(image_file)
+    
+    # Aplica a orientação correta baseada no EXIF (ex: fotos de celular) e retorna uma cópia
     img = ImageOps.exif_transpose(img)
+    
     logger.info(
         'Processando imagem: format=%s mode=%s size=%s filename=%s',
         img.format,
@@ -72,12 +75,19 @@ def _normalize_image(image_file):
         getattr(image_file, 'name', None),
     )
 
-    img = img.convert('RGBA')
+    # A normalização para RGBA e a composição sobre um fundo branco (Image.new)
+    # criam um novo objeto de imagem que não contém os metadados EXIF da original.
+    # Isso garante a privacidade do usuário (remove GPS, modelo de câmera, etc).
+    if img.mode != 'RGBA':
+        img = img.convert('RGBA')
 
+    # Cria um fundo branco para imagens com transparência (como PNGs ou GIFs)
     background = Image.new('RGBA', img.size, (255, 255, 255, 255))
     img = Image.alpha_composite(background, img)
+    # Converte para RGB final (WebP usará isso)
     img = img.convert('RGB')
 
+    # Redimensiona e corta para preencher o quadrado 600x600
     normalized = ImageOps.fit(
         img,
         IMAGE_SIZE,
@@ -86,7 +96,7 @@ def _normalize_image(image_file):
     )
 
     logger.info(
-        'Imagem normalizada: mode=%s size=%s',
+        'Imagem normalizada com sucesso: mode=%s size=%s',
         normalized.mode,
         normalized.size,
     )
@@ -126,10 +136,14 @@ def _save_processed_webp(image_file, original_name=None, request=None):
         raise IOError(f'Arquivo salvo mas não encontrado no disco: {physical_path}')
 
     image_url = default_storage.url(saved_webp_path)
-    if image_url.startswith('/') and request is not None:
-        image_url = request.build_absolute_uri(image_url)
-    elif settings.DEBUG and image_url.startswith('/'):
-        image_url = f"http://127.0.0.1:8000{image_url}"
+    if image_url.startswith('/'):
+        backend_url = os.getenv('BACKEND_URL', '')
+        if backend_url:
+            image_url = f"{backend_url.rstrip('/')}{image_url}"
+        elif request:
+            image_url = request.build_absolute_uri(image_url)
+        elif settings.DEBUG:
+            image_url = f"http://127.0.0.1:8000{image_url}"
 
     logger.info('Imagem salva em %s %s', saved_webp_path, physical_path or '')
 
@@ -155,6 +169,30 @@ def _content_type_ok(uploaded):
     return False
 
 
+def _check_path_traversal(filename):
+    """Verifica se o nome do arquivo tenta path traversal."""
+    if not filename:
+        return False
+    # Verifica padrões de path traversal
+    dangerous_patterns = ['..', '../', '..\\', '~/', '/etc/', '/var/', '\\windows\\']
+    filename_lower = filename.lower()
+    return any(pattern in filename_lower for pattern in dangerous_patterns)
+
+
+def _check_double_extension(filename):
+    """Verifica se o arquivo tem extensão dupla (ex: image.php.jpg)."""
+    if not filename:
+        return False
+    parts = filename.split('.')
+    # Se tiver mais de 2 partes após o split, pode ser extensão dupla
+    if len(parts) > 2:
+        # Verifica se as duas últimas extensões são suspeitas
+        dangerous_exts = ['php', 'jsp', 'asp', 'exe', 'sh', 'bat', 'cmd', 'js', 'vbs']
+        if parts[-2].lower() in dangerous_exts:
+            return True
+    return False
+
+
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def upload_product_image(request):
@@ -171,6 +209,21 @@ def upload_product_image(request):
             )
 
         image_file = request.FILES['image']
+
+        # Security checks
+        if _check_path_traversal(image_file.name):
+            logger.warning('Tentativa de path traversal detectada: %s', image_file.name)
+            return Response(
+                {'error': 'Nome de arquivo inválido.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if _check_double_extension(image_file.name):
+            logger.warning('Tentativa de extensão dupla detectada: %s', image_file.name)
+            return Response(
+                {'error': 'Arquivo com extensão múltipla não permitido.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if not _content_type_ok(image_file):
             return Response(
@@ -212,8 +265,6 @@ def upload_product_image(request):
             )
 
         logger.info('Upload de imagem processado com sucesso: %s', image_file.name)
-        print("UPLOAD ENDPOINT:", request.method, request.path)
-        print("API IMAGE URL:", data)
         return Response(data, status=status.HTTP_201_CREATED)
 
     except Exception as e:
@@ -308,9 +359,14 @@ def list_product_images(request):
                 image_url = default_storage.url(file_path)
 
                 if image_url.startswith('/'):
-                    image_url = request.build_absolute_uri(image_url)
-                elif settings.DEBUG and image_url.startswith('/'):
-                    image_url = f"http://127.0.0.1:8000{image_url}"
+                    # Prioriza BACKEND_URL se estiver definido (comum em produção), caso contrário usa o host da request
+                    backend_url = os.getenv('BACKEND_URL', '')
+                    if backend_url:
+                        image_url = f"{backend_url.rstrip('/')}{image_url}"
+                    elif request:
+                        image_url = request.build_absolute_uri(image_url)
+                    elif settings.DEBUG:
+                        image_url = f"http://127.0.0.1:8000{image_url}"
 
                 images.append({
                     'filename': filename,

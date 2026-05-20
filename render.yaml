@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: projeto-loja-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: projeto-loja-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://projeto-loja-uol4.vercel.app,https://projeto-loja-uqac.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://projeto-loja-uol4.vercel.app,https://projeto-loja-uqac.onrender.com
+      - key: BACKEND_URL
+        value: https://projeto-loja-uqac.onrender.com
+      - key: MERCADO_PAGO_ACCESS_TOKEN
+        sync: false
+      - key: MERCADO_PAGO_PUBLIC_KEY
+        sync: false
+      - key: WEBHOOK_URL
+        value: https://projeto-loja-uqac.onrender.com/api/pagamentos/webhook/
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_S3_REGION_NAME
+        value: us-east-1
+      - key: AWS_S3_CUSTOM_DOMAIN
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO
+
+databases:
+  - name: projeto-loja-db
+    databaseName: projeto_loja
+    user: projeto_loja_user

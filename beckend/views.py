@@ -96,7 +96,13 @@ class RegisterView(generics.CreateAPIView):
 
     def post(self, request):
         # Rate limit check
-        rate_limiter.check_rate_limit(request)
+        try:
+            rate_limiter.check_rate_limit(request)
+        except Throttled as e:
+            return Response(
+                {'detail': str(e.detail)},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
         
         email = (request.data.get('email') or '').strip().lower()
         password = request.data.get('password')
@@ -265,6 +271,14 @@ class PublishedProductsView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
+        # Rate limit for public endpoint
+        try:
+            rate_limiter.check_rate_limit(request)
+        except Throttled as e:
+            return Response(
+                {'detail': str(e.detail)},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
         try:
             queryset = Product.objects.filter(
                 is_active=True,

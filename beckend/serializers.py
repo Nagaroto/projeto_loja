@@ -1,5 +1,7 @@
 # Serializers DRF: validação e representação JSON dos modelos da loja.
 
+import os
+from django.conf import settings
 from rest_framework import serializers
 from django.utils.text import slugify
 import requests
@@ -175,9 +177,17 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         url = obj.image_url or ''
-        request = self.context.get('request')
-        if request and url.startswith('/'):
-            return request.build_absolute_uri(url)
+        if url.startswith('/'):
+            # Prioriza BACKEND_URL (produção), depois request.build_absolute_uri
+            backend_url = os.getenv('BACKEND_URL', '')
+            if backend_url:
+                return f"{backend_url.rstrip('/')}{url}"
+            
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(url)
+            elif settings.DEBUG:
+                return f"http://127.0.0.1:8000{url}"
         return url
 
     def get_promotion_info(self, obj):
