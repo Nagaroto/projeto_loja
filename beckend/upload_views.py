@@ -117,20 +117,18 @@ def _save_processed_webp(image_file, original_name=None, request=None):
 
     safe_name = _make_safe_filename()
     final_filename = f"products/{safe_name}.webp"
-    print("UPLOAD ORIGINAL:", original_name)
-    print("SAFE NAME:", safe_name)
-    print("FINAL SAVE NAME:", final_filename)
+    
+    # Cloudinary e outros storages remotos funcionam melhor com ContentFile
+    # e garantem que o arquivo seja persistente.
     saved_webp_path = default_storage.save(final_filename, ContentFile(webp_buffer.getvalue()))
-    print("STORAGE PATH:", saved_webp_path)
-
-    if not default_storage.exists(saved_webp_path):
-        raise IOError(f'Arquivo salvo mas não encontrado em storage: {saved_webp_path}')
-
+    
+    # Tenta obter o caminho físico apenas se o storage for local (DEBUG)
     physical_path = None
-    try:
-        physical_path = default_storage.path(saved_webp_path)
-    except (AttributeError, NotImplementedError):
-        pass
+    if settings.DEBUG:
+        try:
+            physical_path = default_storage.path(saved_webp_path)
+        except (AttributeError, NotImplementedError):
+            pass
 
     if physical_path and not os.path.exists(physical_path):
         raise IOError(f'Arquivo salvo mas não encontrado no disco: {physical_path}')

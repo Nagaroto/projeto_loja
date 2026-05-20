@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'cloudinary_storage',
+    'cloudinary',
     'beckend',
     'pagamentos',
     'rest_framework',
@@ -136,18 +138,21 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Production media/static configuration
 if not DEBUG:
-    # Use AWS S3 or similar in production via environment variables
-    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', '')
-    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
-    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
-    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
-    AWS_S3_CUSTOM_DOMAIN = os.getenv('AWS_S3_CUSTOM_DOMAIN', '')
+    # Configuração do Cloudinary para Mídia
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.getenv('CLOUDINARY_STORAGE_CLOUD_NAME', ''),
+        'API_KEY': os.getenv('CLOUDINARY_STORAGE_API_KEY', ''),
+        'API_SECRET': os.getenv('CLOUDINARY_STORAGE_API_SECRET', ''),
+    }
     
-    if AWS_STORAGE_BUCKET_NAME:
-        STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-        DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-        STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/' if AWS_S3_CUSTOM_DOMAIN else f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
-        MEDIA_URL = STATIC_URL
+    if CLOUDINARY_STORAGE['CLOUD_NAME']:
+        DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+        # Em produção, a MEDIA_URL será gerenciada pelo Cloudinary
+        # Mas mantemos a MEDIA_URL para consistência
+        MEDIA_URL = f"https://res.cloudinary.com/{CLOUDINARY_STORAGE['CLOUD_NAME']}/"
+    
+    # Static files (podemos manter local no Render ou usar Cloudinary/S3 se necessário)
+    # Por enquanto, focamos em Mídia que é o que some no Render
 
 _default_cors_origins = (
     'https://projeto-loja-phi.vercel.app,https://projeto-loja-uqac.onrender.com'
