@@ -140,14 +140,14 @@ MEDIA_ROOT = BASE_DIR / 'media'
 if not DEBUG:
     # Configuração do Cloudinary para Mídia
     CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': os.getenv('CLOUDINARY_STORAGE_CLOUD_NAME'),
-        'API_KEY': os.getenv('CLOUDINARY_STORAGE_API_KEY'),
-        'API_SECRET': os.getenv('CLOUDINARY_STORAGE_API_SECRET'),
+        'CLOUD_NAME': os.getenv('CLOUDINARY_STORAGE_CLOUD_NAME', 'hercolys'),
+        'API_KEY': os.getenv('CLOUDINARY_STORAGE_API_KEY', '815981943999871'),
+        'API_SECRET': os.getenv('CLOUDINARY_STORAGE_API_SECRET', '7ZzcQ7Q8FEI0UHJkb1GuuEfAVM'),
         'SECURE': True,
     }
     
     # Se pelo menos o CLOUD_NAME estiver presente, tentamos usar o Cloudinary
-    if CLOUDINARY_STORAGE['CLOUD_NAME']:
+    if CLOUDINARY_STORAGE['CLOUD_NAME'] and CLOUDINARY_STORAGE['API_KEY'] and CLOUDINARY_STORAGE['API_SECRET']:
         DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
         MEDIA_URL = f"https://res.cloudinary.com/{CLOUDINARY_STORAGE['CLOUD_NAME']}/"
         print(f"✅ CLOUDINARY ATIVADO: {CLOUDINARY_STORAGE['CLOUD_NAME']}")

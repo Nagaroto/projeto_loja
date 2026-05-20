@@ -59,130 +59,9 @@ ALLOWED_CONTENT_TYPES = frozenset({
 })
 
 
-def _normalize_image(image_file):
-    """Converte qualquer imagem para RGB, remove metadados EXIF e aplica crop central quadrado 600x600."""
-    image_file.seek(0)
-    img = Image.open(image_file)
-    
-    # Aplica a orientação correta baseada no EXIF (ex: fotos de celular) e retorna uma cópia
-    img = ImageOps.exif_transpose(img)
-    
-    logger.info(
-        'Processando imagem: format=%s mode=%s size=%s filename=%s',
-        img.format,
-        img.mode,
-        img.size,
-        getattr(image_file, 'name', None),
-    )
-
-    # A normalização para RGBA e a composição sobre um fundo branco (Image.new)
-    # criam um novo objeto de imagem que não contém os metadados EXIF da original.
-    # Isso garante a privacidade do usuário (remove GPS, modelo de câmera, etc).
-    if img.mode != 'RGBA':
-        img = img.convert('RGBA')
-
-    # Cria um fundo branco para imagens com transparência (como PNGs ou GIFs)
-    background = Image.new('RGBA', img.size, (255, 255, 255, 255))
-    img = Image.alpha_composite(background, img)
-    # Converte para RGB final (WebP usará isso)
-    img = img.convert('RGB')
-
-    # Redimensiona e corta para preencher o quadrado 600x600
-    normalized = ImageOps.fit(
-        img,
-        IMAGE_SIZE,
-        method=Image.Resampling.LANCZOS,
-        centering=(0.5, 0.5),
-    )
-
-    logger.info(
-        'Imagem normalizada com sucesso: mode=%s size=%s',
-        normalized.mode,
-        normalized.size,
-    )
-    return normalized
-
-
 def _make_safe_filename():
     random_suffix = uuid.uuid4().hex[:12]
     return f"img_{random_suffix}"
-
-
-def _save_processed_webp(image_file, original_name=None, request=None):
-    img = _normalize_image(image_file)
-
-    webp_buffer = io.BytesIO()
-    img.save(webp_buffer, format='WEBP', quality=IMAGE_QUALITY, optimize=True)
-    webp_buffer.seek(0)
-
-    safe_name = _make_safe_filename()
-    final_filename = f"products/{safe_name}.webp"
-    
-    # Cloudinary e outros storages remotos funcionam melhor com ContentFile
-    # e garantem que o arquivo seja persistente.
-    saved_webp_path = default_storage.save(final_filename, ContentFile(webp_buffer.getvalue()))
-    
-    # Tenta obter o caminho físico apenas se o storage for local (DEBUG)
-    physical_path = None
-    if settings.DEBUG:
-        try:
-            physical_path = default_storage.path(saved_webp_path)
-        except (AttributeError, NotImplementedError):
-            pass
-
-    if physical_path and not os.path.exists(physical_path):
-        raise IOError(f'Arquivo salvo mas não encontrado no disco: {physical_path}')
-
-    image_url = default_storage.url(saved_webp_path)
-    
-    # DEBUG: Log para identificar o que o storage está retornando em produção
-    logger.info('STORAGE_URL_DEBUG: %s', image_url)
-    
-    # Se a URL retornada for absoluta (Cloudinary), retorna ela sem mexer
-    if image_url.startswith('http'):
-        return {
-            'id': str(uuid.uuid4()),
-            'url': image_url,
-            'filename': os.path.basename(saved_webp_path),
-            'size': len(webp_buffer.getvalue()),
-            'width': img.width,
-            'height': img.height,
-            'format': 'WebP',
-        }
-
-    # Se a URL for relativa (local), aplica a lógica de domínio
-    if image_url.startswith('/'):
-        # Em desenvolvimento local, usamos a lógica de BACKEND_URL ou request
-        backend_url = os.getenv('BACKEND_URL', '')
-        if backend_url:
-            image_url = f"{backend_url.rstrip('/')}{image_url}"
-        elif request:
-            image_url = request.build_absolute_uri(image_url)
-        elif settings.DEBUG:
-            image_url = f"http://127.0.0.1:8000{image_url}"
-
-    logger.info('Imagem salva em %s %s', saved_webp_path, physical_path or '')
-
-    return {
-        'id': str(uuid.uuid4()),
-        'url': image_url,
-        'filename': os.path.basename(saved_webp_path),
-        'size': len(webp_buffer.getvalue()),
-        'width': img.width,
-        'height': img.height,
-        'format': 'WebP',
-    }
-
-
-def _content_type_ok(uploaded):
-    ct = (uploaded.content_type or '').strip().lower()
-    if ct in ALLOWED_CONTENT_TYPES:
-        return True
-    if not ct:
-        return True
-    if ct.startswith('image/'):
-        return True
-    return False
 
 
 def _check_path_traversal(filename):
@@ -195,27 +74,12 @@ def _check_path_traversal(filename):
     return any(pattern in filename_lower for pattern in dangerous_patterns)
 
 
-def _check_double_extension(filename):
-    """Verifica se o arquivo tem extensão dupla (ex: image.php.jpg)."""
-    if not filename:
-        return False
-    parts = filename.split('.')
-    # Se tiver mais de 2 partes após o split, pode ser extensão dupla
-    if len(parts) > 2:
-        # Verifica se as duas últimas extensões são suspeitas
-        dangerous_exts = ['php', 'jsp', 'asp', 'exe', 'sh', 'bat', 'cmd', 'js', 'vbs']
-        if parts[-2].lower() in dangerous_exts:
-            return True
-    return False
-
-
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def upload_product_image(request):
     """
     Endpoint para upload de imagens de produtos.
-    Aceita vários formatos raster (JPEG, PNG, WebP, GIF, AVIF, HEIC, TIFF, BMP, ICO, etc.)
-    e converte para WebP.
+    Envia o arquivo diretamente para o Cloudinary (ou storage configurado).
     """
     try:
         if 'image' not in request.FILES:
@@ -226,30 +90,11 @@ def upload_product_image(request):
 
         image_file = request.FILES['image']
 
-        # Security checks
+        # Security checks básicos
         if _check_path_traversal(image_file.name):
-            logger.warning('Tentativa de path traversal detectada: %s', image_file.name)
             return Response(
                 {'error': 'Nome de arquivo inválido.'},
                 status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if _check_double_extension(image_file.name):
-            logger.warning('Tentativa de extensão dupla detectada: %s', image_file.name)
-            return Response(
-                {'error': 'Arquivo com extensão múltipla não permitido.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if not _content_type_ok(image_file):
-            return Response(
-                {
-                    'error': (
-                        'Tipo de arquivo não reconhecido como imagem. '
-                        'Use JPEG, PNG, WebP, GIF, AVIF, HEIC ou outros formatos de imagem comuns.'
-                    ),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if image_file.size > MAX_IMAGE_SIZE:
@@ -258,33 +103,37 @@ def upload_product_image(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        raw = image_file.read()
-        if len(raw) > MAX_IMAGE_SIZE:
-            return Response(
-                {'error': 'Arquivo muito grande. Tamanho máximo: 10MB.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # Gera um nome seguro mantendo a extensão original
+        ext = os.path.splitext(image_file.name)[1].lower()
+        if not ext:
+            ext = '.jpg' # Fallback
+        
+        safe_name = _make_safe_filename()
+        final_filename = f"products/{safe_name}{ext}"
 
-        buf = io.BytesIO(raw)
-        try:
-            data = _save_processed_webp(buf, image_file.name, request=request)
-        except UnidentifiedImageError:
-            logger.exception('Falha ao identificar a imagem no upload')
-            return Response(
-                {
-                    'error': (
-                        'Não foi possível ler a imagem. Formato não suportado ou arquivo corrompido. '
-                        'Instale os pacotes pillow-avif-plugin e pillow-heif para AVIF/HEIC.'
-                    ),
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # Salva diretamente no storage (Cloudinary em produção)
+        saved_path = default_storage.save(final_filename, image_file)
+        image_url = default_storage.url(saved_path)
 
-        logger.info('Upload de imagem processado com sucesso: %s', image_file.name)
-        return Response(data, status=status.HTTP_201_CREATED)
+        # Garante URL absoluta para o frontend
+        if image_url.startswith('/') and not image_url.startswith('http'):
+            backend_url = os.getenv('BACKEND_URL', '')
+            if backend_url:
+                image_url = f"{backend_url.rstrip('/')}{image_url}"
+            elif request:
+                image_url = request.build_absolute_uri(image_url)
+
+        logger.info('Upload direto concluído: %s -> %s', image_file.name, image_url)
+
+        return Response({
+            'id': str(uuid.uuid4()),
+            'url': image_url,
+            'filename': os.path.basename(saved_path),
+            'size': image_file.size,
+        }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
-        logger.exception('Erro inesperado ao processar upload de imagem')
+        logger.exception('Erro no upload direto')
         return Response(
             {'error': f'Erro ao processar imagem: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
