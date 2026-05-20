@@ -135,16 +135,27 @@ def _save_processed_webp(image_file, original_name=None, request=None):
 
     image_url = default_storage.url(saved_webp_path)
     
-    # Se a URL retornada pelo storage já for absoluta (como no Cloudinary), não precisamos concatenar nada.
-    # O default_storage.url() do Cloudinary retorna a URL completa com https://.
-    if image_url.startswith('/') and not (image_url.startswith('http://') or image_url.startswith('https://')):
-        backend_url = os.getenv('BACKEND_URL', '')
-        if backend_url:
-            image_url = f"{backend_url.rstrip('/')}{image_url}"
-        elif request:
-            image_url = request.build_absolute_uri(image_url)
-        elif settings.DEBUG:
-            image_url = f"http://127.0.0.1:8000{image_url}"
+    # O CloudinaryStorage retorna uma URL que pode ser relativa ao domínio (ex: /v123/image.webp)
+    # ou absoluta (http...). Se for relativa, o Django/Cloudinary espera que usemos build_absolute_uri
+    # ou o domínio do Cloudinary.
+    if image_url.startswith('/'):
+        # Se estivermos usando Cloudinary em produção (DEBUG=False), a URL deve vir do Cloudinary
+        if not settings.DEBUG:
+             # O CloudinaryStorage geralmente já configura a URL correta, 
+             # mas se ela vier apenas com o path, garantimos que seja absoluta.
+             if not (image_url.startswith('http://') or image_url.startswith('https://')):
+                # Se não tem protocolo, verificamos se o STORAGE_URL está no settings ou usamos o host
+                if request:
+                    image_url = request.build_absolute_uri(image_url)
+        else:
+            # Em desenvolvimento local, usamos a lógica de BACKEND_URL ou request
+            backend_url = os.getenv('BACKEND_URL', '')
+            if backend_url:
+                image_url = f"{backend_url.rstrip('/')}{image_url}"
+            elif request:
+                image_url = request.build_absolute_uri(image_url)
+            elif settings.DEBUG:
+                image_url = f"http://127.0.0.1:8000{image_url}"
 
     logger.info('Imagem salva em %s %s', saved_webp_path, physical_path or '')
 

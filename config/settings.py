@@ -147,9 +147,10 @@ if not DEBUG:
     
     if CLOUDINARY_STORAGE['CLOUD_NAME']:
         DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-        # Em produção, a MEDIA_URL será gerenciada pelo Cloudinary
-        # Mas mantemos a MEDIA_URL para consistência
+        # Em produção, a MEDIA_URL deve ser o domínio do Cloudinary
         MEDIA_URL = f"https://res.cloudinary.com/{CLOUDINARY_STORAGE['CLOUD_NAME']}/"
+        # Garante que o Django use a URL absoluta do Cloudinary
+        CLOUDINARY_STORAGE['SECURE'] = True
     
     # Static files (podemos manter local no Render ou usar Cloudinary/S3 se necessário)
     # Por enquanto, focamos em Mídia que é o que some no Render
