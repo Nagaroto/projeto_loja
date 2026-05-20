@@ -97,7 +97,10 @@ export function ProductImageUploader({
         throw new Error(`Máximo de ${maxImages} imagens.`);
       }
 
-      await Promise.all(fileArray.map(processImageUpload));
+      // Processa um por um para garantir que o estado de previews seja atualizado corretamente
+      for (const file of fileArray) {
+        await processImageUpload(file);
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -210,16 +213,24 @@ export function ProductImageUploader({
       <div className="grid grid-cols-2 gap-4">
         {/* Renderiza previews de uploads em andamento */}
         {Array.from(uploadingImages).map((tempId) => (
-          <div key={tempId} className="relative opacity-60">
-            <div className="aspect-square w-full overflow-hidden rounded bg-gray-100 flex items-center justify-center">
+          <div key={tempId} className="relative opacity-70">
+            <div className="aspect-square w-full overflow-hidden rounded bg-gray-100 flex items-center justify-center border-2 border-cereon-green border-dashed">
               {previews[tempId] ? (
-                <img src={previews[tempId]} className="w-full h-full object-cover" alt="Preview" />
-              ) : (
-                <Loader2 className="animate-spin text-gray-400" />
-              )}
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className="animate-spin text-white drop-shadow-md" />
+                <img 
+                  src={previews[tempId]} 
+                  className="w-full h-full object-cover" 
+                  alt="Preview" 
+                  onLoad={() => console.log('Preview carregado com sucesso')}
+                  onError={(e) => {
+                    console.error('Erro no preview local:', previews[tempId]);
+                    e.target.style.display = 'none'; // Se o preview local falhar, esconde a img e deixa o loader
+                  }}
+                />
+              ) : null}
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/10">
+                <Loader2 className="animate-spin text-cereon-green mb-2" size={32} />
+                <span className="text-[10px] font-bold text-cereon-green bg-white/80 px-1 rounded">ENVIANDO...</span>
+              </div>
             </div>
           </div>
         ))}
