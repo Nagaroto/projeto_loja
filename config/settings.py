@@ -5,21 +5,26 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-# Carregar variáveis do arquivo .env
-load_dotenv()
+# Carregar variáveis do arquivo .env (apenas se existir, sem sobrescrever o sistema)
+load_dotenv(override=False)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+# 1. Carregar DEBUG primeiro
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
+# 2. Carregar SECRET_KEY com validação rigorosa
 SECRET_KEY = os.getenv('SECRET_KEY')
+
 if not SECRET_KEY:
     if DEBUG:
-        import warnings
-        warnings.warn('SECRET_KEY not set in environment. Using temporary key for development only.')
         SECRET_KEY = 'django-insecure-dev-temp-key-change-in-production'
     else:
-        raise ValueError('SECRET_KEY must be set in environment variables in production')
+        # Erro crítico em produção
+        raise ValueError(
+            "SECRET_KEY não encontrada! Verifique se ela está configurada no painel do Render "
+            "em 'Environment Variables'."
+        )
 
 ALLOWED_HOSTS = [
     host.strip()
