@@ -11,29 +11,15 @@ load_dotenv(override=False)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 1. Carregar DEBUG primeiro
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-
+DEBUG = False
 # 2. Carregar SECRET_KEY com validação rigorosa
-SECRET_KEY = os.getenv('SECRET_KEY', 'r-k#1o%h5fxoo*fqyzv5jmwa6+c6nnot_o#$@kf6_^62$0+!i')
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-if not SECRET_KEY:
-    if DEBUG:
-        SECRET_KEY = 'django-insecure-dev-temp-key-change-in-production'
-    else:
-        # Erro crítico em produção
-        raise ValueError(
-            "SECRET_KEY não encontrada! Verifique se ela está configurada no painel do Render "
-            "em 'Environment Variables'."
-        )
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv(
-        'ALLOWED_HOSTS',
-        '.onrender.com,.vercel.app' if not DEBUG else 'localhost,127.0.0.1'
-    ).split(',')
-    if host.strip()
-]
+ALLOWED_HOSTS = os.getenv(
+    'ALLOWED_HOSTS',
+    '.onrender.com,.vercel.app'
+).split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -107,10 +93,10 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
     import dj_database_url
     DATABASES = {
-        'default': dj_database_url.config(
-            DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
+       'default': dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=True,
         )
     }
 else:
@@ -143,17 +129,15 @@ STATIC_URL = '/static/'
 # CLOUDINARY CONFIGURAÇÃO - SEMPRE ATIVO
 # =========================================================
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME', 'desqxyngm'),
-    'API_KEY': os.getenv('CLOUDINARY_API_KEY', '815981943999871'),
-    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET', 'm7ZzcQ7Q8FEI0UHJkb1GuuEfAVM'),
-    'SECURE': True,
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
 }
 
 # Cloudinary como storage padrão para todos os arquivos (dev e produção)
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 MEDIA_URL = f"https://res.cloudinary.com/{CLOUDINARY_STORAGE['CLOUD_NAME']}/"
 
-print(f"✅ STORAGE: Cloudinary Ativado ({CLOUDINARY_STORAGE['CLOUD_NAME']})")
 
 _default_cors_origins = (
     'https://projeto-loja-phi.vercel.app,https://projeto-loja-uqac.onrender.com'
