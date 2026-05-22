@@ -58,6 +58,8 @@ class ProductImage(models.Model):
         verbose_name='Imagem',
         help_text='Arquivo de imagem do produto (salvo no Cloudinary)',
         upload_to='products/',
+        null=True,
+        blank=True,
     )
     is_cover = models.BooleanField(
         default=False,

@@ -11,7 +11,7 @@ load_dotenv(override=False)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 1. Carregar DEBUG primeiro
-DEBUG = False
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 # 2. Carregar SECRET_KEY com validação rigorosa
 SECRET_KEY = os.getenv("SECRET_KEY")
 

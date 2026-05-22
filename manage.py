@@ -3,6 +3,18 @@
 import os
 import sys
 
+# Workaround for rest_framework_simplejwt 5.2.2 missing pkg_resources
+try:
+    import pkg_resources
+except ImportError:
+    import importlib.metadata
+    class DummyPkgResources:
+        @staticmethod
+        def get_distribution(name):
+            return importlib.metadata.distribution(name)
+        DistributionNotFound = importlib.metadata.PackageNotFoundError
+    sys.modules['pkg_resources'] = DummyPkgResources
+
 
 def main():
     """Run administrative tasks."""
