@@ -25,36 +25,47 @@ class ProductImageSerializer(serializers.ModelSerializer):
         return obj.filename
 
     def validate(self, attrs):
-        """Validação customizada para garantir consistência."""
-        product = self.instance.product if self.instance else None
+        """Garante consistência de capa por produto."""
+        product = getattr(self.instance, "product", None)
 
-        # Se está definindo como capa, garantir que não haja outra capa
         if attrs.get('is_cover', False) and product:
-            # Remover capa de outras imagens do mesmo produto
             ProductImage.objects.filter(
                 product=product,
                 is_cover=True
-            ).exclude(id=self.instance.id if self.instance else None).update(is_cover=False)
+            ).exclude(
+                id=self.instance.id if self.instance else None
+            ).update(is_cover=False)
 
         return attrs
 
 
 class ProductImageCreateSerializer(serializers.ModelSerializer):
-    """Serializer para criação de imagens de produto com ImageField."""
+    """Serializer para criação de imagens de produto com upload Cloudinary."""
 
     class Meta:
         model = ProductImage
-        fields = ['image', 'is_cover', 'order']
+        fields = ['product', 'image', 'is_cover', 'order']  # FIX principal
+
+    def validate(self, attrs):
+        """Regras antes de salvar."""
+        product = attrs.get('product')
+
+        if not product:
+            raise serializers.ValidationError("product é obrigatório")
+
+        return attrs
 
     def create(self, validated_data):
-        """Cria imagem garantindo que apenas uma seja capa."""
+        """Garante apenas uma capa por produto."""
+
         product = validated_data['product']
 
-        # Se esta imagem deve ser capa, remover capa das outras
         if validated_data.get('is_cover', False):
-            ProductImage.objects.filter(product=product, is_cover=True).update(is_cover=False)
+            ProductImage.objects.filter(
+                product=product,
+                is_cover=True
+            ).update(is_cover=False)
 
-        # Se não há imagens de capa, definir esta como capa
         elif not ProductImage.objects.filter(product=product, is_cover=True).exists():
             validated_data['is_cover'] = True
 
