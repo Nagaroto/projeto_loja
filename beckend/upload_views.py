@@ -1,10 +1,11 @@
 import logging
 import uuid
 import io
-from datetime import datetime
 
 from django.core.files.base import ContentFile
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, UnidentifiedImageError
+import cloudinary
+import cloudinary.uploader
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
@@ -71,7 +72,7 @@ def _check_path_traversal(filename):
 def upload_product_image(request):
     """
     Endpoint para upload de imagens de produtos.
-    Pipeline: Upload → Pillow converte para WebP → Cloudinary storage → Retorna URL
+    Pipeline: Upload → Pillow converte para WebP → Cloudinary API → Retorna URL
     """
     try:
         if 'image' not in request.FILES:
@@ -98,17 +99,15 @@ def upload_product_image(request):
         # Converte para WebP
         webp_file = _convert_to_webp(image_file)
         
-        # Cria instância de ProductImage temporária para obter URL do Cloudinary
-        from .models import ProductImage
-        temp_image = ProductImage(image=webp_file)
-        temp_image.save()
+        # Faz upload diretamente via Cloudinary API, sem ProductImage
+        upload_result = cloudinary.uploader.upload(
+            webp_file,
+            folder="products/",
+            resource_type="image"
+        )
         
-        # Obtém URL do Cloudinary
-        cloudinary_url = temp_image.image.url
-        filename = temp_image.filename
-        
-        # Deleta a instância temporária (não queremos salvar no banco ainda)
-        temp_image.delete()
+        cloudinary_url = upload_result.get('secure_url', upload_result.get('url'))
+        filename = upload_result.get('public_id')
         
         logger.info('Upload convertido para WebP e enviado ao Cloudinary: %s -> %s', image_file.name, cloudinary_url)
 
