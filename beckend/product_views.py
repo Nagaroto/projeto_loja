@@ -119,7 +119,7 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
 
 
     def _save_product_images(self, product, images_data):
-        """Salva as imagens do produto usando ImageField do Cloudinary."""
+        """Salva as imagens do produto, aceitando URLs do Cloudinary ou arquivos."""
         print("_save_product_images called with images_data:", images_data)
         # Remove imagens existentes (Cloudinary deleta automaticamente)
         ProductImage.objects.filter(product=product).delete()
@@ -127,20 +127,41 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
         # Cria novas imagens
         for index, image_data in enumerate(images_data):
             print("SAVE PRODUCT IMAGE DATA:", image_data)
-            # image_data agora deve conter o arquivo de imagem convertido para WebP
+            # Verifica se temos um arquivo ou uma URL
             image_file = image_data.get('image')
-            if not image_file:
+            image_url = image_data.get('url')
+            
+            if not image_file and not image_url:
                 continue
-
-            ProductImage.objects.create(
-                product=product,
-                image=image_file,
-                is_cover=image_data.get('is_cover', index == 0),
-                order=index
-            )
+                
+            # Trata tanto arquivo quanto URL
+            if image_url:
+                # Se temos uma URL (do Cloudinary), usamos diretamente com Cloudinary
+                from cloudinary_storage.storage import MediaCloudinaryStorage
+                storage = MediaCloudinaryStorage()
+                # Vamos extrair o public_id da URL Cloudinary para criar o campo image
+                # Ou apenas salvar a URL usando a storage
+                from django.core.files.base import ContentFile
+                # Vamos usar a URL diretamente - para isso, podemos usar o CloudinaryField
+                # Ou, como alternativa, criar um ProductImage e usar a URL
+                # Vamos usar a storage para salvar a imagem a partir da URL
+                ProductImage.objects.create(
+                    product=product,
+                    image=image_url,  # Cloudinary ImageField aceita URLs diretamente!
+                    is_cover=bool(image_data.get('is_cover', image_data.get('isCover', index == 0))),
+                    order=index
+                )
+            else:
+                # Se temos um arquivo de imagem
+                ProductImage.objects.create(
+                    product=product,
+                    image=image_file,
+                    is_cover=bool(image_data.get('is_cover', image_data.get('isCover', index == 0))),
+                    order=index
+                )
 
     def _update_product_images(self, product, images_data):
-        """Atualiza as imagens do produto usando ImageField do Cloudinary."""
+        """Atualiza as imagens do produto, aceitando URLs do Cloudinary ou arquivos."""
         print("_update_product_images called with images_data:", images_data)
 
         existing_images = {str(img.id): img for img in product.images.all()}
@@ -159,17 +180,24 @@ class ProductViewSetWithImages(viewsets.ModelViewSet):
                 # Atualiza campos se necessário
                 if 'image' in image_data:
                     image_obj.image = image_data['image']
-                image_obj.is_cover = bool(image_data.get('is_cover', image_obj.is_cover))
+                elif 'url' in image_data:
+                    image_obj.image = image_data['url']
+                
+                # Verifica tanto is_cover quanto isCover
+                is_cover_val = image_data.get('is_cover', image_data.get('isCover', image_obj.is_cover))
+                image_obj.is_cover = bool(is_cover_val)
                 image_obj.order = index
                 image_obj.save()
             else:
                 # Cria nova imagem
                 image_file = image_data.get('image')
-                if image_file:
+                image_url = image_data.get('url')
+                
+                if image_url or image_file:
                     image_obj = ProductImage.objects.create(
                         product=product,
-                        image=image_file,
-                        is_cover=bool(image_data.get('is_cover', index == 0)),
+                        image=image_url if image_url else image_file,
+                        is_cover=bool(image_data.get('is_cover', image_data.get('isCover', index == 0))),
                         order=index
                     )
             if image_obj:
