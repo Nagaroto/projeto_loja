@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 # 2. Carregar SECRET_KEY com validação rigorosa
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY', 'r-k#1o%h5fxoo*fqyzv5jmwa6+c6nnot_o#$@kf6_^62$0+!i')
 
 if not SECRET_KEY:
     if DEBUG:
