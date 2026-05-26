@@ -5,7 +5,7 @@ from .models import ProductImage
 class ProductImageSerializer(serializers.ModelSerializer):
     """Serializer para o modelo ProductImage com Cloudinary."""
 
-    url = serializers.ImageField(source='image', read_only=True)
+    url = serializers.SerializerMethodField()
     filename = serializers.SerializerMethodField()
 
     class Meta:
@@ -19,6 +19,12 @@ class ProductImageSerializer(serializers.ModelSerializer):
             'created_at'
         ]
         read_only_fields = ['id', 'created_at']
+
+    def get_url(self, obj):
+        """Retorna a URL completa da imagem do Cloudinary."""
+        if obj.image:
+            return obj.image.url
+        return None
 
     def get_filename(self, obj):
         """Retorna o nome do arquivo do Cloudinary."""
