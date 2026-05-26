@@ -636,7 +636,11 @@ export function ProductDetail() {
                 >
                   <div className="relative h-48 overflow-hidden bg-gray-200 rounded-t-lg">
                     <img
-                      src={relatedProduct.image_url || FALLBACK_IMG}
+                      src={
+                        relatedProduct.images?.[0]?.url ||
+                        relatedProduct.image_url ||
+                        FALLBACK_IMG
+                      }
                       alt={relatedProduct.name}
                       className="w-full h-full object-cover"
                     />
