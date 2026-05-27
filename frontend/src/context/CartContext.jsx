@@ -32,7 +32,13 @@ function backendItemToFront(item) {
   const finalPrice = (hasPromotion && Number.isFinite(promoPriceNum) && promoPriceNum > 0)
     ? promoPriceNum
     : (Number.isFinite(priceNum) ? priceNum : 0);
-  const image = p?.image_url || '/imgs/cereon.webp';
+  
+  // Obter imagem prioritária: image_url (que já vem corrigido do backend) 
+  // ou fallback para o logo da empresa
+  const image = (p?.image_url && p.image_url !== '/imgs/cereon.webp') 
+    ? p.image_url 
+    : '/imgs/cereon.webp';
+
   const itemId = item?.cart_item_key || String(p?.id || item?.id || '');
   return {
     ...p,
@@ -124,13 +130,25 @@ export function CartProvider({ children }) {
     const finalPrice = (hasPromotion && Number.isFinite(promoPriceNum) && promoPriceNum > 0)
       ? promoPriceNum
       : (Number.isFinite(priceNum) ? priceNum : 0);
+    // Obter imagem prioritária: image_url ou a primeira da lista images
+    const getProductImage = () => {
+      if (product.image_url && product.image_url !== '/imgs/cereon.webp') {
+        return product.image_url;
+      }
+      if (Array.isArray(product.images) && product.images.length > 0) {
+        const first = product.images[0];
+        return typeof first === 'object' ? first.url : first;
+      }
+      return product.image || '/imgs/cereon.webp';
+    };
+
     const normalized = {
       ...product,
       price: finalPrice,
       original_price: priceNum,
       promotional_price: promoPriceNum,
       has_promotion: !!hasPromotion,
-      image: product.image_url || product.image || '/imgs/cereon.webp',
+      image: getProductImage(),
     };
 
     if ((product.colors?.length || product.sizes?.length) && !product.selectedSize && !product.selectedColor) {

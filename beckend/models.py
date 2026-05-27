@@ -190,6 +190,19 @@ class Product(models.Model):
     def __str__(self):
         return f"{self.name} - R$ {self.price:.2f}"
 
+    @property
+    def cover_image_url(self):
+        """Retorna a URL da imagem de capa, ou a primeira imagem, ou o image_url legado."""
+        cover = self.images.filter(is_cover=True).first()
+        if cover and cover.image:
+            return cover.image.url
+        
+        first_img = self.images.first()
+        if first_img and first_img.image:
+            return first_img.image.url
+            
+        return self.image_url
+
     def is_in_stock(self):
         return self.stock > 0
 

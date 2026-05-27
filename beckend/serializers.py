@@ -176,9 +176,7 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_image_url(self, obj):
-        # Cloudinary retorna URLs absolutas automaticamente via ImageField.url
-        # Não precisa de lógica manual de URL building
-        return obj.image_url
+        return obj.cover_image_url
 
     def get_promotion_info(self, obj):
         from datetime import date
@@ -233,10 +231,14 @@ class PromotionSerializer(serializers.ModelSerializer):
 class CartItemProductSerializer(serializers.ModelSerializer):
     promotional_price = serializers.SerializerMethodField()
     has_promotion = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = ['id', 'name', 'price', 'promotional_price', 'has_promotion', 'image_url', 'stock', 'is_active']
+
+    def get_image_url(self, obj):
+        return obj.cover_image_url
 
     def get_promotional_price(self, obj):
         return obj.get_promotional_price()

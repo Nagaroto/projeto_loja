@@ -74,7 +74,35 @@ export function ProductCard({ product, categories = [] }) {
   };
 
   const categoryLabel = getCategoryName();
-  const coverImageUrl = product.image_url || product.image || product.images?.find?.((img) => img?.is_cover)?.url || product.images?.[0]?.url;
+  
+  // Obter a melhor imagem disponível, priorizando a capa se disponível em product.images
+  const getCoverImage = () => {
+    // Se image_url estiver presente, o backend já deve ter priorizado a capa (conforme novos serializers)
+    if (product.image_url && product.image_url !== '/imgs/cereon.webp') {
+      return product.image_url;
+    }
+
+    // Fallback para product.image
+    if (product.image && product.image !== '/imgs/cereon.webp') {
+      return product.image;
+    }
+
+    // Se tivermos a lista de imagens, procurar pela capa
+    if (Array.isArray(product.images) && product.images.length > 0) {
+      // Se for array de objetos (formato DRF direto)
+      const coverObj = product.images.find(img => typeof img === 'object' && img.is_cover);
+      if (coverObj?.url) return coverObj.url;
+
+      // Se for array de strings (formato normalizado no front) ou fallback para primeira
+      const firstImg = product.images[0];
+      return typeof firstImg === 'object' ? firstImg.url : firstImg;
+    }
+
+    // Fallback final
+    return '/imgs/cereon.webp';
+  };
+
+  const coverImageUrl = getCoverImage();
 
   return (
     <motion.div
