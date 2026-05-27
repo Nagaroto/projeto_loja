@@ -387,7 +387,7 @@ export function ProductDetail() {
             {product.colors.length > 0 ? (
               <div className="space-y-3">
                 <label className="block text-lg font-semibold text-cereon-dark">
-                  Cores disponíveis
+                  Disponíveis
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {product.colors.map((color) => (
@@ -413,7 +413,7 @@ export function ProductDetail() {
             {product.sizes.length > 0 ? (
               <div className="space-y-3">
                 <label className="block text-lg font-semibold text-cereon-dark">
-                  Tamanhos disponíveis
+                  Variações
                 </label>
                 <div className="grid grid-cols-4 gap-3">
                   {product.sizes.map((size) => (
